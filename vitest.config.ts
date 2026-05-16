@@ -60,7 +60,17 @@ export default defineConfig({
           browser: {
             enabled: true,
             headless: true,
-            provider: playwright({}),
+            provider: playwright({
+              launch: {
+                args: [
+                  '--disable-dev-shm-usage',
+                  '--no-sandbox',
+                  '--disable-gpu',
+                  '--disable-extensions',
+                  '--disable-background-networking',
+                ],
+              },
+            }),
             instances: [{ browser: 'chromium' }],
           },
         },
@@ -80,7 +90,17 @@ export default defineConfig({
           browser: {
             enabled: true,
             headless: true,
-            provider: playwright({}),
+            provider: playwright({
+              launch: {
+                args: [
+                  '--disable-dev-shm-usage',
+                  '--no-sandbox',
+                  '--disable-gpu',
+                  '--disable-extensions',
+                  '--disable-background-networking',
+                ],
+              },
+            }),
             instances: [
               {
                 browser: 'chromium',
