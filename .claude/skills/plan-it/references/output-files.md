@@ -14,9 +14,21 @@ Before writing issue files, run:
 bash scripts/ensure-issues-dir.sh issues
 ```
 
+## Issue numbering rule
+
+**Never infer the next number by counting files in `issues/`.** Files may have been deleted or archived. Instead, call the numbering script once per issue file, immediately before writing it:
+
+```bash
+NUM=$(bash scripts/next-issue-number.sh)
+```
+
+The script reads `issues-lock.json` at the project root to get a collision-free number and reserves it. If the lock file does not exist, the script scans `issues/` and `issues/_archive/` to derive a safe ceiling.
+
+Call it once per task — each call increments the counter.
+
 ## Issue file rules
 
-- Use priority order for file numbering.
+- Use the number returned by `next-issue-number.sh` as the numeric prefix.
 - Respect dependency order.
 - A dependent task must not appear before the task it depends on.
 - If two tasks have the same priority, order the task with fewer dependencies first.
@@ -25,6 +37,8 @@ bash scripts/ensure-issues-dir.sh issues
 - Use `.md` extension.
 - Keep one task per file.
 - Preserve all task sections inside the file.
+- Set `status: active` in the frontmatter.
+- Set `created` and `updated` to today's date (YYYY-MM-DD) in the frontmatter.
 - Use `assets/task-template.md` as the required structure.
 
 ## Issue file naming format
@@ -34,12 +48,14 @@ issues/001-short-descriptive-slug.md
 ```
 
 Good:
+
 - `issues/001-create-project.md`
 - `issues/002-invite-project-member.md`
 - `issues/003-protect-project-settings.md`
 - `issues/004-add-project-observability.md`
 
 Bad:
+
 - `issues/create project.md`
 - `issues/task1.md`
 - `issues/high-priority-feature.md`
@@ -56,11 +72,13 @@ Sort tasks by:
 4. earliest tracer-bullet validation
 
 Good:
+
 - `001-create-project.md` before `002-invite-project-member.md`, because invitations require `projectId`.
 - `002-invite-project-member.md` before `003-resend-invitation.md`, because resend requires an existing invitation.
 - `003-protect-project-settings.md` before `004-add-settings-form.md`, because permissions define who can use the form.
 
 Bad:
+
 - Write UI polish before the core project creation flow exists.
 - Write invitation tasks before the project identity exists.
 - Write analytics-only tasks before the user behavior exists.
@@ -92,11 +110,13 @@ docs/adrs/001-short-decision-slug.md
 ```
 
 Good:
+
 - `docs/adrs/001-use-notification-port.md`
 - `docs/adrs/002-store-project-events.md`
 - `docs/adrs/003-use-opentelemetry.md`
 
 Bad:
+
 - `docs/adrs/architecture.md`
 - `docs/adrs/decision1.md`
 - `docs/adrs/final-choice.md`
@@ -108,11 +128,13 @@ Bad:
 Sort ADRs by when the decision is first needed.
 
 Good:
+
 - `001-use-notification-port.md` before `002-send-invitation-email.md`, because email delivery tasks depend on the port decision.
 - `002-store-project-events.md` before tasks that write audit events.
 - `003-use-opentelemetry.md` before tasks that standardize traces and metrics.
 
 Bad:
+
 - Create provider-specific ADRs before deciding the boundary.
 - Create implementation detail ADRs before the architecture question exists.
 - Create ADRs after tasks already depend on unrecorded architecture decisions.
@@ -140,6 +162,7 @@ Report:
 - unresolved assumptions, if any
 
 Good:
+
 - Created `issues/001-create-project.md`.
 - Created `issues/002-invite-project-member.md`.
 - Created `docs/adrs/001-use-notification-port.md`.
@@ -147,6 +170,7 @@ Good:
 - Assumption: invitations expire after 7 days.
 
 Bad:
+
 - Done.
 - Created issues.
 - Created ADRs.

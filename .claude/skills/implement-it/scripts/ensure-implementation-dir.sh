@@ -1,5 +1,8 @@
 # implement-it/scripts/ensure-implementation-dir.sh
 #!/usr/bin/env bash
+# Invoked by implement-it before writing implementation summaries to `implementation/`.
+# Exit codes: 0 (directory ready), non-zero on permission error (set -e propagates).
+# Output: prints "ready: <DIR>" on success.
 set -euo pipefail
 
 show_help() {

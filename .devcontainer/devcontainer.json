@@ -1,0 +1,32 @@
+{
+  "name": "ask-data-dev",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+
+  "shutdownAction": "stopCompose",
+
+  "postCreateCommand": "pnpm install && pnpm exec playwright install chromium && echo \"devcontainer ready\"",
+
+  "remoteEnv": {
+    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}",
+    "OPENAI_API_KEY": "${localEnv:OPENAI_API_KEY}",
+    "PI_API_KEY": "${localEnv:PI_API_KEY}"
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Catppuccin.catppuccin-vsc",
+        "Catppuccin.catppuccin-vsc-icons",
+        "CucumberOpen.cucumber-official",
+        "dbaeumer.vscode-eslint",
+        "antfu.vitest",
+        "bierner.lit-html",
+        "ms-vscode.vscode-typescript-next",
+        "anthropic.claude-code",
+        "runem.lit-plugin"
+      ]
+    }
+  }
+}

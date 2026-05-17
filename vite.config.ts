@@ -10,6 +10,9 @@ export default defineConfig({
       'chrono-node/pt': root('./node_modules/chrono-node/dist/esm/locales/pt/index.js'),
     },
   },
+  optimizeDeps: {
+    exclude: ['@duckdb/duckdb-wasm'],
+  },
   server: {
     host: '0.0.0.0',
   },

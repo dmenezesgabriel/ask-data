@@ -1,7 +1,16 @@
 import * as duckdb from '@duckdb/duckdb-wasm';
+import ehWorker from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
+import mvpWorker from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url';
+import ehWasm from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
+import mvpWasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url';
 import type { Table } from 'apache-arrow';
 
 import type { QueryPort } from '../query/query-port';
+
+const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
+  mvp: { mainModule: mvpWasm, mainWorker: mvpWorker },
+  eh: { mainModule: ehWasm, mainWorker: ehWorker },
+};
 
 export class DuckDBManager implements QueryPort {
   private dbInstance: duckdb.AsyncDuckDB | null = null;
@@ -9,16 +18,11 @@ export class DuckDBManager implements QueryPort {
 
   async initialize(): Promise<duckdb.AsyncDuckDB> {
     if (this.dbInstance) return this.dbInstance;
-    const jsDelivrBundles = duckdb.getJsDelivrBundles();
-    const bundle = await duckdb.selectBundle(jsDelivrBundles);
-    const workerUrl = URL.createObjectURL(
-      new Blob([`importScripts("${bundle.mainWorker}");`], { type: 'text/javascript' }),
-    );
-    const worker = new Worker(workerUrl);
+    const bundle = await duckdb.selectBundle(MANUAL_BUNDLES);
+    const worker = new Worker(bundle.mainWorker!, { type: 'classic' });
     const logger = new duckdb.ConsoleLogger();
     const db = new duckdb.AsyncDuckDB(logger, worker);
     await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-    URL.revokeObjectURL(workerUrl);
     this.dbInstance = db;
     this.dbConnection = await db.connect();
     return db;

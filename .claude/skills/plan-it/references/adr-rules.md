@@ -20,6 +20,7 @@ Create an ADR stub during planning when a task depends on a decision that is:
 - boundary-defining
 
 Good:
+
 - Choose how project audit events are stored.
 - Hide email delivery behind a notification port.
 - Use OpenTelemetry for traces, metrics, and log correlation.
@@ -27,29 +28,21 @@ Good:
 - Use asynchronous invitation email delivery through a queue.
 
 Bad:
+
 - Rename a component.
 - Move a helper function.
 - Add a button label.
 - Change CSS spacing.
 - Add a unit test.
 
-## Planning vs implementation
+## Planning phase responsibilities
 
 Planning phase:
+
 - Identify that an ADR is needed.
 - Create a lightweight ADR stub.
 - Capture context, options, recommendation, and open questions.
 - Link the ADR to affected task files.
-
-Implementation phase:
-- Validate the decision against real code constraints.
-- Update the ADR status.
-- Record final consequences.
-- Link the final implementation PR, issue, or commit when available.
-
-Good rule:
-- Plan phase: identify ADR needed.
-- Implementation phase: decide, validate, and complete ADR.
 
 ## ADR status
 
@@ -67,11 +60,13 @@ Write ADRs inside `docs/adrs/`.
 Use chronological numeric prefixes and short lowercase kebab-case slugs.
 
 Good:
+
 - `docs/adrs/001-use-notification-port.md`
 - `docs/adrs/002-store-project-events.md`
 - `docs/adrs/003-use-opentelemetry.md`
 
 Bad:
+
 - `docs/adrs/adr.md`
 - `docs/adrs/architecture decision.md`
 - `docs/adrs/final-choice.md`
@@ -82,11 +77,13 @@ Bad:
 When a task depends on an ADR, reference it in the task Dependencies section.
 
 Good:
+
 - Depends on ADR `docs/adrs/001-use-notification-port.md`.
 - Depends on ADR `docs/adrs/002-store-project-events.md`.
 - No ADR dependency; this task uses existing architecture.
 
 Bad:
+
 - Depends on architecture.
 - Needs ADR.
 - Check decision later.
@@ -96,6 +93,7 @@ Bad:
 Each ADR must be short and decision-focused.
 
 Good:
+
 - State the decision in one or two sentences.
 - List two or three realistic options.
 - Mark the recommended option with `(recommended)`.
@@ -103,6 +101,7 @@ Good:
 - List validation steps for implementation.
 
 Bad:
+
 - Write a long essay.
 - Document every implementation step.
 - Hide the decision inside background text.
@@ -113,12 +112,14 @@ Bad:
 Tasks should not silently depend on unrecorded architecture decisions.
 
 Good:
+
 - The task references the ADR in Dependencies.
 - The ADR references the related task file.
 - The task Definition of Ready says the ADR stub exists.
 - The task Definition of Done says the ADR is accepted or explicitly left proposed with open questions.
 
 Bad:
+
 - The task chooses a provider without an ADR.
 - The task adds an architectural boundary without documenting the decision.
 - The ADR exists but no task references it.

@@ -17,6 +17,10 @@ bash scripts/ensure-implementation-dir.sh implementation
 - Use kebab-case for slugs.
 - Use `.md` extension.
 - Keep one implementation summary per implemented issue or task.
+- Set `id` in the frontmatter to the numeric prefix used in the filename.
+- Set `issue` in the frontmatter to the path of the related issue file.
+- Set `created` to today's date (YYYY-MM-DD) when first writing the file.
+- Set `updated` to today's date (YYYY-MM-DD) each time the file is modified.
 - Use `assets/implementation-summary-template.md`.
 
 ## File naming format
@@ -26,11 +30,13 @@ implementation/001-short-descriptive-slug-summary.md
 ```
 
 Good:
+
 - `implementation/001-create-project-summary.md`
 - `implementation/002-invite-project-member-summary.md`
 - `implementation/003-protect-project-settings-summary.md`
 
 Bad:
+
 - `implementation/done.md`
 - `implementation/task1.md`
 - `implementation/summary final.md`
@@ -52,6 +58,7 @@ The summary must include:
 - unresolved assumptions or follow-up work
 
 Good:
+
 - `UT-001` added for project name length.
 - `IT-001` added for `POST /projects` persistence.
 - `ProjectForm` component states verified for invalid, submitting, and server-error states.
@@ -59,6 +66,7 @@ Good:
 - `E2E-001` not applicable because this task changed only a pure validator.
 
 Bad:
+
 - Done.
 - Tests passed.
 - Changed backend.

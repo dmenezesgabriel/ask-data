@@ -3,6 +3,7 @@
 node_modules
 dist
 .cache
+.pnpm-store
 _
 reports
 coverage

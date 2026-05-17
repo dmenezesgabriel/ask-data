@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Invoked by plan-it before writing issue files to `issues/`.
+# Exit codes: 0 (directory ready), non-zero on permission error (set -e propagates).
+# Output: prints "ready: <DIR>" on success.
 set -euo pipefail
 
 show_help() {

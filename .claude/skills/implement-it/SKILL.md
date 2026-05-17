@@ -1,6 +1,10 @@
 ---
 name: implement-it
-description: Use this skill when the user asks to implement, code, fix, refactor, or complete an existing issue, task, story, or plan in frontend, backend, full-stack, CLI, service, API, or library code. Applies TDD, Component-Driven Development, semantic HTML, accessibility, Atomic Design when relevant, SOLID, Ports and Adapters, Clean Architecture boundaries, meaningful tests, observability, ADR updates, and validation while avoiding overengineering and workarounds.
+description: Implements existing tasks, issues, stories, or plan items using TDD, vertical slices, and existing project conventions. Use when the user asks to implement, code, fix, refactor, or complete a defined task, issue, or story in any language, framework, or layer.
+compatibility: Designed for Claude Code. Requires bash for script execution. Language and framework agnostic.
+metadata:
+  domain: software-implementation
+  version: '1.0'
 ---
 
 Implement one or more existing tasks, issues, stories, or plan items.
@@ -21,35 +25,34 @@ Apply a principle only when it reduces current risk, clarifies responsibility, p
 
 Do not introduce abstractions, layers, adapters, factories, ports, design-system structure, or architectural patterns just because they are considered good practice.
 
+## When NOT to use this skill
+
+Do not use implement-it when:
+
+- There is no defined task, issue, or story — use plan-it to create one first.
+- The request is exploratory or the acceptance criteria are undefined.
+- The user wants a quick one-off answer or a prototype without production quality.
+- The work is purely architectural review or documentation with no code changes.
+- The user is asking how something works, not asking to change it.
+
 ## Core workflow
 
-1. Read the assigned issue, task, story, plan, or user request.
-2. Inspect the codebase before asking questions when the answer can be discovered.
-3. Identify relevant existing architecture, tests, conventions, components, services, boundaries, accessibility patterns, and ADRs.
-4. Implement the smallest safe vertical slice that satisfies the task.
-5. Use TDD for logic, APIs, services, domain rules, data flows, permissions, and regressions when practical.
-6. Use Component-Driven Development for frontend UI work when practical.
-7. Use semantic HTML and native controls before ARIA for frontend work.
-8. Treat accessibility as part of component behavior, not final polish.
-9. Use Atomic Design as a UI organization heuristic when it matches or improves the existing project structure.
+1. If `CONTEXT.md` exists at the project root, read it to load the project's domain vocabulary. Use this vocabulary consistently in all implementation decisions, test names, and variable names.
+2. Read the assigned issue, task, story, plan, or user request. If requirements are ambiguous or contradictory, inspect the codebase first — the answer is often already there. If still unclear after inspection, flag the ambiguity explicitly before coding — do not silently pick an interpretation and implement it. If the user changes scope mid-implementation, stop, clarify the new scope, and assess whether completed work is still valid before continuing.
+3. Inspect the codebase before asking questions when the answer can be discovered. See [implementation-rules.md — Codebase exploration](references/implementation-rules.md#codebase-exploration) for what to look for.
+4. Identify relevant existing architecture, tests, conventions, components, services, boundaries, accessibility patterns, and ADRs.
+5. Implement the smallest safe vertical slice that satisfies the task. See [implementation-rules.md — Vertical-slice implementation](references/implementation-rules.md#vertical-slice-implementation).
+6. Use TDD for logic, APIs, services, domain rules, data flows, permissions, and regressions when practical. See [implementation-rules.md — TDD workflow](references/implementation-rules.md#tdd-workflow).
+7. Use Component-Driven Development for frontend UI work when practical. See [implementation-rules.md — CDD workflow](references/implementation-rules.md#component-driven-development-workflow).
+8. Use semantic HTML and native controls before ARIA for frontend work. Treat accessibility as part of component behavior, not final polish. See [implementation-rules.md — Semantic HTML and accessibility](references/implementation-rules.md#semantic-html-and-accessibility).
+9. Apply design principles selectively — read [design-rules.md](references/design-rules.md) when a design decision arises.
 10. Preserve architecture boundaries and dependency direction.
-11. Add or update only meaningful tests.
+11. Add or update only meaningful tests. Read [testing-rules.md](references/testing-rules.md) before adding or changing any test type.
 12. Add or update logs, metrics, traces, and analytics only when required by the task or risk.
-13. Update ADRs when implementation confirms, changes, or rejects architectural assumptions.
-14. Validate with the relevant test, lint, typecheck, build, accessibility, and runtime checks.
-15. Write a short implementation summary.
-
-## Required references
-
-Read these files when using this skill:
-
-- `references/implementation-rules.md` — use for implementation workflow, codebase exploration, TDD, CDD, frontend/backend execution, accessibility execution, scope control, and validation.
-- `references/design-rules.md` — use for SOLID, design patterns, Ports and Adapters, Clean Architecture, Component-Driven Development, semantic HTML, accessibility, Atomic Design, boundaries, naming, cohesion, coupling, and avoiding overengineering.
-- `references/testing-rules.md` — use before adding or changing unit, component, integration, smoke, E2E, regression, performance, security, usability, accessibility, or observability tests.
-- `references/adr-implementation-rules.md` — use when implementation touches ADR-backed decisions or discovers new architectural decisions.
-- `references/output-rules.md` — use before writing implementation notes or summaries.
-- `assets/implementation-checklist.md` — use as the implementation checklist.
-- `assets/implementation-summary-template.md` — use as the final implementation summary format.
+13. Update ADRs when implementation confirms, changes, or rejects architectural assumptions. Read [adr-implementation-rules.md](references/adr-implementation-rules.md) only when touching an ADR-backed decision.
+14. Validate with the relevant test, lint, typecheck, build, accessibility, and runtime checks. If validation fails, fix the root cause — do not disable linting, skip tests, or use `--force` flags. If a failure is pre-existing and out of scope, document it in the summary under "Unresolved assumptions". See [implementation-rules.md — Validation loop](references/implementation-rules.md#validation-loop).
+15. Write a short implementation summary. Read [output-rules.md](references/output-rules.md) before writing.
+16. If domain terms were defined or clarified during implementation, add them to `CONTEXT.md` at the project root using the format in the existing entries or [assets/context-template.md](../plan-it/assets/context-template.md) if it exists.
 
 ## Output requirement
 
@@ -67,6 +70,39 @@ Use this naming format:
 implementation/001-create-project-summary.md
 implementation/002-invite-project-member-summary.md
 ```
+
+## Before marking complete
+
+- [ ] Implementation summary created in `implementation/` using the template structure
+- [ ] All required tests added or updated and passing
+- [ ] Lint, typecheck, and build pass (or pre-existing failures documented)
+- [ ] Accessibility checks completed if any UI was touched
+- [ ] ADRs updated only where implementation confirmed, changed, or rejected a decision
+- [ ] No unrelated files modified
+
+## If validation fails
+
+If a validation check (test, lint, build) fails after implementation:
+
+- Fix the root cause, not the check.
+- Do not disable linting, skip tests, or use `--force` flags to make CI pass.
+- If the failure is pre-existing and out of scope, document it in the summary under "Unresolved assumptions" and do not claim it as a blocker.
+
+## Anti-patterns to avoid
+
+**Scope creep rewrite**: Do not rewrite working code unless it is directly required by the task. Every line changed beyond the task scope is unreviewed risk introduced without a corresponding requirement.
+
+**Pattern-first architecture**: Do not introduce a new architectural pattern mid-task without an ADR. If the pattern is needed, write the ADR first, then implement.
+
+**Frontend-only authorization**: Frontend permission checks are presentation guards, not the source of truth. Backend must enforce every permission — a UI-only check is a security vulnerability.
+
+**Deferred accessibility**: Do not treat accessibility as final polish. After changing interactive UI, forms, modals, or error states, check keyboard navigation, focus behavior, labels, and error announcements before marking the task complete.
+
+**Unjustified "not applicable"**: Do not mark a test type as not applicable unless you have a concrete reason. State the reason in the summary.
+
+**Convention override**: If the codebase uses a different convention than what you would normally choose, follow the codebase convention. Consistency outranks personal preference.
+
+**Routine ADR update**: Do not update ADRs for routine changes. Update only when implementation confirms, changes, or rejects an architectural assumption.
 
 ## Final response
 

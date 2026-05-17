@@ -11,6 +11,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(dirname, './src'),
+      'chrono-node/en': path.resolve(
+        dirname,
+        './node_modules/chrono-node/dist/esm/locales/en/index.js',
+      ),
+      'chrono-node/pt': path.resolve(
+        dirname,
+        './node_modules/chrono-node/dist/esm/locales/pt/index.js',
+      ),
     },
   },
   test: {
