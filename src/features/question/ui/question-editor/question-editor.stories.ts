@@ -6,7 +6,7 @@ import { html } from 'lit';
 const meta = {
   title: 'Pages/Question Editor',
   component: 'question-editor',
-  tags: ['autodocs', '!test'],
+  tags: ['autodocs', 'skip-browser-test'],
   render: (args) =>
     html`<question-editor
       .slug=${args['slug'] as string}

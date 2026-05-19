@@ -26,7 +26,7 @@ const EMPTY_CONFIG: DashboardConfig = {
 const meta = {
   title: 'Templates/Dashboard Editor',
   component: 'dashboard-editor',
-  tags: ['autodocs', '!test'],
+  tags: ['autodocs', 'skip-browser-test'],
   render: ({ config, slug, isNew }: DashboardEditorArgs) =>
     html`<dashboard-editor .config=${config} .slug=${slug} .isNew=${isNew}></dashboard-editor>`,
   argTypes: {

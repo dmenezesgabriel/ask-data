@@ -6,7 +6,7 @@ import { html } from 'lit';
 const meta = {
   title: 'Pages/Dashboard App',
   component: 'app-dashboard',
-  tags: ['autodocs', '!test'],
+  tags: ['autodocs', 'skip-browser-test'],
   render: () => html`<app-dashboard></app-dashboard>`,
   parameters: {
     layout: 'fullscreen',

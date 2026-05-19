@@ -57,7 +57,7 @@ const POPULATED_SHEETS = [
 const meta = {
   title: 'Templates/Dashboard Workspace',
   component: 'dashboard-workspace',
-  tags: ['autodocs', '!test'],
+  tags: ['autodocs', 'skip-browser-test'],
   render: ({ config, slug, isNew }: DashboardWorkspaceArgs) =>
     html`<dashboard-workspace
       .config=${config}

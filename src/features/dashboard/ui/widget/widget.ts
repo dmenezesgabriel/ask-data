@@ -6,9 +6,9 @@ import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
 import type { DashboardWidget as WidgetConfig } from '@/core/entities';
 
+import { createLogger } from '../../../../shared/observability/logger';
 import type { CellValue, Filters, ValueFormat } from '../../../../shared/types/index';
 import { formatValue } from '../../../../shared/utils/utils';
-import { createLogger } from '../../../../shared/observability/logger';
 import { buildWidgetChartConfig } from './widget-model';
 
 Chart.register(...registerables);

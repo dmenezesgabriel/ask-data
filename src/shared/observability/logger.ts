@@ -14,6 +14,7 @@ const LOG_LEVEL_PRIORITY: Record<LogLevelName, number> = {
 
 const LOG_LEVEL_STORAGE_KEY = 'ask-data:log-level';
 const DEFAULT_LOG_LEVEL: LogLevelName = 'info';
+let traceSequence = 0;
 
 function isLogLevelName(value: string | null | undefined): value is LogLevelName {
   return value === 'debug' || value === 'info' || value === 'warn' || value === 'error';
@@ -51,7 +52,10 @@ function normalizeMetadata(metadata?: LogMetadata): LogMetadata | undefined {
   if (!metadata || Object.keys(metadata).length === 0) return undefined;
 
   return Object.fromEntries(
-    Object.entries(metadata).map(([key, value]) => [key, key === 'error' ? serializeError(value) : value]),
+    Object.entries(metadata).map(([key, value]) => [
+      key,
+      key === 'error' ? serializeError(value) : value,
+    ]),
   );
 }
 
@@ -75,7 +79,8 @@ function createTraceId(): string {
     return crypto.randomUUID();
   }
 
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  traceSequence += 1;
+  return `${Date.now()}-${traceSequence}`;
 }
 
 function normalizeSql(sql: string): string {

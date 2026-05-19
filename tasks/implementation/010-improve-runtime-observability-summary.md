@@ -41,15 +41,15 @@
 In the browser console:
 
 ```js
-localStorage.setItem('ask-data:log-level', 'debug')
-location.reload()
+localStorage.setItem('ask-data:log-level', 'debug');
+location.reload();
 ```
 
 To restore the default:
 
 ```js
-localStorage.removeItem('ask-data:log-level')
-location.reload()
+localStorage.removeItem('ask-data:log-level');
+location.reload();
 ```
 
 ## Tests and validations run

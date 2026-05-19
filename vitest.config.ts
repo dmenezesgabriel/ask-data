@@ -89,6 +89,9 @@ export default defineConfig({
           // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
           storybookTest({
             configDir: path.join(dirname, '.storybook'),
+            tags: {
+              exclude: ['skip-browser-test'],
+            },
           }),
         ],
         resolve: {

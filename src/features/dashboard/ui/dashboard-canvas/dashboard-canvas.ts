@@ -4,8 +4,8 @@ import { html, LitElement, nothing as renderNothing, type TemplateResult } from 
 
 import type { Dashboard } from '@/core/entities';
 
-import type { CellValue, Filters } from '../../../../shared/types/index';
 import { createLogger } from '../../../../shared/observability/logger';
+import type { CellValue, Filters } from '../../../../shared/types/index';
 import {
   COMPONENT_RULES,
   GAP_PX,

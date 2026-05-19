@@ -2,6 +2,7 @@ import * as chronoEn from 'chrono-node/en';
 import * as chronoPt from 'chrono-node/pt';
 import Fuse from 'fuse.js';
 
+import { createLogger } from '../../../shared/observability/logger';
 import type {
   CatalogField,
   Entity,
@@ -13,7 +14,6 @@ import type {
   Vocabulary,
 } from '../../../shared/types/index';
 import { fieldKey, norm, toRows } from '../../../shared/utils/utils';
-import { createLogger } from '../../../shared/observability/logger';
 import { CatalogBuilder } from './catalog-builder';
 import { DateRangeParser } from './date-range-parser';
 import { DiagnosticRunner } from './diagnostic-runner';
