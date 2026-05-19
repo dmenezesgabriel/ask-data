@@ -1,4 +1,6 @@
-import type { QueryPort } from '../../../infra/query/query-port';
+import type { QueryPort } from '@/core/application/ports';
+import { createLogger } from '@/shared/observability/logger';
+
 import type {
   CatalogField,
   Entity,
@@ -24,6 +26,7 @@ import {
 import { AutoFieldRoleDetector, type FieldSignature } from './semantic-modeling';
 
 export class CatalogBuilder {
+  private readonly logger = createLogger('AskData.catalog');
   private readonly roleDetector = new AutoFieldRoleDetector();
   config: { dataSources?: Array<{ name: string }>; relationships?: Relationship[] };
   askConfig: {
@@ -178,7 +181,7 @@ export class CatalogBuilder {
         latestYearEnd: isoDate(new Date(Date.UTC(latestYearStart.getUTCFullYear() + 1, 0, 1))),
       };
     } catch (err) {
-      console.warn('[AskData] Failed to profile time field', field.id, err);
+      this.logger.warn('time-profile.failed', { fieldId: field.id, error: err });
       return null;
     }
   }

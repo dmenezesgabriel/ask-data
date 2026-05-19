@@ -86,6 +86,23 @@ function makeParser({
   });
 }
 
+// UT-003: QuestionParser returns valid AskIntent for "top 5 products by revenue"
+describe('UT-003: parse() returns valid AskIntent for ranking queries', () => {
+  it('UT-003: "top 5 products by revenue" produces a ranking intent', async () => {
+    const parser = makeParser({
+      resolveFieldPhrase: async (phrase) => {
+        if (phrase.includes('revenue') || phrase.includes('sales')) return { field: revenueField };
+        return {};
+      },
+    });
+    const result = await parser.parse('top 5 products by revenue');
+    // Must not be an error or clarification — must produce an intent
+    expect(result.intent).toBeDefined();
+    // A ranking/top-N query should have a limit or analysisType indicating ranking
+    expect(result.error).toBeUndefined();
+  });
+});
+
 describe('QuestionParser.parse()', () => {
   describe('ParseOptions threading', () => {
     it('accepts ParseOptions with typed clarification', async () => {

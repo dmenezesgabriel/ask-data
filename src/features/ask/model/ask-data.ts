@@ -13,6 +13,7 @@ import type {
   Vocabulary,
 } from '../../../shared/types/index';
 import { fieldKey, norm, toRows } from '../../../shared/utils/utils';
+import { createLogger } from '../../../shared/observability/logger';
 import { CatalogBuilder } from './catalog-builder';
 import { DateRangeParser } from './date-range-parser';
 import { DiagnosticRunner } from './diagnostic-runner';
@@ -69,6 +70,7 @@ export {
 export { IntentCueDetector } from './intent-cue-detector';
 
 export class AskDataEngine {
+  private readonly logger = createLogger('AskData');
   config: {
     dataSources?: Array<{ name: string }>;
     relationships?: Relationship[];
@@ -266,15 +268,18 @@ export class AskDataEngine {
   async initialize() {
     if (this.initialized) return;
     await this.refreshCatalog();
-    console.info('[AskData] Ready', {
+    this.logger.info('ready', {
       fields: this.catalog.length,
-      relationships: this.relationships,
-      ambiguousRelationships: this.ambiguousRelationships,
+      relationships: this.relationships.length,
+      ambiguousRelationships: this.ambiguousRelationships.length,
+      catalogBuildMs: this.metrics.catalogBuildMs,
     });
   }
 
   async refreshCatalog() {
-    console.info('[AskData] Building data catalog');
+    this.logger.info('catalog.build.start', {
+      dataSources: (this.config.dataSources || []).map((source) => source.name),
+    });
     const catalogStarted = performance.now();
     await this.buildCatalog();
     this.buildFuseIndexes();
@@ -352,109 +357,135 @@ export class AskDataEngine {
   }
 
   async ask(question, options: ParseOptions = {}) {
+    const askSpan = this.logger.span('ask', { question });
     const totalStarted = performance.now();
-    await this.initialize();
-    const parseStarted = performance.now();
-    const parsed = await this.parseQuestion(question, options);
-    const parseMs = Math.round(performance.now() - parseStarted);
-    if (parsed.error)
-      return {
-        ...parsed,
-        metrics: {
-          catalogBuildMs: this.metrics.catalogBuildMs,
-          parseMs,
-          totalAskMs: Math.round(performance.now() - totalStarted),
-        },
-      };
-    if (parsed.clarification)
-      return {
-        ...parsed,
-        metrics: {
-          catalogBuildMs: this.metrics.catalogBuildMs,
-          parseMs,
-          totalAskMs: Math.round(performance.now() - totalStarted),
-        },
-      };
-    const planned = this.planSql(parsed.intent);
-    if (planned.error)
-      return {
-        ...planned,
-        metrics: {
-          catalogBuildMs: this.metrics.catalogBuildMs,
-          parseMs,
-          totalAskMs: Math.round(performance.now() - totalStarted),
-        },
-      };
-    console.info('[AskData] SQL', planned.sql);
-    const sqlStarted = performance.now();
-    if (!planned.sql) {
-      return {
-        error: planned.error || 'Failed to generate SQL query',
-        metrics: {
-          catalogBuildMs: this.metrics.catalogBuildMs,
-          parseMs,
-          totalAskMs: Math.round(performance.now() - totalStarted),
-        },
-      };
-    }
-    const result = await this.duckDBManager.query(planned.sql);
-    const sqlExecutionMs = Math.round(performance.now() - sqlStarted);
-    const rows = toRows(result).map((row) =>
-      Object.fromEntries(
-        Object.entries(row).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v]),
-      ),
-    );
-    const columns = rows.length ? Object.keys(rows[0]) : planned.columns;
-    const diagnostics = await this.evaluateDiagnostics(planned);
-    const shape = this.shapeAnalyzer.analyze(rows, columns, parsed.intent);
-    const chartDecision = this.chartDecisionTree.decide(shape, parsed.intent);
-    const insights = this.insightGenerator.generate(rows, parsed.intent, shape);
-    let narratives: NarrativeResult | null = null;
-    if (this.autoNarrativesEnabled && rows.length > 0) {
-      try {
-        const metricField =
-          parsed.intent.metric && 'table' in parsed.intent.metric ? parsed.intent.metric : null;
-        narratives = this.narrativeGenerator.generateNarratives(
-          rows,
-          parsed.intent,
-          shape,
-          metricField,
-        );
-      } catch (err) {
-        console.warn('[AskData] Narrative generation failed', err);
+
+    try {
+      await this.initialize();
+      const parseStarted = performance.now();
+      const parsed = await this.parseQuestion(question, options);
+      const parseMs = Math.round(performance.now() - parseStarted);
+      if (parsed.error) {
+        const response = {
+          ...parsed,
+          metrics: {
+            catalogBuildMs: this.metrics.catalogBuildMs,
+            parseMs,
+            totalAskMs: Math.round(performance.now() - totalStarted),
+          },
+        };
+        askSpan.end({ outcome: 'parse-error', metrics: response.metrics }, 'warn');
+        return response;
       }
+      if (parsed.clarification) {
+        const response = {
+          ...parsed,
+          metrics: {
+            catalogBuildMs: this.metrics.catalogBuildMs,
+            parseMs,
+            totalAskMs: Math.round(performance.now() - totalStarted),
+          },
+        };
+        askSpan.end({ outcome: 'clarification', metrics: response.metrics }, 'info');
+        return response;
+      }
+      const planned = this.planSql(parsed.intent);
+      if (planned.error) {
+        const response = {
+          ...planned,
+          metrics: {
+            catalogBuildMs: this.metrics.catalogBuildMs,
+            parseMs,
+            totalAskMs: Math.round(performance.now() - totalStarted),
+          },
+        };
+        askSpan.end({ outcome: 'planning-error', metrics: response.metrics }, 'warn');
+        return response;
+      }
+      this.logger.info('sql.generated', { traceId: askSpan.traceId, sql: planned.sql });
+      const sqlStarted = performance.now();
+      if (!planned.sql) {
+        const response = {
+          error: planned.error || 'Failed to generate SQL query',
+          metrics: {
+            catalogBuildMs: this.metrics.catalogBuildMs,
+            parseMs,
+            totalAskMs: Math.round(performance.now() - totalStarted),
+          },
+        };
+        askSpan.end({ outcome: 'missing-sql', metrics: response.metrics }, 'error');
+        return response;
+      }
+      const result = await this.duckDBManager.query(planned.sql);
+      const sqlExecutionMs = Math.round(performance.now() - sqlStarted);
+      const rows = toRows(result).map((row) =>
+        Object.fromEntries(
+          Object.entries(row).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v]),
+        ),
+      );
+      const columns = rows.length ? Object.keys(rows[0]) : planned.columns;
+      const diagnostics = await this.evaluateDiagnostics(planned);
+      const shape = this.shapeAnalyzer.analyze(rows, columns, parsed.intent);
+      const chartDecision = this.chartDecisionTree.decide(shape, parsed.intent);
+      const insights = this.insightGenerator.generate(rows, parsed.intent, shape);
+      let narratives: NarrativeResult | null = null;
+      if (this.autoNarrativesEnabled && rows.length > 0) {
+        try {
+          const metricField =
+            parsed.intent.metric && 'table' in parsed.intent.metric ? parsed.intent.metric : null;
+          narratives = this.narrativeGenerator.generateNarratives(
+            rows,
+            parsed.intent,
+            shape,
+            metricField,
+          );
+        } catch (err) {
+          this.logger.warn('narrative.failed', { traceId: askSpan.traceId, error: err });
+        }
+      }
+      const confidence = this.confidenceScorer.estimate(parsed.intent);
+      const validationWarnings = this.resultValidator.validate({
+        rows,
+        intent: parsed.intent,
+        confidence,
+        diagnostics,
+      });
+      const evidence = this.describeEvidence(parsed.intent);
+      const response = {
+        question,
+        interpretation: this.describeIntent(parsed.intent),
+        intent: parsed.intent,
+        sql: planned.sql,
+        rows,
+        columns,
+        shape,
+        diagnostics,
+        chartDecision,
+        insights,
+        narratives,
+        evidence,
+        chartType: chartDecision.rendered,
+        warnings: [...(parsed.warnings || []), ...validationWarnings],
+        confidence,
+        metrics: {
+          catalogBuildMs: this.metrics.catalogBuildMs,
+          parseMs,
+          sqlExecutionMs,
+          totalAskMs: Math.round(performance.now() - totalStarted),
+        },
+      };
+      askSpan.end({
+        outcome: 'success',
+        chartType: response.chartType,
+        rowCount: response.rows.length,
+        warningCount: response.warnings.length,
+        metrics: response.metrics,
+      });
+      return response;
+    } catch (error) {
+      askSpan.fail(error);
+      throw error;
     }
-    const confidence = this.confidenceScorer.estimate(parsed.intent);
-    const validationWarnings = this.resultValidator.validate({
-      rows,
-      intent: parsed.intent,
-      confidence,
-      diagnostics,
-    });
-    const evidence = this.describeEvidence(parsed.intent);
-    return {
-      question,
-      interpretation: this.describeIntent(parsed.intent),
-      intent: parsed.intent,
-      sql: planned.sql,
-      rows,
-      columns,
-      shape,
-      diagnostics,
-      chartDecision,
-      insights,
-      narratives,
-      evidence,
-      chartType: chartDecision.rendered,
-      warnings: [...(parsed.warnings || []), ...validationWarnings],
-      confidence,
-      metrics: {
-        catalogBuildMs: this.metrics.catalogBuildMs,
-        parseMs,
-        sqlExecutionMs,
-        totalAskMs: Math.round(performance.now() - totalStarted),
-      },
-    };
   }
 
   parseQuestion(question, options: ParseOptions = {}) {

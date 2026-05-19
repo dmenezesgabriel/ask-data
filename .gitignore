@@ -20,3 +20,4 @@ inline
 inline.md
 
 *.png
+.claude/worktrees/

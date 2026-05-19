@@ -3,7 +3,11 @@ import './index';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 
+import { setDbService } from '@/shared/services/db-service';
+
 import type { DashboardConfig } from '../../../../shared/types/index';
+
+setDbService({ query: async () => ({}), initialize: async () => {}, createViews: async () => {} });
 
 type DashboardWorkspaceArgs = {
   config: DashboardConfig;

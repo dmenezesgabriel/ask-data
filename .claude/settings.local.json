@@ -109,7 +109,32 @@
       "Bash(chmod +x *)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('engines:', d.get\\('engines',{}\\)\\); print\\('nodeVersion:', d.get\\('volta', d.get\\('engines', {}\\)\\)\\)\")",
       "Bash(docker compose *)",
-      "Bash(python3 -c \"import json; json.load\\(open\\('/home/gabriel-menezes/Documents/repos/ask-data/.devcontainer/devcontainer.json'\\)\\)\")"
+      "Bash(python3 -c \"import json; json.load\\(open\\('/home/gabriel-menezes/Documents/repos/ask-data/.devcontainer/devcontainer.json'\\)\\)\")",
+      "Bash(awk -F/ '{for\\(i=1;i<NF;i++\\)printf \"  \"; print $NF}')",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm run *)",
+      "Bash(pnpm build *)",
+      "Bash(pnpm test:unit *)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm vitest *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}; print\\('\\\\n'.join\\(k for k in deps if 'bound' in k.lower\\(\\) or 'eslint' in k.lower\\(\\)\\)\\)\")",
+      "Bash(pnpm add *)",
+      "Bash(pnpm config *)",
+      "Bash(mkdir -p /home/gabriel-menezes/.local/share/pnpm/store)",
+      "Bash(sed -i 's|store-dir=.*|store-dir=/home/gabriel-menezes/.local/share/pnpm/store/v10|' /home/gabriel-menezes/.config/pnpm/rc)",
+      "Bash(pnpm install *)",
+      "Bash(sudo chown -R gabriel-menezes:gabriel-menezes /home/gabriel-menezes/Documents/repos/ask-data/node_modules)",
+      "Bash(grep -E \"^/.*\\\\.ts$|boundaries/\")",
+      "Bash(grep -v \"node_modules\\\\|spec.ts\\\\|datasource-picker.ts$\")",
+      "Bash(grep -rn \"type { Dashboard\\\\b\\\\|Dashboard,\" --include=\"*.ts\" /home/gabriel-menezes/Documents/repos/ask-data/src)",
+      "Bash(sudo chown *)",
+      "Bash(xargs ls)",
+      "Bash(sudo sysctl fs.inotify.max_user_watches=524288)",
+      "Bash(VITE_LEGACY_CJS_PROXY=1 npm run dev -- --watch false)",
+      "Bash(sudo tee /proc/sys/fs/inotify/max_user_watches)",
+      "Bash(pkill -f \"vite --host\")",
+      "Bash(CHOKIDAR_USEPOLLING=false CHOKIDAR_INTERVAL=0 npm run dev)",
+      "Bash(CHOKIDAR_USEPOLLING=1 npx vite --host 0.0.0.0)"
     ]
   }
 }

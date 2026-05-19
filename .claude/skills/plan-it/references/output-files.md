@@ -1,34 +1,31 @@
 # Output Files
 
-After all tasks are defined, write each task as a separate Markdown file inside an `issues/` directory.
+After all tasks are defined, write each task as a separate Markdown file inside a `tasks/issues/` directory.
 
 If ADRs are needed, write each ADR as a separate Markdown file inside a `docs/adrs/` directory.
 
 ## Issue directory rule
 
-Create the `issues/` directory if it does not exist.
-
-Before writing issue files, run:
+Create the `tasks/issues/` directory if it does not exist:
 
 ```bash
-bash scripts/ensure-issues-dir.sh issues
+mkdir -p tasks/issues
 ```
 
 ## Issue numbering rule
 
-**Never infer the next number by counting files in `issues/`.** Files may have been deleted or archived. Instead, call the numbering script once per issue file, immediately before writing it:
+**Never infer the next number by counting files in `tasks/issues/`.** Files may have been deleted or archived. Use `issues-lock.json` at the project root as the authoritative counter:
 
-```bash
-NUM=$(bash scripts/next-issue-number.sh)
-```
+1. If `issues-lock.json` exists, read the `next_id` integer field.
+2. If it does not exist, scan `tasks/issues/` and `tasks/issues/_archive/` for the highest numeric prefix among `.md` filenames and add 1. Start at 1 if both directories are empty or absent.
+3. Format the number as a 3-digit zero-padded string (e.g. `003`).
+4. Before writing the issue file, write the incremented counter back to `issues-lock.json`: `{"next_id": <used_number + 1>}`.
 
-The script reads `issues-lock.json` at the project root to get a collision-free number and reserves it. If the lock file does not exist, the script scans `issues/` and `issues/_archive/` to derive a safe ceiling.
-
-Call it once per task — each call increments the counter.
+Do this once per task — each issue gets its own reserved number.
 
 ## Issue file rules
 
-- Use the number returned by `next-issue-number.sh` as the numeric prefix.
+- Use the reserved number as the numeric prefix.
 - Respect dependency order.
 - A dependent task must not appear before the task it depends on.
 - If two tasks have the same priority, order the task with fewer dependencies first.
@@ -44,23 +41,23 @@ Call it once per task — each call increments the counter.
 ## Issue file naming format
 
 ```text
-issues/001-short-descriptive-slug.md
+tasks/issues/001-short-descriptive-slug.md
 ```
 
 Good:
 
-- `issues/001-create-project.md`
-- `issues/002-invite-project-member.md`
-- `issues/003-protect-project-settings.md`
-- `issues/004-add-project-observability.md`
+- `tasks/issues/001-create-project.md`
+- `tasks/issues/002-invite-project-member.md`
+- `tasks/issues/003-protect-project-settings.md`
+- `tasks/issues/004-add-project-observability.md`
 
 Bad:
 
-- `issues/create project.md`
-- `issues/task1.md`
-- `issues/high-priority-feature.md`
-- `issues/001.md`
-- `issues/ProjectCreation.md`
+- `tasks/issues/create project.md`
+- `tasks/issues/task1.md`
+- `tasks/issues/high-priority-feature.md`
+- `tasks/issues/001.md`
+- `tasks/issues/ProjectCreation.md`
 
 ## Issue ordering rule
 
@@ -73,9 +70,9 @@ Sort tasks by:
 
 Good:
 
-- `001-create-project.md` before `002-invite-project-member.md`, because invitations require `projectId`.
-- `002-invite-project-member.md` before `003-resend-invitation.md`, because resend requires an existing invitation.
-- `003-protect-project-settings.md` before `004-add-settings-form.md`, because permissions define who can use the form.
+- `tasks/issues/001-create-project.md` before `tasks/issues/002-invite-project-member.md`, because invitations require `projectId`.
+- `tasks/issues/002-invite-project-member.md` before `tasks/issues/003-resend-invitation.md`, because resend requires an existing invitation.
+- `tasks/issues/003-protect-project-settings.md` before `tasks/issues/004-add-settings-form.md`, because permissions define who can use the form.
 
 Bad:
 
@@ -85,12 +82,10 @@ Bad:
 
 ## ADR directory rule
 
-Create the `docs/adrs/` directory if ADRs are needed and it does not exist.
-
-Before writing ADR files, run:
+Create the `docs/adrs/` directory if ADRs are needed and it does not exist:
 
 ```bash
-bash scripts/ensure-adrs-dir.sh docs/adrs
+mkdir -p docs/adrs
 ```
 
 ## ADR file rules
@@ -139,17 +134,6 @@ Bad:
 - Create implementation detail ADRs before the architecture question exists.
 - Create ADRs after tasks already depend on unrecorded architecture decisions.
 
-## Scripts
-
-Use the bundled scripts:
-
-```bash
-bash scripts/ensure-issues-dir.sh issues
-bash scripts/ensure-adrs-dir.sh docs/adrs
-```
-
-Each script must create the directory and exit successfully if it already exists.
-
 ## Final response after file generation
 
 Report:
@@ -163,8 +147,8 @@ Report:
 
 Good:
 
-- Created `issues/001-create-project.md`.
-- Created `issues/002-invite-project-member.md`.
+- Created `tasks/issues/001-create-project.md`.
+- Created `tasks/issues/002-invite-project-member.md`.
 - Created `docs/adrs/001-use-notification-port.md`.
 - `E2E-001` was marked not applicable for the validation-only task because no user journey changed.
 - Assumption: invitations expire after 7 days.

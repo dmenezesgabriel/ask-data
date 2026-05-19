@@ -112,7 +112,7 @@ Given('a sheet exists with chart widgets', async function (this: BrowserWorld) {
     window.location.hash = '#/dashboard/portable-bi-dashboard';
   });
   await this.waitForWidgets();
-  await this.page.waitForTimeout(500);
+  await this.waitForChartInitialization();
 });
 
 Then('I should see widgets rendered on the canvas', async function (this: BrowserWorld) {

@@ -8,7 +8,7 @@ import '../dashboard-workspace';
 import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
 import type {
-  AskResult,
+  AskDataResponse,
   AskSuccessResult,
   Clarification,
   ClarificationChoice,
@@ -18,7 +18,7 @@ import { AskOrchestrator } from '../../../ask/orchestration/ask-orchestrator';
 import { createDashboardOrchestrator } from '../../../ask/orchestration/create-dashboard-orchestrator';
 import type { DashboardMode } from '../dashboard-editor-header/dashboard-editor-header';
 
-function isAskSuccess(result: AskResult): result is AskSuccessResult {
+function isAskSuccess(result: AskDataResponse): result is AskSuccessResult {
   return 'rows' in result && 'sql' in result && 'chartType' in result;
 }
 

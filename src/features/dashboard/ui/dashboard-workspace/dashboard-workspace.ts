@@ -5,20 +5,24 @@ import '../../../../shared/ui/ui-button';
 
 import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
-import { duckDBManager } from '../../../../infra/db/db';
+import type {
+  Dashboard,
+  DashboardWidget as WidgetConfig,
+  Datasource as DataSourceConfig,
+} from '@/core/entities';
+import type { Question as QuestionConfig } from '@/core/entities';
+import { getDbService } from '@/shared/services/db-service';
+import { createLogger } from '@/shared/observability/logger';
+
 import type {
   CellValue,
-  Dashboard,
   DashboardConfig,
   DashboardFilterConfig,
-  DataSourceConfig,
   Filters,
-  QuestionConfig,
-  WidgetConfig,
 } from '../../../../shared/types/index';
 import { escapeSqlString, quoteIdent, toRows } from '../../../../shared/utils/utils';
 import { AskDataEngine } from '../../../ask/model/ask-data';
-import { getDatasourceBySlug } from '../../../datasource/data/datasource-registry';
+import { getDatasourceBySlug } from '../../../datasource/datasource-service';
 import { DASHBOARD_CONFIG } from '../../model/dashboard-config';
 import {
   configToDashboard,
@@ -36,6 +40,8 @@ import {
   sanitizePersistedDashboardLayouts,
   storageKeyForDashboard,
 } from './dashboard-workspace-model';
+
+const logger = createLogger('dashboard.workspace');
 
 type DashboardAskEventDetail = {
   dashboardId: string;
@@ -121,17 +127,36 @@ export class DashboardWorkspace extends LitElement {
     this.widgetErrors = {};
     this.filters = {};
     this.crossFilters = {};
-    this._askEngine = new AskDataEngine(this.config, duckDBManager);
+    this._askEngine = new AskDataEngine(
+      {
+        dataSources: this._resolvedDataSources,
+        relationships: this.config.relationships,
+        askData: this.config.askData,
+      },
+      getDbService(),
+    );
   }
 
   override createRenderRoot(): HTMLElement | DocumentFragment {
     return this;
   }
 
-  override updated(changedProps: Map<string, unknown>): void {
+  override willUpdate(changedProps: Map<string, unknown>): void {
+    if (changedProps.has('editMode') && !this.editMode) {
+      this.selectedWidgetId = null;
+    }
+
     if (changedProps.has('config')) {
-      this._askEngine = new AskDataEngine(this.config, duckDBManager);
+      this._askEngine = new AskDataEngine(
+        {
+          dataSources: this._resolvedDataSources,
+          relationships: this.config.relationships,
+          askData: this.config.askData,
+        },
+        getDbService(),
+      );
       this._dataReady = false;
+      this._viewsCreated = false;
       this._dataCache = {};
       this._loadSheets();
       return;
@@ -139,10 +164,6 @@ export class DashboardWorkspace extends LitElement {
 
     if (changedProps.has('slug') || changedProps.has('isNew')) {
       this._loadSheets();
-    }
-
-    if (changedProps.has('editMode') && !this.editMode) {
-      this.selectedWidgetId = null;
     }
   }
 
@@ -155,30 +176,38 @@ export class DashboardWorkspace extends LitElement {
     return slugs.map((s) => getDatasourceBySlug(s)).filter(Boolean) as DataSourceConfig[];
   }
 
+  private _viewsCreated = false;
+
+  private async _ensureViewsCreated(): Promise<void> {
+    if (this._viewsCreated) return;
+    const sources = this._resolvedDataSources;
+    for (const source of sources) {
+      logger.info('view.create.start', { datasource: source.name, url: source.url });
+      try {
+        await getDbService().query(
+          `CREATE OR REPLACE VIEW ${quoteIdent(source.name)} AS SELECT * FROM read_csv_auto('${escapeSqlString(
+            source.url,
+          )}')`,
+        );
+        logger.info('view.create.ok', { datasource: source.name });
+      } catch (err) {
+        logger.error('view.create.error', err, { datasource: source.name, url: source.url });
+        throw err;
+      }
+    }
+    this._viewsCreated = true;
+  }
+
   private async _ensureDataReady(): Promise<void> {
     if (this._dataReady) return;
     try {
-      const sources = this._resolvedDataSources;
-      for (const source of sources) {
-        console.info(`[sheets] creating view ${source.name} from ${source.url}`);
-        try {
-          await duckDBManager.query(
-            `CREATE OR REPLACE VIEW ${quoteIdent(source.name)} AS SELECT * FROM read_csv_auto('${escapeSqlString(
-              source.url,
-            )}')`,
-          );
-          console.info(`[sheets] created view ${source.name}`);
-        } catch (err) {
-          console.error(`[sheets] failed to create view ${source.name}:`, err);
-          throw err;
-        }
-      }
-      console.info('[sheets] initializing AskData engine');
+      await this._ensureViewsCreated();
+      logger.info('ask-engine.initialize.start');
       await this._askEngine.initialize();
-      console.info('[sheets] AskData engine initialized');
+      logger.info('ask-engine.initialize.ok');
       this._dataReady = true;
     } catch (err) {
-      console.error('[sheets] Failed to initialize data:', err);
+      logger.error('data.initialize.error', err);
       throw err;
     }
   }
@@ -196,9 +225,9 @@ export class DashboardWorkspace extends LitElement {
     values: number[];
     rows?: Record<string, CellValue>[];
   }> {
-    await this._ensureDataReady();
+    await this._ensureViewsCreated();
     const sql = applySqlFilters(widget.query ?? '', this._getFilterDefs(), this.filters);
-    const result = await duckDBManager.query(sql);
+    const result = await getDbService().query(sql);
     const rows = toRows(result).map((row) =>
       Object.fromEntries(
         Object.entries(row).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v]),
@@ -490,7 +519,7 @@ export class DashboardWorkspace extends LitElement {
           const result = await this._executeQuery(widget);
           newData[widget.id] = result;
         } catch (err) {
-          console.error(`Failed to load data for widget ${widget.id}:`, err);
+          logger.error('widget-data.load.error', err, { widgetId: widget.id });
           newData[widget.id] = { labels: [], values: [] };
           newErrors[widget.id] = err instanceof Error ? err.message : String(err);
         }
@@ -498,9 +527,7 @@ export class DashboardWorkspace extends LitElement {
     }
 
     if (this.activeSheetId !== loadingSheetId) {
-      console.log(
-        `[sheets] data load stale (sheet changed), discarding results for "${loadingSheetId}"`,
-      );
+      logger.debug('widget-data.load.stale', { dashboardId: loadingSheetId });
       return;
     }
 
@@ -614,7 +641,7 @@ export class DashboardWorkspace extends LitElement {
       this._persistSheets();
       this._refreshWidgetData();
     } catch (err) {
-      console.error('Failed to import file:', err);
+      logger.error('import.error', err);
       this._importError = 'Failed to import file. Make sure it is valid YAML or JSON.';
     }
   }
@@ -666,7 +693,6 @@ export class DashboardWorkspace extends LitElement {
     super.connectedCallback();
     document.addEventListener('click', this._onDocumentClick);
     document.addEventListener('keydown', this._onDocumentKeydown);
-    this._loadSheets();
   }
 
   override disconnectedCallback(): void {

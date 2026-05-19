@@ -1,7 +1,9 @@
 import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
-import { duckDBManager } from '../../../../infra/db/db';
-import type { DataSourceConfig, DataSourceType } from '../../../../shared/types/index';
+import type { Datasource as DataSourceConfig, DataSourceType } from '@/core/entities';
+import { getDbService } from '@/shared/services/db-service';
+
+import { toRows } from '../../../../shared/utils/utils';
 import { escapeSqlString } from '../../../../shared/utils/utils';
 
 const DS_TYPES: DataSourceType[] = ['csv', 'parquet', 'json'];
@@ -46,7 +48,9 @@ export class DatasourceEditorPanel extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     // Pre-warm DuckDB so the first Test Connection click is fast.
-    duckDBManager.initialize().catch(() => {});
+    getDbService()
+      .initialize()
+      .catch(() => {});
   }
 
   override createRenderRoot(): HTMLElement | DocumentFragment {
@@ -83,21 +87,21 @@ export class DatasourceEditorPanel extends LitElement {
 
     try {
       // Schema via DESCRIBE
-      const descResult = await duckDBManager.query(
+      const descResult = await getDbService().query(
         `DESCRIBE SELECT * FROM ${fn}('${url}') LIMIT 5`,
       );
-      const descRows = descResult.toArray();
+      const descRows = toRows(descResult);
       this._testColumns = descRows.slice(0, 20).map((r) => ({
-        name: String(r['column_name'] ?? r[0] ?? ''),
-        type: String(r['column_type'] ?? r[1] ?? ''),
+        name: String(r['column_name'] ?? ''),
+        type: String(r['column_type'] ?? ''),
       }));
 
       // Data preview — 5 rows
-      const dataResult = await duckDBManager.query(`SELECT * FROM ${fn}('${url}') LIMIT 5`);
-      this._testRowFields = dataResult.schema.fields.map((f) => f.name);
-      this._testRows = dataResult
-        .toArray()
-        .map((r) => Object.fromEntries(this._testRowFields.map((f) => [f, r[f]])));
+      const dataRows = toRows(await getDbService().query(`SELECT * FROM ${fn}('${url}') LIMIT 5`));
+      this._testRowFields = dataRows.length > 0 ? Object.keys(dataRows[0]) : [];
+      this._testRows = dataRows.map((r) =>
+        Object.fromEntries(this._testRowFields.map((f) => [f, r[f]])),
+      );
 
       this._testStatus = 'success';
     } catch (err: unknown) {
@@ -108,8 +112,32 @@ export class DatasourceEditorPanel extends LitElement {
     }
   }
 
+  private _formatPreviewCell(value: unknown, colType: string): string {
+    if (value == null) return '';
+    const isDateCol = /^(date|timestamp|time)/i.test(colType.trim());
+    if (isDateCol) {
+      let ms: number;
+      if (typeof value === 'bigint') {
+        ms = Number(value) / 1000;
+      } else if (typeof value === 'number' && value > 1e9) {
+        ms = value;
+      } else {
+        return String(value);
+      }
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) {
+        return /^date$/i.test(colType.trim())
+          ? d.toISOString().slice(0, 10)
+          : d.toISOString().replace('T', ' ').slice(0, 19);
+      }
+    }
+    if (typeof value === 'bigint') return String(value);
+    return String(value);
+  }
+
   private _renderDataPreview(): TemplateResult {
     if (!this._testRows.length) return html``;
+    const colTypeByName = Object.fromEntries(this._testColumns.map((c) => [c.name, c.type]));
     return html`
       <details class="ds-test-details" open>
         <summary class="ds-test-summary">Data preview (${this._testRows.length} rows)</summary>
@@ -124,7 +152,10 @@ export class DatasourceEditorPanel extends LitElement {
               ${this._testRows.map(
                 (row) => html`
                   <tr>
-                    ${this._testRowFields.map((f) => html`<td>${String(row[f] ?? '')}</td>`)}
+                    ${this._testRowFields.map(
+                      (f) =>
+                        html`<td>${this._formatPreviewCell(row[f], colTypeByName[f] ?? '')}</td>`,
+                    )}
                   </tr>
                 `,
               )}

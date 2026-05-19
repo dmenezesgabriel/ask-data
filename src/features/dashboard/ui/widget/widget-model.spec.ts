@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { WidgetConfig } from '../../../../shared/types/index';
+import type { DashboardWidget as WidgetConfig } from '@/core/entities';
+
 import { buildWidgetChartConfig, getWidgetChartJsType } from './widget-model';
 
 const baseConfig: WidgetConfig = {

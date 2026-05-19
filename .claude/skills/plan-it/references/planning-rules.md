@@ -87,6 +87,8 @@ Good rule:
 - Plan phase: identify ADR needed.
 - Implementation phase: decide, validate, and complete ADR.
 
+When ADR options differ in topology, data flow, or system boundaries, a single `flowchart` or `sequenceDiagram` in the Options Considered section may clarify the comparison — see [diagram-rules.md](diagram-rules.md) for when and how.
+
 ## Planning clarification rule
 
 Before finalizing the plan, identify unresolved decisions, hidden assumptions, and missing constraints.
@@ -298,7 +300,7 @@ Bad:
 
 ## Context
 
-Provide enough context for someone to understand the task without reading previous discussion.
+Provide enough context for someone to understand the task without reading previous discussion. When ≥3 components interact or the flow cannot be expressed in ≤3 bullet points, include a Mermaid diagram after the prose — see [diagram-rules.md](diagram-rules.md) for type selection, placement, and formatting.
 
 Good:
 

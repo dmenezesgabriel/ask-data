@@ -4,11 +4,16 @@ import '../../../../components/spinner';
 import { Chart, registerables } from 'chart.js';
 import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
-import type { CellValue, Filters, ValueFormat, WidgetConfig } from '../../../../shared/types/index';
+import type { DashboardWidget as WidgetConfig } from '@/core/entities';
+
+import type { CellValue, Filters, ValueFormat } from '../../../../shared/types/index';
 import { formatValue } from '../../../../shared/utils/utils';
+import { createLogger } from '../../../../shared/observability/logger';
 import { buildWidgetChartConfig } from './widget-model';
 
 Chart.register(...registerables);
+
+const logger = createLogger('dashboard.widget');
 
 export class Widget extends LitElement {
   static override readonly properties = {
@@ -68,10 +73,10 @@ export class Widget extends LitElement {
 
   private _handleClick(_e: MouseEvent): void {
     if (!this.editMode) {
-      console.log(`[widget] click on "${this.config.title}" — view mode, ignoring selection`);
+      logger.debug('select.ignored', { widgetId: this.config.id, title: this.config.title });
       return;
     }
-    console.log(`[widget] click on "${this.config.title}" — edit mode, selecting widget`);
+    logger.debug('select', { widgetId: this.config.id, title: this.config.title });
     this.dispatchEvent(
       new CustomEvent('widget-select', {
         detail: { id: this.config.id },
@@ -90,7 +95,11 @@ export class Widget extends LitElement {
   private _onChartClick(element: { index: number }): void {
     if (!this.data?.labels) return;
     const label = this.data.labels[element.index];
-    console.log(`[widget] chart click on "${this.config.title}" — cross-filter label="${label}"`);
+    logger.debug('cross-filter.chart', {
+      widgetId: this.config.id,
+      title: this.config.title,
+      label,
+    });
     this.dispatchEvent(
       new CustomEvent('cross-filter', {
         detail: { widgetId: this.config.id, field: 'label', value: label },
@@ -103,9 +112,11 @@ export class Widget extends LitElement {
   private _onTableRowClick(e: Event, row: Record<string, CellValue>): void {
     e.stopPropagation();
     const label = String(row.label ?? row.name ?? '');
-    console.log(
-      `[widget] table row click on "${this.config.title}" — cross-filter label="${label}"`,
-    );
+    logger.debug('cross-filter.table', {
+      widgetId: this.config.id,
+      title: this.config.title,
+      label,
+    });
     this.dispatchEvent(
       new CustomEvent('cross-filter', {
         detail: { widgetId: this.config.id, field: 'label', value: label },
@@ -148,7 +159,9 @@ export class Widget extends LitElement {
     if (!this.data) {
       return html`<skeleton-loader variant="kpi"></skeleton-loader>`;
     }
-    const value = this.data.values?.[0] ?? this.data.rows?.[0]?.value ?? 'N/A';
+    const rawValue = this.data.rows?.[0]?.value;
+    const value =
+      rawValue !== undefined && rawValue !== null ? rawValue : (this.data.values?.[0] ?? 'N/A');
     const formatted = this._formatValue(value, kpi?.format);
     return html`
       <div class="widget-kpi">
@@ -226,17 +239,13 @@ export class Widget extends LitElement {
     return String(v);
   }
 
-  override firstUpdated(): void {
-    this._initChart();
-  }
-
   private _lastDataKey: string | null = null;
 
   override updated(changedProps: Map<string, unknown>): void {
     if (changedProps.has('data')) {
       const key = this.data ? `${this.data.labels.join(',')}|${this.data.values.join(',')}` : null;
       if (key !== this._lastDataKey) {
-        console.log(`[widget] data changed for "${this.config.title}" — recreating chart`);
+        logger.debug('chart.refresh', { widgetId: this.config.id, title: this.config.title });
         this._destroyChart();
         this._initChart();
         this._lastDataKey = key;
@@ -246,7 +255,7 @@ export class Widget extends LitElement {
 
   private _initChart(): void {
     if (this.config.type !== 'chart' || !this.data) return;
-    console.log(`[widget] initializing chart for "${this.config.title}"`);
+    logger.debug('chart.init', { widgetId: this.config.id, title: this.config.title });
 
     const canvas = this.querySelector('canvas') as HTMLCanvasElement | null;
     if (!canvas) return;

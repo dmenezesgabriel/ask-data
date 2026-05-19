@@ -1,11 +1,10 @@
 import type {
-  CellValue,
   Dashboard,
-  DashboardFilterConfig,
-  Filters,
-  QuestionConfig,
-  WidgetConfig,
-} from '../../../../shared/types/index';
+  DashboardWidget as WidgetConfig,
+  Question as QuestionConfig,
+} from '@/core/entities';
+
+import type { CellValue, DashboardFilterConfig, Filters } from '../../../../shared/types/index';
 
 export type WidgetDataMap = Record<
   string,
@@ -14,6 +13,20 @@ export type WidgetDataMap = Record<
 
 export function storageKeyForDashboard(slug: string): string {
   return `dashboard:${slug || 'default'}`;
+}
+
+export function getPersistedWidgetCount(slug: string): number | null {
+  try {
+    const raw = localStorage.getItem(storageKeyForDashboard(slug));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { data?: { widgets?: unknown[] }[] };
+    const sheets = parsed?.data;
+    if (!Array.isArray(sheets) || sheets.length === 0) return null;
+    const widgets = sheets[0]?.widgets;
+    return Array.isArray(widgets) ? widgets.length : null;
+  } catch {
+    return null;
+  }
 }
 
 export function applySqlFilters(

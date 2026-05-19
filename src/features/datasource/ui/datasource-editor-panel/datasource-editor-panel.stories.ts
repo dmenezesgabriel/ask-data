@@ -3,8 +3,12 @@ import './datasource-editor-panel';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 
-import type { DataSourceConfig } from '../../../../shared/types/index';
+import type { Datasource as DataSourceConfig } from '@/core/entities';
+import { setDbService } from '@/shared/services/db-service';
+
 import { createEmptyDatasourceConfig } from '../../model/datasource-config';
+
+setDbService({ query: async () => ({}), initialize: async () => {}, createViews: async () => {} });
 
 function makeConfig(overrides: Partial<DataSourceConfig> = {}): DataSourceConfig {
   return {

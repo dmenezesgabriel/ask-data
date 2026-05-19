@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { DataSourceManager } from '../../../infra/data-sources/data-source-manager';
+import type { DataSourceManager } from '@/core/application/ports';
+
 import type { AskSuccessResult, Clarification, DashboardConfig } from '../../../shared/types/index';
 import { type AskEngine, AskOrchestrator } from './ask-orchestrator';
 

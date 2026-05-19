@@ -16,6 +16,7 @@ Apply a principle only when it reduces current risk, clarifies responsibility, p
 Do not introduce abstractions, layers, adapters, factories, ports, design-system structure, or architectural patterns just because they are considered good practice.
 
 Good:
+
 - Keep a pure validation function when a full service would add no value.
 - Add a port when provider replacement or test isolation is a real concern.
 - Extract a component when multiple UI states or reuse justify it.
@@ -24,6 +25,7 @@ Good:
 - Keep direct simple code when there is no volatility, duplication, or boundary risk.
 
 Bad:
+
 - Add an interface for every class.
 - Add a repository around simple existing queries without a boundary need.
 - Add strategy pattern for one hardcoded behavior.
@@ -38,6 +40,7 @@ Use SOLID, design patterns, Ports and Adapters, Clean Architecture, Component-Dr
 Do not introduce a new architecture style just because this skill mentions it.
 
 Good:
+
 - Follow the existing feature-folder convention for frontend code.
 - Use the existing service and repository boundary for backend code.
 - Add a port for email delivery because the task touches a volatile provider.
@@ -45,6 +48,7 @@ Good:
 - Follow the project’s existing accessibility helpers and form patterns.
 
 Bad:
+
 - Restructure the whole app into Clean Architecture.
 - Add Atomic Design directories to a project with a clear feature-based UI structure.
 - Add interfaces for every class.
@@ -56,6 +60,7 @@ Bad:
 Apply SOLID as design pressure, not ceremony.
 
 Good:
+
 - Keep validation rules in a validator or domain service, not scattered across UI and API.
 - Keep project invitation policy separate from email delivery.
 - Depend on a notification interface instead of a provider SDK.
@@ -63,6 +68,7 @@ Good:
 - Keep a component focused on rendering and interaction instead of owning unrelated business rules.
 
 Bad:
+
 - Add interfaces for every class.
 - Create factories before there are variants.
 - Mix permission rules, persistence, and HTTP formatting in one controller.
@@ -74,6 +80,7 @@ Bad:
 Use Ports and Adapters when external systems or volatile infrastructure are involved.
 
 Good:
+
 - Domain service depends on `NotificationPort`.
 - Email provider SDK lives in `SendGridNotificationAdapter`.
 - Tests use an in-memory notification adapter.
@@ -81,6 +88,7 @@ Good:
 - Analytics provider calls live behind an analytics adapter.
 
 Bad:
+
 - Domain logic imports the email provider SDK.
 - UI component writes directly to the database.
 - Tests require real external email delivery.
@@ -93,6 +101,7 @@ Bad:
 Keep dependency direction pointing inward.
 
 Good:
+
 - UI calls application use cases.
 - API handlers translate HTTP input into application commands.
 - Application services coordinate domain rules and ports.
@@ -100,6 +109,7 @@ Good:
 - Domain logic has no framework, database, UI, or provider dependency.
 
 Bad:
+
 - Domain imports React, Vue, Angular, Express, Fastify, Django, Rails, Prisma, or provider SDKs.
 - Repository decides business permissions.
 - API handler contains core domain rules.
@@ -114,12 +124,14 @@ Use CDD for frontend implementation when the task changes UI behavior.
 Build components in isolation first when practical, then compose them into screens.
 
 Good:
+
 - Define `ProjectForm` states: empty, invalid, submitting, success, server error, and permission denied.
 - Verify component behavior with fixtures before wiring the real API.
 - Compose field, form, panel, and page only after each state is clear.
 - Keep component API small: inputs, outputs, events, accessible names, and labels.
 
 Bad:
+
 - Build the whole page before designing component states.
 - Mix fetching, permission rules, formatting, validation, and rendering in one component.
 - Add E2E tests for every component state.
@@ -132,6 +144,7 @@ Use native controls before custom controls.
 Use ARIA only when native semantics are not enough.
 
 Good:
+
 - Use `<button>` for actions.
 - Use `<a href="...">` for navigation.
 - Use `<label>` for form controls.
@@ -143,6 +156,7 @@ Good:
 - Use live regions only for dynamic messages that need announcement.
 
 Bad:
+
 - Use `<div onClick>` as a button.
 - Use `<span>` as a link.
 - Use placeholders as the only label.
@@ -156,6 +170,7 @@ Bad:
 Interactive UI must work with keyboard and predictable focus.
 
 Good:
+
 - Tab order follows the visual and logical flow.
 - Focus remains visible.
 - Dialogs move focus inside when opened and restore focus when closed.
@@ -164,6 +179,7 @@ Good:
 - Disabled controls expose clear state and do not trap focus.
 
 Bad:
+
 - A mouse-only menu.
 - A modal that leaves focus behind the overlay.
 - A custom dropdown without keyboard support.
@@ -175,6 +191,7 @@ Bad:
 Forms must be understandable and recoverable.
 
 Good:
+
 - Every input has an accessible name.
 - Required fields are communicated consistently.
 - Errors appear next to the related field.
@@ -183,6 +200,7 @@ Good:
 - Submission state prevents duplicates without trapping the user.
 
 Bad:
+
 - Error summary with no field-level errors.
 - Field-level errors not connected to inputs.
 - Validation only through color.
@@ -195,6 +213,7 @@ Use Atomic Design as a vocabulary for UI composition when it helps.
 Do not force it onto projects that already use another coherent structure.
 
 Good:
+
 - Atom: button, input, label, icon, helper text.
 - Molecule: validated field, search box, project status chip.
 - Organism: project form, invitation panel, project list.
@@ -202,12 +221,14 @@ Good:
 - Page: dashboard with data, permissions, routing, and user flows.
 
 Good:
+
 - Reuse a validated field molecule across create and edit forms.
 - Keep project list organism independent from route details.
 - Keep page-level data loading out of simple atoms.
 - Name components by domain meaning when domain meaning is clearer than Atomic Design labels.
 
 Bad:
+
 - Create atom/molecule/organism folders for a tiny one-off UI.
 - Split every label and wrapper into separate files.
 - Put business rules in atoms.
@@ -218,6 +239,7 @@ Bad:
 Keep frontend concerns separated by responsibility.
 
 Good:
+
 - Presentational components render state and emit events.
 - Container or page components coordinate data loading and routing when that is the project convention.
 - Shared validators are reused by UI and API when the project supports shared code.
@@ -225,6 +247,7 @@ Good:
 - Client-side permission checks improve UX but backend remains authoritative.
 
 Bad:
+
 - UI is the only place enforcing authorization.
 - One page component owns API calls, permissions, validation, formatting, state machine, and rendering.
 - Validation messages differ between frontend and backend without reason.
@@ -235,6 +258,7 @@ Bad:
 Keep backend concerns separated by responsibility.
 
 Good:
+
 - API handler parses request and formats response.
 - Application service coordinates use case behavior.
 - Domain model or policy enforces business rules.
@@ -242,6 +266,7 @@ Good:
 - Provider adapter handles external communication.
 
 Bad:
+
 - Controller sends email, validates fields, checks permissions, writes database rows, and formats responses.
 - Repository decides whether a user can perform a domain action.
 - External provider errors are returned directly to clients.
@@ -252,6 +277,7 @@ Bad:
 Each module should have one clear reason to change.
 
 Good:
+
 - `ProjectNameValidator` changes when name rules change.
 - `CreateProjectService` changes when project creation behavior changes.
 - `ProjectRepository` changes when persistence changes.
@@ -259,6 +285,7 @@ Good:
 - `InvitationPanel` changes when invitation UI states change.
 
 Bad:
+
 - `projectUtils` contains validation, API calls, formatting, rendering, and permissions.
 - `ProjectController` sends email, validates fields, writes database rows, and formats UI messages.
 - One component handles routing, fetching, validation, authorization, analytics, and rendering.
@@ -269,6 +296,7 @@ Bad:
 Prefer stable contracts over volatile details.
 
 Good:
+
 - Use application-level commands like `CreateProjectCommand`.
 - Keep API response shape stable with `{ code, message, field }`.
 - Hide provider-specific errors behind application errors.
@@ -276,6 +304,7 @@ Good:
 - Pass component data through explicit props or inputs instead of hidden globals.
 
 Bad:
+
 - Pass raw HTTP request objects through domain logic.
 - Leak database row shape into UI components.
 - Expose provider-specific error names to users.
@@ -287,6 +316,7 @@ Bad:
 Use design patterns only when they reduce current complexity.
 
 Good:
+
 - Use Strategy when multiple invitation expiration policies are real.
 - Use Adapter for email, payment, storage, analytics, or external APIs.
 - Use Repository when persistence details should not leak into application logic.
@@ -294,6 +324,7 @@ Good:
 - Use Presenter/ViewModel when UI formatting is complex and shared.
 
 Bad:
+
 - Add Strategy for one hardcoded behavior.
 - Add Repository when the project already uses direct simple queries consistently.
 - Add Factory for a single constructor call.
@@ -305,6 +336,7 @@ Bad:
 Use names that reveal intent and domain meaning.
 
 Good:
+
 - `CreateProjectService`
 - `ProjectInvitation`
 - `ownerId`
@@ -314,6 +346,7 @@ Good:
 - `InvitationStatusBadge`
 
 Bad:
+
 - `Manager`
 - `Handler2`
 - `processData`
@@ -327,6 +360,7 @@ Bad:
 Refactor only when it supports the task or removes local friction.
 
 Good:
+
 - Extract duplicate validation after adding the second real use.
 - Rename a misleading method before adding behavior to it.
 - Split a large function when the new branch would make it harder to test.
@@ -334,6 +368,7 @@ Good:
 - Extract a component when the screen has multiple states or reuse emerges.
 
 Bad:
+
 - Refactor the whole module before fixing a small bug.
 - Split code into many files because small files look cleaner.
 - Change architecture style mid-task without an ADR.
@@ -345,6 +380,7 @@ Bad:
 Do the simplest thing that satisfies current requirements and preserves likely change points.
 
 Good:
+
 - Add a small port for email delivery because the provider is volatile.
 - Keep project creation synchronous until a real async requirement exists.
 - Add one validation function instead of a validation framework.
@@ -352,6 +388,7 @@ Good:
 - Keep code inline when extraction would reduce readability.
 
 Bad:
+
 - Build a workflow engine for one form.
 - Add plugin architecture for one integration.
 - Introduce event sourcing for simple CRUD without an ADR.
@@ -364,6 +401,7 @@ Bad:
 Fix the root cause when practical.
 
 Good:
+
 - Fix the permission check in the service.
 - Normalize API validation errors at the boundary.
 - Escape project names at render time.
@@ -371,6 +409,7 @@ Good:
 - Fix focus management instead of hiding the failing interaction.
 
 Bad:
+
 - Hide the settings button but leave the API unprotected.
 - Retry forever instead of handling the failure.
 - Ignore type errors with unsafe casts or dynamic escape hatches.

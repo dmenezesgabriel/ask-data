@@ -1,9 +1,15 @@
 import './datasource-editor-panel';
 
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
-import type { DataSourceConfig } from '../../../../shared/types/index';
+import type { Datasource as DataSourceConfig } from '@/core/entities';
+import { setDbService } from '@/shared/services/db-service';
+
 import { createEmptyDatasourceConfig } from '../../model/datasource-config';
+
+beforeAll(() => {
+  setDbService({ query: async () => {}, initialize: async () => {}, createViews: async () => {} });
+});
 
 function makeConfig(overrides: Partial<DataSourceConfig> = {}): DataSourceConfig {
   return {

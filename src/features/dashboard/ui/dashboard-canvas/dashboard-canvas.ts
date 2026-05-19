@@ -2,7 +2,10 @@ import '../widget';
 
 import { html, LitElement, nothing as renderNothing, type TemplateResult } from 'lit';
 
-import type { CellValue, Dashboard, Filters } from '../../../../shared/types/index';
+import type { Dashboard } from '@/core/entities';
+
+import type { CellValue, Filters } from '../../../../shared/types/index';
+import { createLogger } from '../../../../shared/observability/logger';
 import {
   COMPONENT_RULES,
   GAP_PX,
@@ -14,6 +17,8 @@ import {
   resolveCollisions,
   ROW_PX,
 } from '../../model/grid-layout-engine';
+
+const logger = createLogger('dashboard.canvas');
 
 export class DashboardCanvas extends LitElement {
   static override readonly properties = {
@@ -165,7 +170,7 @@ export class DashboardCanvas extends LitElement {
 
   private _onWidgetSelect(e: Event): void {
     if (!this.editMode) {
-      console.log('[canvas] widget-select ignored — not in edit mode');
+      logger.debug('widget-select.ignored');
       return;
     }
     const widget = (e.target as HTMLElement).closest('app-widget');
@@ -175,7 +180,7 @@ export class DashboardCanvas extends LitElement {
       shadowRoot?.querySelector('.widget')?.getAttribute('data-widget-id') ??
       (widget as unknown as { config?: { id?: string } }).config?.id ??
       null;
-    console.log(`[canvas] widget selected: ${id}`);
+    logger.debug('widget-select', { widgetId: id });
     this.selectedWidgetId = id;
     this.dispatchEvent(
       new CustomEvent('widget-select', { detail: { id }, bubbles: true, composed: true }),
@@ -529,7 +534,7 @@ export class DashboardCanvas extends LitElement {
       this._resizeObserver?.disconnect();
       this._resizeObserver?.observe(canvasEl);
       this._observedCanvas = canvasEl;
-      this._updateContainerWidth();
+      Promise.resolve().then(() => this._updateContainerWidth());
     }
   }
 

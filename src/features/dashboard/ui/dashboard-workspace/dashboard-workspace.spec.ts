@@ -1,8 +1,14 @@
 import './index';
 
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+
+import { setDbService } from '@/shared/services/db-service';
 
 import { DashboardWorkspace } from './dashboard-workspace';
+
+beforeAll(() => {
+  setDbService({ query: async () => {}, initialize: async () => {}, createViews: async () => {} });
+});
 
 function mount(): DashboardWorkspace {
   const el = document.createElement('dashboard-workspace') as DashboardWorkspace;

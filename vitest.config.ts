@@ -75,7 +75,6 @@ export default defineConfig({
                   '--no-sandbox',
                   '--disable-gpu',
                   '--disable-extensions',
-                  '--disable-background-networking',
                 ],
               },
             }),
@@ -87,11 +86,46 @@ export default defineConfig({
         extends: true,
         plugins: [
           // The plugin will run tests for the stories defined in your Storybook config
-          // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
+          // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
           storybookTest({
             configDir: path.join(dirname, '.storybook'),
           }),
         ],
+        resolve: {
+          alias: {
+            '@': path.resolve(dirname, './src'),
+            'chrono-node/en': path.resolve(
+              dirname,
+              './node_modules/chrono-node/dist/esm/locales/en/index.js',
+            ),
+            'chrono-node/pt': path.resolve(
+              dirname,
+              './node_modules/chrono-node/dist/esm/locales/pt/index.js',
+            ),
+          },
+        },
+        optimizeDeps: {
+          include: [
+            'lit',
+            'lit/directives/if-defined.js',
+            'lit/directives/style-map.js',
+            'lit/async-directive.js',
+            'lit/decorators.js',
+            '@storybook/addon-a11y',
+            '@storybook/addon-docs',
+            '@storybook/web-components-vite',
+            'dayjs',
+            'dayjs/plugin/quarterOfYear.js',
+          ],
+          exclude: ['chrono-node', 'apache-arrow'],
+        },
+        server: {
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': '*',
+          },
+        },
         test: {
           name: 'storybook',
           testTimeout: 30_000,
@@ -105,7 +139,6 @@ export default defineConfig({
                   '--no-sandbox',
                   '--disable-gpu',
                   '--disable-extensions',
-                  '--disable-background-networking',
                 ],
               },
             }),

@@ -2,28 +2,8 @@ import type Fuse from 'fuse.js';
 import type MiniSearch from 'minisearch';
 
 // ---------------------------------------------------------------------------
-// Primitive cell and row types (used across dashboard, ask, and utils)
+// Shared primitive types needed by AskDataConfig and AskDataResponse
 // ---------------------------------------------------------------------------
-export type PrimitiveCell = string | number | bigint | boolean | Date | null | undefined;
-export type CellValue = PrimitiveCell | Record<string, unknown> | unknown[];
-export type DataRow = Record<string, CellValue>;
-export type Filters = Record<string, string>;
-export type ValueFormat = 'currency' | 'percent' | string | undefined;
-export type SortDirection = 'ASC' | 'DESC';
-
-// ---------------------------------------------------------------------------
-// Ask domain types
-// ---------------------------------------------------------------------------
-export type FieldRole = 'measure' | 'time' | 'dimension' | 'key';
-export type AnalysisType =
-  | 'list_values'
-  | 'yoy'
-  | 'change'
-  | 'share'
-  | 'comparison'
-  | 'trend'
-  | 'ranking'
-  | 'kpi';
 export type AskChartType =
   | 'kpi'
   | 'table'
@@ -36,14 +16,34 @@ export type AskChartType =
   | 'bubble'
   | 'histogram';
 
-export interface DateProfile {
-  minDate: string;
-  maxDate: string;
-  latestMonthStart: string;
-  latestMonthEnd: string;
-  latestYearStart: string;
-  latestYearEnd: string;
+export type AnalysisType =
+  | 'list_values'
+  | 'yoy'
+  | 'change'
+  | 'share'
+  | 'comparison'
+  | 'trend'
+  | 'ranking'
+  | 'kpi';
+
+export type ValueFormat = 'currency' | 'percent' | string | undefined;
+export type FieldRole = 'measure' | 'time' | 'dimension' | 'key';
+
+export interface SourceColumnRef {
+  table: string;
+  column: string;
 }
+
+export interface SemanticMatchingConfig {
+  enabled?: boolean;
+  model?: string;
+  dtype?: string;
+  minScore?: number;
+  minMargin?: number;
+  batchSize?: number;
+}
+
+export type Vocabulary = Record<string, Record<string, string[]>>;
 
 export interface FieldConfig {
   table: string;
@@ -61,24 +61,6 @@ export interface FieldConfig {
   parseFormat?: string | null;
 }
 
-export interface CatalogField extends Required<
-  Omit<FieldConfig, 'role' | 'aggregation' | 'format' | 'default' | 'parseFormat'>
-> {
-  id: string;
-  type: string;
-  role: FieldRole;
-  aggregation?: string;
-  format?: ValueFormat;
-  default: boolean;
-  priority: number;
-  parseFormat?: string | null;
-  sampleValues: string[];
-  samples: CellValue[];
-  dateProfile: DateProfile | null;
-  cardinality: number;
-  rowCount: number;
-}
-
 export interface EntityConfig {
   label: string;
   labels?: Record<string, string>;
@@ -88,12 +70,6 @@ export interface EntityConfig {
   synonyms?: string[];
   localizedTerms?: Record<string, string[]>;
   preferredDimensions?: string[];
-}
-
-export interface Entity extends EntityConfig {
-  field: CatalogField;
-  terms: string[];
-  preferredDimensionFields?: CatalogField[];
 }
 
 export interface RelationshipSide {
@@ -109,22 +85,9 @@ export interface Relationship {
   overlap?: number;
 }
 
-export interface SemanticMatchingConfig {
-  enabled?: boolean;
-  model?: string;
-  dtype?: string;
-  minScore?: number;
-  minMargin?: number;
-  batchSize?: number;
-}
-
-export type Vocabulary = Record<string, Record<string, string[]>>;
-
-export interface SourceColumnRef {
-  table: string;
-  column: string;
-}
-
+// ---------------------------------------------------------------------------
+// AskDataConfig — configuration object used to initialize the ask use case
+// ---------------------------------------------------------------------------
 export interface AskDataConfig {
   enabled?: boolean;
   locale?: string;
@@ -157,6 +120,42 @@ export interface AskDataConfig {
   relationships?: Relationship[];
 }
 
+// ---------------------------------------------------------------------------
+// AskDataResponse — what the ask use case returns to the UI
+// ---------------------------------------------------------------------------
+export type Filters = Record<string, string>;
+export type PrimitiveCell = string | number | bigint | boolean | Date | null | undefined;
+export type CellValue = PrimitiveCell | Record<string, unknown> | unknown[];
+export type DataRow = Record<string, CellValue>;
+export type SortDirection = 'ASC' | 'DESC';
+
+export interface DateProfile {
+  minDate: string;
+  maxDate: string;
+  latestMonthStart: string;
+  latestMonthEnd: string;
+  latestYearStart: string;
+  latestYearEnd: string;
+}
+
+export interface CatalogField extends Required<
+  Omit<FieldConfig, 'role' | 'aggregation' | 'format' | 'default' | 'parseFormat'>
+> {
+  id: string;
+  type: string;
+  role: FieldRole;
+  aggregation?: string;
+  format?: ValueFormat;
+  default: boolean;
+  priority: number;
+  parseFormat?: string | null;
+  sampleValues: string[];
+  samples: CellValue[];
+  dateProfile: DateProfile | null;
+  cardinality: number;
+  rowCount: number;
+}
+
 export interface CountStarMetric {
   kind: 'count_star';
   label: string;
@@ -167,6 +166,12 @@ export interface CountDistinctMetric {
   entity: Entity;
   field: CatalogField;
   label: string;
+}
+
+export interface Entity extends EntityConfig {
+  field: CatalogField;
+  terms: string[];
+  preferredDimensionFields?: CatalogField[];
 }
 
 export type IntentMetric = CatalogField | CountStarMetric | CountDistinctMetric | null;
@@ -311,10 +316,6 @@ export interface ClarificationPending {
   candidates?: ClarificationChoice[];
 }
 
-export interface ParseOptions {
-  clarification?: ClarificationPending;
-}
-
 export interface Clarification {
   message: string;
   pending: ClarificationPending;
@@ -365,7 +366,18 @@ export interface AskClarificationResult {
   metrics?: AskMetrics;
 }
 
-export type AskResult = AskSuccessResult | AskErrorResult | AskClarificationResult;
+/**
+ * AskDataResponse — the result returned by the AskData use case to the UI.
+ * Previously named AskResult in shared/types/ask.ts.
+ */
+export type AskDataResponse = AskSuccessResult | AskErrorResult | AskClarificationResult;
+
+// ---------------------------------------------------------------------------
+// Internal engine types — these stay in shared/types, NOT in core/entities
+// ---------------------------------------------------------------------------
+export interface ParseOptions {
+  clarification?: ClarificationPending;
+}
 
 export interface PlannedSql {
   sql?: string;

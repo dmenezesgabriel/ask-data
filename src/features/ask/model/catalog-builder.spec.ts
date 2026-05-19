@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { QueryPort } from '../../../infra/query/query-port';
+import type { QueryPort } from '@/core/application/ports';
+
 import { CatalogBuilder } from './catalog-builder';
 
 function makeQueryPort(handler: (sql: string) => unknown[]): QueryPort {

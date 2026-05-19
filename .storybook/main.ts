@@ -21,8 +21,14 @@ const config: StorybookConfig = {
         );
     config.resolve.alias = [
       ...existingAliases,
-      { find: 'chrono-node/en', replacement: root('../node_modules/chrono-node/dist/esm/locales/en/index.js') },
-      { find: 'chrono-node/pt', replacement: root('../node_modules/chrono-node/dist/esm/locales/pt/index.js') },
+      {
+        find: 'chrono-node/en',
+        replacement: root('../node_modules/chrono-node/dist/esm/locales/en/index.js'),
+      },
+      {
+        find: 'chrono-node/pt',
+        replacement: root('../node_modules/chrono-node/dist/esm/locales/pt/index.js'),
+      },
     ];
     // Suppress "unable to find package.json" warnings for packages that ship
     // non-standard layouts or are only used in tests/server code.

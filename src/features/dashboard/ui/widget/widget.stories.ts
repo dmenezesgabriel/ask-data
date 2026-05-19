@@ -4,7 +4,9 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { expect, fn, userEvent } from 'storybook/test';
 
-import type { Filters, WidgetConfig } from '../../../../shared/types/index';
+import type { DashboardWidget as WidgetConfig } from '@/core/entities';
+
+import type { Filters } from '../../../../shared/types/index';
 
 type WidgetArgs = {
   config: WidgetConfig;

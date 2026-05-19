@@ -3,14 +3,15 @@ import '../question-editor-panel';
 
 import { html, LitElement, type TemplateResult } from 'lit';
 
-import type { QuestionConfig } from '../../../../shared/types/index';
+import type { Question as QuestionConfig } from '@/core/entities';
+
+import { createEmptyQuestionConfig } from '../../model/question-config';
 import {
   addQuestion,
   deleteQuestion,
   getQuestionBySlug,
   updateQuestion,
-} from '../../data/question-registry';
-import { createEmptyQuestionConfig } from '../../model/question-config';
+} from '../../question-service';
 
 export class QuestionEditor extends LitElement {
   static override readonly properties = {
@@ -42,14 +43,15 @@ export class QuestionEditor extends LitElement {
   }
 
   private _loadConfig(): void {
-    if (this.isNew) {
+    if (this.isNew && this.slug && this.slug !== 'new') {
+      // Shell pre-created the entry; load it so the title appears pre-filled.
+      this._config = getQuestionBySlug(this.slug) ?? createEmptyQuestionConfig();
+    } else if (this.isNew) {
       this._config = createEmptyQuestionConfig();
-      this._isDirty = false;
     } else {
-      const q = getQuestionBySlug(this.slug);
-      this._config = q ?? null;
-      this._isDirty = false;
+      this._config = getQuestionBySlug(this.slug) ?? null;
     }
+    this._isDirty = false;
   }
 
   private _onPanelChange(e: CustomEvent<QuestionConfig>): void {
@@ -60,8 +62,13 @@ export class QuestionEditor extends LitElement {
   private _onSave(): void {
     if (!this._config) return;
     if (this.isNew) {
-      const saved = addQuestion(this._config);
-      window.location.hash = `#/question/${saved.slug}`;
+      if (this.slug && this.slug !== 'new' && getQuestionBySlug(this.slug)) {
+        updateQuestion(this.slug, this._config);
+        window.location.hash = `#/question/${this.slug}`;
+      } else {
+        const saved = addQuestion(this._config);
+        window.location.hash = `#/question/${saved.slug}`;
+      }
     } else {
       updateQuestion(this.slug, this._config);
     }
@@ -94,6 +101,7 @@ export class QuestionEditor extends LitElement {
       <main class="qe-main">
         <question-editor-panel
           .config=${this._config}
+          .readonly=${this._config.source === 'yaml'}
           @panel-change=${(e: CustomEvent<QuestionConfig>) => this._onPanelChange(e)}
         ></question-editor-panel>
       </main>

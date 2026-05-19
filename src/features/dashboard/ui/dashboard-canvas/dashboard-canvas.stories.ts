@@ -4,7 +4,9 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { fn } from 'storybook/test';
 
-import type { Dashboard, Filters } from '../../../../shared/types/index';
+import type { Dashboard } from '@/core/entities';
+
+import type { Filters } from '../../../../shared/types/index';
 
 type DashboardCanvasArgs = {
   sheet: Dashboard;

@@ -1,6 +1,6 @@
 import type { ChartConfiguration } from 'chart.js';
 
-import type { WidgetConfig } from '../../../../shared/types/index';
+import type { DashboardWidget as WidgetConfig } from '@/core/entities';
 
 type WidgetChartJsType = 'bar' | 'line' | 'pie' | 'doughnut' | 'scatter' | 'bubble';
 

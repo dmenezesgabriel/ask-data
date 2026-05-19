@@ -1,10 +1,11 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { BarChart2, FileText, HelpCircle, MessageSquare, Table2, TrendingUp } from 'lucide';
 
-import type { QuestionConfig } from '../../../../shared/types/index';
+import type { Question as QuestionConfig } from '@/core/entities';
+
 import { CollectionList } from '../../../../shared/ui/collection-list/collection-list';
 import { icon } from '../../../../shared/utils/icons';
-import { deleteQuestion, questionList } from '../../data/question-registry';
+import { deleteQuestion, questionList } from '../../question-service';
 
 export class QuestionList extends CollectionList {
   public override get title(): string {

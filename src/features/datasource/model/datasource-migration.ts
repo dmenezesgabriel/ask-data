@@ -1,4 +1,5 @@
-import type { DataSourceType } from '../../../shared/types/index';
+import type { DataSourceType } from '@/core/entities';
+
 import { addDatasource, datasourceList, getDatasourceByUrl } from '../data/datasource-registry';
 
 interface LegacyDataSourceEntry {

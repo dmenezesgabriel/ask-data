@@ -3,13 +3,14 @@ import '../datasource-editor-panel/datasource-editor-panel';
 
 import { html, LitElement, type TemplateResult } from 'lit';
 
-import type { DataSourceConfig } from '../../../../shared/types/index';
+import type { Datasource as DataSourceConfig } from '@/core/entities';
+
 import {
   addDatasource,
   deleteDatasource,
   getDatasourceBySlug,
   updateDatasource,
-} from '../../data/datasource-registry';
+} from '../../datasource-service';
 import { createEmptyDatasourceConfig } from '../../model/datasource-config';
 import { serializeDatasourceYaml } from '../../model/datasource-yaml';
 

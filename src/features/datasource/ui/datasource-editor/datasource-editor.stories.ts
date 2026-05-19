@@ -3,6 +3,10 @@ import './datasource-editor';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 
+import { setDbService } from '@/shared/services/db-service';
+
+setDbService({ query: async () => ({}), initialize: async () => {}, createViews: async () => {} });
+
 const meta = {
   title: 'Features/DatasourceEditor',
   component: 'datasource-editor',

@@ -1,10 +1,11 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { Database } from 'lucide';
 
-import type { DataSourceConfig } from '../../../../shared/types/index';
+import type { Datasource as DataSourceConfig } from '@/core/entities';
+
 import { CollectionList } from '../../../../shared/ui/collection-list/collection-list';
 import { icon } from '../../../../shared/utils/icons';
-import { datasourceList, deleteDatasource } from '../../data/datasource-registry';
+import { datasourceList, deleteDatasource } from '../../datasource-service';
 
 export class DatasourceList extends CollectionList {
   public override get title(): string {

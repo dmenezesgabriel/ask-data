@@ -144,6 +144,16 @@ describe('SqlPlanner', () => {
       expect(result.metricFormat).toBeUndefined();
     });
 
+    // UT-004: SqlPlanner produces valid SQL for a KPI intent with a single measure
+    it('UT-004: plan() produces valid SQL for a KPI intent with a single measure', () => {
+      const planner = makePlanner();
+      const result = planner.plan(makeIntent({ analysisType: 'kpi', dimensions: [] }));
+      expect(result.error).toBeUndefined();
+      expect(result.sql).toBeTruthy();
+      // Single-measure KPI must produce an aggregate expression
+      expect(result.sql).toMatch(/SUM|COUNT|AVG|MIN|MAX/i);
+    });
+
     it('uses the configured maxRows as default limit for grouped kpi', () => {
       const planner = makePlanner({
         askConfig: { maxRows: 50 },

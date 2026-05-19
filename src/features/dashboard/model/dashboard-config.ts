@@ -1,14 +1,12 @@
-import { createDefaultDashboardSeed } from '../../../app/app-config';
 import type { DashboardConfig } from '../../../shared/types/index';
 
 export function createEmptyDashboardConfig(title = 'New Dashboard'): DashboardConfig {
-  const seed = createDefaultDashboardSeed();
   return {
     title,
-    subtitle: seed.subtitle,
-    dataSourceSlugs: seed.dataSourceSlugs,
-    askData: seed.askData,
-    filters: seed.filters,
+    subtitle: '',
+    dataSourceSlugs: [],
+    askData: { defaultQuestion: '' },
+    filters: [],
     kpis: [],
     charts: [],
     tables: [],

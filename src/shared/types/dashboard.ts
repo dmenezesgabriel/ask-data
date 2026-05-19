@@ -1,6 +1,6 @@
 import type { ChartConfiguration, ChartType } from 'chart.js';
 
-import type { AskDataConfig, Relationship, SourceColumnRef } from './ask';
+import type { AskDataConfig, Relationship, SourceColumnRef } from '@/shared/types/ask';
 
 export interface DashboardFilterConfig {
   field: string;
@@ -14,6 +14,13 @@ export interface KpiConfig {
   title: string;
   query: string;
   format?: 'currency';
+}
+
+export interface Position {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
 export interface ChartConfig {
@@ -31,54 +38,6 @@ export interface TableConfig {
   query: string;
   columns: string[];
   columnFormats?: Record<string, 'currency'>;
-}
-
-export interface Position {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-export type WidgetType = 'chart' | 'table' | 'kpi' | 'text' | 'image' | 'filter';
-export type ChartType2 =
-  | 'bar'
-  | 'line'
-  | 'area'
-  | 'pie'
-  | 'donut'
-  | 'scatter'
-  | 'bubble'
-  | 'histogram'
-  | 'gauge'
-  | 'funnel';
-
-export interface WidgetConfig {
-  id: string;
-  type: WidgetType;
-  title: string;
-  query?: string;
-  queryType?: 'nl' | 'sql';
-  chartType?: ChartType2;
-  columns?: string[];
-  columnFormats?: Record<string, 'currency'>;
-  kpiConfig?: KpiConfig;
-  textContent?: string;
-  filters?: DashboardFilterConfig[];
-  crossFilterFields?: string[];
-  options?: Record<string, unknown>;
-  backgroundColor?: string;
-}
-
-export interface Dashboard {
-  id: string;
-  name: string;
-  type: 'layout' | 'dashboard';
-  widgets: WidgetConfig[];
-  layout: Position[];
-  filters?: DashboardFilterConfig[];
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface DashboardConfig {

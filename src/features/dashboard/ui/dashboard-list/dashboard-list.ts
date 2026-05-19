@@ -3,7 +3,8 @@ import { LayoutGrid } from 'lucide';
 
 import { CollectionList } from '../../../../shared/ui/collection-list/collection-list';
 import { icon } from '../../../../shared/utils/icons';
-import { type DashboardEntry, dashboardList, deleteDashboard } from '../../data/dashboard-registry';
+import { type DashboardEntry, dashboardList, deleteDashboard } from '../../dashboard-service';
+import { getPersistedWidgetCount } from '../dashboard-workspace/dashboard-workspace-model';
 
 export class DashboardList extends CollectionList {
   public override get title(): string {
@@ -71,6 +72,16 @@ export class DashboardList extends CollectionList {
     );
   }
 
+  private _renderWidgetCount(entry: DashboardEntry): TemplateResult {
+    const persisted = getPersistedWidgetCount(entry.slug);
+    if (persisted !== null) {
+      return html`<span>${persisted}</span> widgets`;
+    }
+    const total =
+      entry.config.kpis.length + entry.config.charts.length + entry.config.tables.length;
+    return html`<span>${total}</span> widgets`;
+  }
+
   protected override _renderListItems(): TemplateResult {
     if (dashboardList.length === 0) {
       return html`
@@ -106,11 +117,7 @@ export class DashboardList extends CollectionList {
                 >${entry.config.subtitle}</span
               >
               <span class="collection-list-col collection-list-col-meta">
-                <span>${entry.config.kpis.length}</span> KPIs
-                <span class="collection-list-sep">·</span>
-                <span>${entry.config.charts.length}</span> charts
-                <span class="collection-list-sep">·</span>
-                <span>${entry.config.tables.length}</span> tables
+                ${this._renderWidgetCount(entry)}
               </span>
               <span
                 class="collection-list-col collection-list-col-actions"

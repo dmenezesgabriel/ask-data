@@ -1,4 +1,5 @@
-import type { DataSourceConfig } from '../../../shared/types/index';
+import type { Datasource as DataSourceConfig } from '@/core/entities';
+
 import { createEmptyDatasourceConfig } from '../model/datasource-config';
 import { parseDatasourceYaml } from '../model/datasource-yaml';
 import sampleCustomersYaml from './datasources/sample-customers.yaml?raw';

@@ -1,6 +1,6 @@
 import { parse, stringify } from 'yaml';
 
-import type { QuestionConfig } from '../../../shared/types/index';
+import type { Question as QuestionConfig } from '@/core/entities';
 
 type RawQuestionYaml = Record<string, unknown>;
 

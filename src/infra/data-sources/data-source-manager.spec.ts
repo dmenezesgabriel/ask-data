@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { DataSourceEntry } from './data-source-manager';
+import type { DataSourceEntry } from '@/core/application/ports';
+
 import { DuckDBDataSourceManager } from './data-source-manager';
 
 describe('DataSourceManager port', () => {

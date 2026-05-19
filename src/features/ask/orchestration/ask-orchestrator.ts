@@ -1,9 +1,7 @@
+import type { DataSourceEntry, DataSourceManager } from '@/core/application/ports';
+
 import type {
-  DataSourceEntry,
-  DataSourceManager,
-} from '../../../infra/data-sources/data-source-manager';
-import type {
-  AskResult,
+  AskDataResponse,
   Clarification,
   DashboardConfig,
   ParseOptions,
@@ -11,7 +9,7 @@ import type {
 
 export interface AskEngine {
   initialize(): Promise<void>;
-  ask(question: string, options?: ParseOptions): Promise<AskResult>;
+  ask(question: string, options?: ParseOptions): Promise<AskDataResponse>;
 }
 
 export interface AskOrchestratorConfig {
@@ -50,7 +48,7 @@ export class AskOrchestrator {
   async ask(
     question: string,
     options?: { clarification?: Clarification['pending'] },
-  ): Promise<AskResult> {
+  ): Promise<AskDataResponse> {
     await this.initialize();
     if (!this.engine) throw new Error('Engine not initialized');
     return this.engine.ask(question, options ?? {});

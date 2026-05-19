@@ -1,20 +1,21 @@
 import '../../../dashboard/ui/widget';
 import '../../../../shared/ui/code-editor';
-import '../../../../shared/ui/datasource-picker/datasource-picker';
+import '../../../datasource/ui/datasource-picker/datasource-picker';
 import '../../../../shared/ui/ui-button';
 
 import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
-import { DuckDBDataSourceManager } from '../../../../infra/data-sources/data-source-manager';
-import { duckDBManager } from '../../../../infra/db/db';
 import type {
-  DataSourceConfig,
-  QuestionConfig,
-  WidgetConfig,
-} from '../../../../shared/types/index';
+  DashboardWidget as WidgetConfig,
+  Datasource as DataSourceConfig,
+  Question as QuestionConfig,
+} from '@/core/entities';
+import { getDbService } from '@/shared/services/db-service';
+
 import { SQL } from '../../../../shared/ui/code-editor';
+import { toRows } from '../../../../shared/utils/utils';
 import { AskDataEngine } from '../../../ask/model/ask-data';
-import { getDatasourceBySlug } from '../../../datasource/data/datasource-registry';
+import { getDatasourceBySlug } from '../../../datasource/datasource-service';
 
 const WIDGET_TYPES = ['chart', 'table', 'kpi', 'text'] as const;
 const CHART_TYPES = [
@@ -31,6 +32,7 @@ const CHART_TYPES = [
 export class QuestionEditorPanel extends LitElement {
   static override readonly properties = {
     config: { type: Object },
+    readonly: { type: Boolean },
     titleError: { type: String },
     _previewData: { state: true },
     _previewError: { state: true },
@@ -39,6 +41,7 @@ export class QuestionEditorPanel extends LitElement {
   };
 
   config: QuestionConfig | null = null;
+  readonly = false;
   titleError = '';
 
   private _previewData: {
@@ -90,10 +93,10 @@ export class QuestionEditorPanel extends LitElement {
     this._previewError = '';
     this._previewData = null;
     try {
-      const dsm = new DuckDBDataSourceManager(duckDBManager);
-      await dsm.createViews(sources);
+      const db = getDbService();
+      await db.createViews(sources);
       if (isNl) {
-        const engine = new AskDataEngine({ dataSources: sources }, duckDBManager);
+        const engine = new AskDataEngine({ dataSources: sources }, db);
         await engine.initialize();
         const result = await engine.ask(query, {});
         if ('rows' in result && 'sql' in result) {
@@ -113,10 +116,7 @@ export class QuestionEditorPanel extends LitElement {
           this._previewError = 'Natural language query returned no results.';
         }
       } else {
-        const table = await duckDBManager.query(query);
-        const rows = table
-          .toArray()
-          .map((r) => Object.fromEntries(table.schema.fields.map((f) => [f.name, r[f.name]])));
+        const rows = toRows(await db.query(query));
         const labels = rows.map((r) => String(r['label'] ?? r[Object.keys(r)[0]] ?? ''));
         const values = rows.map((r) => Number(r['value'] ?? r[Object.keys(r)[1]] ?? 0));
         this._previewData = { labels, values, rows };
@@ -138,6 +138,7 @@ export class QuestionEditorPanel extends LitElement {
             (t) => html`
               <button
                 class="qep-type-btn ${q.type === t ? 'active' : ''}"
+                ?disabled=${this.readonly}
                 @click=${() => this._emit({ type: t })}
               >
                 ${t}
@@ -151,6 +152,7 @@ export class QuestionEditorPanel extends LitElement {
               <select
                 class="qep-select"
                 .value=${q.chartType ?? 'bar'}
+                ?disabled=${this.readonly}
                 @change=${(e: Event) =>
                   this._emit({
                     chartType: (e.target as HTMLSelectElement).value as QuestionConfig['chartType'],
@@ -175,12 +177,14 @@ export class QuestionEditorPanel extends LitElement {
           <div class="qep-query-type-toggle">
             <button
               class="qep-toggle-btn ${q.queryType !== 'nl' ? 'active' : ''}"
+              ?disabled=${this.readonly}
               @click=${() => this._emit({ queryType: 'sql' })}
             >
               SQL
             </button>
             <button
               class="qep-toggle-btn ${q.queryType === 'nl' ? 'active' : ''}"
+              ?disabled=${this.readonly}
               @click=${() => this._emit({ queryType: 'nl' })}
             >
               Natural language
@@ -193,12 +197,14 @@ export class QuestionEditorPanel extends LitElement {
               rows="5"
               placeholder="e.g. sales by region"
               .value=${q.nlQuery ?? ''}
+              ?disabled=${this.readonly}
               @input=${(e: Event) =>
                 this._emit({ nlQuery: (e.target as HTMLTextAreaElement).value })}
             ></textarea>`
           : html`<ui-code-editor
               .language=${SQL}
               .value=${q.query ?? ''}
+              ?readonly=${this.readonly}
               placeholder="SELECT ..."
               @value-change=${(e: CustomEvent<string>) => this._emit({ query: e.detail })}
             ></ui-code-editor>`}
@@ -253,6 +259,7 @@ export class QuestionEditorPanel extends LitElement {
             .variant=${'secondary'}
             .size=${'sm'}
             .content=${'Manage datasources'}
+            ?disabled=${this.readonly}
             @click=${() => (this._pickerOpen = true)}
           ></ui-button>
           <a class="qep-ds-create-link" href="#/datasource/new" target="_self">
@@ -327,6 +334,7 @@ export class QuestionEditorPanel extends LitElement {
               class="qep-input"
               type="text"
               .value=${this.config.title}
+              ?disabled=${this.readonly}
               ?aria-invalid=${!!this.titleError}
               @input=${(e: Event) => this._emit({ title: (e.target as HTMLInputElement).value })}
             />
@@ -340,6 +348,7 @@ export class QuestionEditorPanel extends LitElement {
               type="text"
               placeholder="Short description"
               .value=${this.config.description ?? ''}
+              ?disabled=${this.readonly}
               @input=${(e: Event) =>
                 this._emit({ description: (e.target as HTMLInputElement).value || undefined })}
             />

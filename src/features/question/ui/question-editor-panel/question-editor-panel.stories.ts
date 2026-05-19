@@ -4,7 +4,7 @@ import './index';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 
-import type { QuestionConfig } from '../../../../shared/types/index';
+import type { Question as QuestionConfig } from '@/core/entities';
 
 function makeConfig(overrides: Partial<QuestionConfig> = {}): QuestionConfig {
   return {

@@ -1,14 +1,6 @@
+import type { DataSourceEntry, DataSourceManager, QueryPort } from '@/core/application/ports';
+
 import { escapeSqlString, quoteIdent } from '../../shared/utils/utils';
-import type { QueryPort } from '../query/query-port';
-
-export interface DataSourceEntry {
-  name: string;
-  url: string;
-}
-
-export interface DataSourceManager {
-  createViews(sources: DataSourceEntry[]): Promise<void>;
-}
 
 export class DuckDBDataSourceManager implements DataSourceManager {
   private db: QueryPort;

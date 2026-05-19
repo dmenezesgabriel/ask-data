@@ -6,10 +6,10 @@ import { createRef, ref } from 'lit/directives/ref.js';
 
 import type {
   ChartType2,
-  QuestionConfig,
-  WidgetConfig,
+  DashboardWidget as WidgetConfig,
+  Question as QuestionConfig,
   WidgetType,
-} from '../../../../shared/types/index';
+} from '@/core/entities';
 
 function widgetToQuestionConfig(w: WidgetConfig): QuestionConfig {
   return {

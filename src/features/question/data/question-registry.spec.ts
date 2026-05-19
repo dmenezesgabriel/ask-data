@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { QuestionConfig } from '../../../shared/types/index';
+import type { Question as QuestionConfig } from '@/core/entities';
+
 import { createEmptyQuestionConfig } from '../model/question-config';
 
 type QuestionRegistryModule = typeof import('./question-registry');

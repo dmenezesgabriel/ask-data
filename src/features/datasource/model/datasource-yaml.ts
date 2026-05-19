@@ -1,6 +1,6 @@
 import { parse, stringify } from 'yaml';
 
-import type { DataSourceConfig, DataSourceType } from '../../../shared/types/index';
+import type { Datasource as DataSourceConfig, DataSourceType } from '@/core/entities';
 
 type RawDatasourceYaml = Record<string, unknown>;
 

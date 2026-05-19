@@ -3,7 +3,8 @@ import './index';
 
 import { describe, expect, it } from 'vitest';
 
-import type { QuestionConfig } from '../../../../shared/types/index';
+import type { Question as QuestionConfig } from '@/core/entities';
+
 import { QuestionEditorPanel } from './question-editor-panel';
 
 function makeConfig(overrides: Partial<QuestionConfig> = {}): QuestionConfig {

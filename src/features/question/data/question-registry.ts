@@ -1,4 +1,5 @@
-import type { QuestionConfig } from '../../../shared/types/index';
+import type { Question as QuestionConfig } from '@/core/entities';
+
 import { migrateQuestions } from '../../datasource/model/datasource-migration';
 import { createEmptyQuestionConfig } from '../model/question-config';
 import { parseQuestionYaml } from '../model/question-yaml';

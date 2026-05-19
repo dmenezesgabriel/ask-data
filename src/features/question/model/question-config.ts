@@ -1,4 +1,4 @@
-import type { QuestionConfig } from '../../../shared/types/index';
+import type { Question as QuestionConfig } from '@/core/entities';
 
 export function createEmptyQuestionConfig(overrides: Partial<QuestionConfig> = {}): QuestionConfig {
   const now = new Date().toISOString();
