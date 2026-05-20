@@ -47,16 +47,6 @@
     "minisearch": "7.1.2",
     "yaml": "^2.9.0"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "duckdb",
-      "esbuild",
-      "onnxruntime-node",
-      "protobufjs",
-      "sharp",
-      "unrs-resolver"
-    ]
-  },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.2.1",
     "@cucumber/cucumber": "^12.8.2",
