@@ -21,3 +21,4 @@ inline.md
 
 *.png
 .claude/worktrees/
+.claude/settings.local.json
