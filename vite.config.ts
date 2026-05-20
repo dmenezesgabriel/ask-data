@@ -4,6 +4,7 @@ import { defineConfig } from 'vite';
 const root = (path: string): string => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
+  base: '/ask-data',
   resolve: {
     alias: {
       '@': root('./src'),
