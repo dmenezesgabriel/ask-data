@@ -50,6 +50,16 @@ Feature: Ask Data – Natural Language Queries
     Then the result is an error
     And the error message contains "lucro"
 
+  Scenario: Truly unsupported English metric returns an error (REG-001)
+    When I ask "what are the total earnings"
+    Then the result is an error
+    And the error message contains "earnings"
+
+  Scenario: Query on profit measure field returns results (IT-001)
+    When I ask "total profit by region"
+    Then the chart type is "bar"
+    And there are 4 result rows
+
   Scenario: Portuguese query resolves the same as English
     When I ask "vendas por região"
     Then the chart type is "bar"

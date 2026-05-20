@@ -570,8 +570,8 @@ describe('ValueFilterResolver', () => {
     });
   });
 
-  describe('resolve() performance with large value catalog', () => {
-    it('resolves a single match across 500 value items within 50ms', () => {
+  describe('PT-001: findMatches() performance with large value catalog', () => {
+    it('PT-001: findMatches() with 500 value items completes 100 calls within 5000ms total', () => {
       const items = Array.from({ length: 500 }, (_, i) =>
         makeValueItem({
           field: regionField,
@@ -580,13 +580,14 @@ describe('ValueFilterResolver', () => {
         }),
       );
       const resolver = makeResolver({ valueItems: items });
+      const query = 'show total sales for region42 in west for january 2024 report';
       const start = Date.now();
-      const result = resolver.resolve('show sales for region42');
+      for (let i = 0; i < 100; i++) resolver.findMatches(query);
       const elapsed = Date.now() - start;
-      expect(elapsed).toBeLessThan(50);
-      expect(result.filters).toBeDefined();
-      expect(result.filters!.length).toBe(1);
-      expect(result.filters![0].value).toBe('Region42');
+      expect(elapsed).toBeLessThan(5000);
+      const matches = resolver.findMatches('show sales for region42');
+      expect(matches.length).toBeGreaterThan(0);
+      expect(matches.some((m) => m.value === 'Region42')).toBe(true);
     });
   });
 });

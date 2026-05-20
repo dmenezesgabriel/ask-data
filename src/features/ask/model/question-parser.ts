@@ -354,8 +354,12 @@ export class QuestionParser {
     };
   }
 
-  withOriginalQuestion(result, question: string) {
-    if (result.clarification?.pending) result.clarification.pending.originalQuestion = question;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  withOriginalQuestion(result: { clarification?: unknown }, question: string): any {
+    const pending = (
+      result.clarification as { pending?: { originalQuestion: string | null } | null } | null
+    )?.pending;
+    if (pending) pending.originalQuestion = question;
     return result;
   }
 

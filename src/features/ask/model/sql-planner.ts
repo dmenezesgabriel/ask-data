@@ -432,7 +432,7 @@ export class SqlPlanner {
     return { tables, joins };
   }
 
-  findRelationshipPath(startTables: string[], targetTable: string) {
+  findRelationshipPath(startTables: string[], targetTable: string): Relationship[] | null {
     const queue: { table: string; path: Relationship[] }[] = startTables.map((table) => ({
       table,
       path: [],

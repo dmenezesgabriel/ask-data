@@ -17,11 +17,11 @@ describe('SqlRenderer', () => {
         renderer.renderCondition({
           kind: 'eq',
           tableAlias: 't0',
-          column: 'Qty',
+          column: 'amount',
           value: 42,
           fieldType: 'INTEGER',
         }),
-      ).toBe(`t0."Qty" = 42`);
+      ).toBe(`t0."amount" = 42`);
     });
 
     it('renders string eq condition with single quotes when fieldType is VARCHAR', () => {

@@ -80,7 +80,12 @@ export class CatalogBuilder {
     this.timeSqlExpression = timeSqlExpression;
   }
 
-  async build() {
+  async build(): Promise<{
+    catalog: CatalogField[];
+    relationships: Relationship[];
+    ambiguousRelationships: Relationship[];
+    entities: Entity[];
+  }> {
     this.fieldByKey.clear();
     const overrides = new Map(
       (this.askConfig.fields || []).map((f) => [fieldKey(f.table, f.column), f]),
