@@ -28,4 +28,4 @@ export function createClientServerContainer() {
   };
 }
 
-// export type ClientServerContainer = ReturnType<typeof createClientServerContainer>;
+export type ClientServerContainer = ReturnType<typeof createClientServerContainer>;
