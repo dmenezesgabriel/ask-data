@@ -1,9 +1,7 @@
-import type { DashboardRepository } from '@/core/application/ports';
+import type { ReadOnlyRepository } from '@/core/application/ports';
 import type { Dashboard } from '@/core/entities';
 
-import { NotImplementedError } from './http-error';
-
-export class HttpDashboardRepository implements DashboardRepository {
+export class HttpDashboardRepository implements ReadOnlyRepository<Dashboard> {
   constructor(private readonly baseUrl: string = '/api/dashboards') {}
 
   async list(): Promise<Dashboard[]> {
@@ -17,13 +15,5 @@ export class HttpDashboardRepository implements DashboardRepository {
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`Failed to get dashboard: ${res.status}`);
     return res.json() as Promise<Dashboard>;
-  }
-
-  async save(_dashboard: Dashboard): Promise<void> {
-    throw new NotImplementedError(`${this.baseUrl} save`);
-  }
-
-  async delete(id: string): Promise<void> {
-    throw new NotImplementedError(`${this.baseUrl}/${id} delete`);
   }
 }

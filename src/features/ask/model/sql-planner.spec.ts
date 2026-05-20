@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AskIntent, CatalogField, DateRange, Relationship } from '../../../shared/types/index';
+import type {
+  AskIntent,
+  CatalogField,
+  DateRange,
+  IntentMetric,
+  Relationship,
+} from '../../../shared/types/index';
 import { SqlPlanner } from './sql-planner';
 
 // --- Helpers ---
@@ -954,7 +960,7 @@ describe('SqlPlanner', () => {
       const result = planner.buildMetricExpr(
         {
           ...makeIntent(),
-          metric: { kind: 'count_distinct', field: salesField, label: 'Distinct' },
+          metric: { kind: 'count_distinct', field: salesField, label: 'Distinct' } as IntentMetric,
         },
         aliases,
       );
@@ -1076,6 +1082,7 @@ describe('SqlPlanner', () => {
         tableAlias: 't1_customer',
         column: 'Region',
         value: 'East',
+        fieldType: 'VARCHAR',
       });
     });
 

@@ -1,4 +1,5 @@
 import type {
+  AskIntent,
   CatalogField,
   Diagnostics,
   PlannedSql,
@@ -39,7 +40,7 @@ export class SqlPlanner {
     this.getDefaultTimeField = getDefaultTimeField;
   }
 
-  timeSqlExpression(field, alias) {
+  timeSqlExpression(field: CatalogField, alias: string): string {
     const isNativeDate = /date|timestamp|time/i.test(field.type || '');
     if (isNativeDate) return `${alias}.${quoteIdent(field.column)}`;
     return field.parseFormat
@@ -47,19 +48,18 @@ export class SqlPlanner {
       : `TRY_CAST(${alias}.${quoteIdent(field.column)} AS DATE)`;
   }
 
-  plan(intent): PlannedSql {
+  plan(intent: AskIntent): PlannedSql {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const m = intent.metric as any;
     const fields = [
-      intent.metric?.field || intent.metric,
+      m?.field || m,
       intent.timeField,
       ...intent.dimensions,
       ...intent.filters.map((f) => f.field),
       intent.dateRange?.field,
     ].filter((f) => f && f.table);
     const baseTable =
-      intent.metric?.field?.table ||
-      intent.metric?.table ||
-      fields[0]?.table ||
-      this.config.dataSources?.[0]?.name;
+      m?.field?.table || m?.table || fields[0]?.table || this.config.dataSources?.[0]?.name;
     const neededTables = [...new Set([baseTable, ...fields.map((f) => f.table)])];
     const joinPlan = this.buildJoinPlan(baseTable, neededTables) as {
       error?: string;
@@ -75,7 +75,7 @@ export class SqlPlanner {
       const alias = aliases.get(dim.table);
       let expr;
       if (dim.role === 'time') {
-        expr = `DATE_TRUNC('${intent.timeGrain || 'month'}', ${this.timeSqlExpression(dim, alias)})`;
+        expr = `DATE_TRUNC('${intent.timeGrain || 'month'}', ${this.timeSqlExpression(dim, alias ?? '')})`;
       } else {
         expr = `${alias}.${quoteIdent(dim.column)}`;
       }
@@ -144,34 +144,38 @@ export class SqlPlanner {
     );
   }
 
-  buildMetricExpr(intent, aliases) {
+  buildMetricExpr(
+    intent: AskIntent,
+    aliases: Map<string, string>,
+  ): { metricExpr: string | null; metricFormat: string | undefined } {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const m = intent.metric as any;
     let metricExpr: string | null = null;
     let metricFormat: string | undefined;
-    if (intent.metric?.kind === 'count_star') {
+    if (m?.kind === 'count_star') {
       metricExpr = 'COUNT(*)';
-    } else if (intent.metric?.kind === 'count_distinct') {
-      const f = intent.metric.field;
-      metricExpr = `COUNT(DISTINCT ${aliases.get(f.table)}.${quoteIdent(f.column)})`;
-    } else if (intent.analysisType !== 'list_values' && intent.metric) {
-      const m = intent.metric;
+    } else if (m?.kind === 'count_distinct') {
+      const f = m.field;
+      metricExpr = `COUNT(DISTINCT ${aliases.get(f.table) ?? ''}.${quoteIdent(f.column)})`;
+    } else if (intent.analysisType !== 'list_values' && m) {
       metricFormat = m.format;
-      metricExpr = `${m.aggregation || 'SUM'}(${aliases.get(m.table)}.${quoteIdent(m.column)})`;
+      metricExpr = `${m.aggregation || 'SUM'}(${aliases.get(m.table) ?? ''}.${quoteIdent(m.column)})`;
     }
     return { metricExpr, metricFormat };
   }
 
-  buildWhereConditions(intent, aliases): WhereCondition[] {
+  buildWhereConditions(intent: AskIntent, aliases: Map<string, string>): WhereCondition[] {
     const conditions: WhereCondition[] = intent.filters.map((filter) => {
-      const tableAlias = aliases.get(filter.field.table);
+      const tableAlias = aliases.get(filter.field.table) ?? '';
       const column = filter.field.column;
       if (filter.operator === 'IN') {
         return { kind: 'in', tableAlias, column, values: filter.values || [] };
       }
-      return { kind: 'eq', tableAlias, column, value: filter.value };
+      return { kind: 'eq', tableAlias, column, value: filter.value, fieldType: filter.field.type };
     });
     if (intent.dateRange?.field) {
       const field = intent.dateRange.field;
-      const dateExpr = this.timeSqlExpression(field, aliases.get(field.table));
+      const dateExpr = this.timeSqlExpression(field, aliases.get(field.table) ?? '');
       if (intent.dateRange.kind === 'monthOfYear') {
         conditions.push({ kind: 'month_of_year', dateExpr, month: intent.dateRange.month });
       } else {
@@ -186,11 +190,18 @@ export class SqlPlanner {
     return conditions;
   }
 
-  buildWhereParts(intent, aliases): string[] {
+  buildWhereParts(intent: AskIntent, aliases: Map<string, string>): string[] {
     return new SqlRenderer().renderConditions(this.buildWhereConditions(intent, aliases));
   }
 
-  planListValues(intent, aliases, whereParts, from, joins, diagnostics) {
+  planListValues(
+    intent: AskIntent,
+    aliases: Map<string, string>,
+    whereParts: string[],
+    from: string,
+    joins: string[],
+    diagnostics: Diagnostics | null,
+  ): PlannedSql {
     const dim = intent.dimensions[0];
     const expr = `${aliases.get(dim.table)}.${quoteIdent(dim.column)}`;
     const listWhereParts = [...whereParts, `${expr} IS NOT NULL`, `CAST(${expr} AS VARCHAR) <> ''`];
@@ -198,14 +209,22 @@ export class SqlPlanner {
     return { sql, columns: ['label'], diagnostics };
   }
 
-  planYoY(intent, aliases, metricExpr, whereParts, from, joins, diagnostics) {
+  planYoY(
+    intent: AskIntent,
+    aliases: Map<string, string>,
+    metricExpr: string | null,
+    whereParts: string[],
+    from: string,
+    joins: string[],
+    diagnostics: Diagnostics | null,
+  ): PlannedSql {
     const timeField =
       intent.timeField ||
       intent.dimensions.find((d) => d.role === 'time') ||
       this.getDefaultTimeField();
     if (!timeField)
       return { error: 'I could not find a date/time field for year-over-year analysis.' };
-    const periodExpr = `DATE_TRUNC('year', ${this.timeSqlExpression(timeField, aliases.get(timeField.table))})`;
+    const periodExpr = `DATE_TRUNC('year', ${this.timeSqlExpression(timeField, aliases.get(timeField.table) ?? '')})`;
     const yoyJoins = joins.length ? `\n  ${joins.join('\n  ')}` : '';
     const yoyWhere = whereParts.length ? `\n  WHERE ${whereParts.join(' AND ')}` : '';
     const sql = `WITH yearly AS (\n  SELECT ${periodExpr} AS period, ${metricExpr} AS value\n  FROM ${from}${yoyJoins}${yoyWhere}\n  GROUP BY 1\n), yoy AS (\n  SELECT period, value, LAG(value) OVER (ORDER BY period) AS previous_value\n  FROM yearly\n)\nSELECT CAST(period AS VARCHAR) AS period, value, previous_value, value - previous_value AS change, CASE WHEN previous_value IS NULL OR previous_value = 0 THEN NULL ELSE (value - previous_value) / previous_value END AS change_percent\nFROM yoy\nORDER BY period ASC`;
@@ -216,12 +235,21 @@ export class SqlPlanner {
     };
   }
 
-  planChange(intent, aliases, metricExpr, metricFormat, whereParts, from, joins, diagnostics) {
+  planChange(
+    intent: AskIntent,
+    aliases: Map<string, string>,
+    metricExpr: string | null,
+    metricFormat: string | undefined,
+    whereParts: string[],
+    from: string,
+    joins: string[],
+    diagnostics: Diagnostics | null,
+  ): PlannedSql {
     const timeField = intent.timeField || this.getDefaultTimeField();
     if (!timeField) return { error: 'I could not find a date/time field for change analysis.' };
-    const dateExpr = this.timeSqlExpression(timeField, aliases.get(timeField.table));
-    const startYear = Number(intent.change.startYear);
-    const endYear = Number(intent.change.endYear);
+    const dateExpr = this.timeSqlExpression(timeField, aliases.get(timeField.table) ?? '');
+    const startYear = Number(intent.change?.startYear);
+    const endYear = Number(intent.change?.endYear);
     const changeWhere = [
       ...whereParts,
       `EXTRACT(year FROM ${dateExpr}) IN (${startYear}, ${endYear})`,
@@ -238,16 +266,16 @@ export class SqlPlanner {
   }
 
   planShare(
-    intent,
-    selectParts,
-    groupParts,
-    metricExpr,
-    metricFormat,
-    whereParts,
-    from,
-    joins,
-    diagnostics,
-  ) {
+    intent: AskIntent,
+    selectParts: string[],
+    groupParts: string[],
+    metricExpr: string | null,
+    metricFormat: string | undefined,
+    whereParts: string[],
+    from: string,
+    joins: string[],
+    diagnostics: Diagnostics | null,
+  ): PlannedSql {
     if (!intent.dimensions.length)
       return { error: 'I need a dimension to calculate share of total.' };
     const shareInnerSelect = [...selectParts, `${metricExpr} AS value`].join(',\n  ');
@@ -267,16 +295,16 @@ export class SqlPlanner {
   }
 
   planGrouped(
-    intent,
-    selectParts,
-    groupParts,
-    metricExpr,
-    metricFormat,
-    whereParts,
-    from,
-    joins,
-    diagnostics,
-  ) {
+    intent: AskIntent,
+    selectParts: string[],
+    groupParts: string[],
+    metricExpr: string | null,
+    metricFormat: string | undefined,
+    whereParts: string[],
+    from: string,
+    joins: string[],
+    diagnostics: Diagnostics | null,
+  ): PlannedSql {
     let sql: string;
     if (intent.dimensions.length) {
       const groupedInnerSelect = [...selectParts, `${metricExpr} AS value`].join(',\n  ');
@@ -305,7 +333,23 @@ export class SqlPlanner {
     };
   }
 
-  buildDiagnostics({ intent, baseTable, aliases, from, joinSqls, joinRels, whereParts }) {
+  buildDiagnostics({
+    intent,
+    baseTable,
+    aliases,
+    from,
+    joinSqls,
+    joinRels,
+    whereParts,
+  }: {
+    intent: AskIntent;
+    baseTable: string;
+    aliases: Map<string, string>;
+    from: string;
+    joinSqls: string[];
+    joinRels: Relationship[];
+    whereParts: string[];
+  }): Diagnostics | null {
     const joinsSuffix = joinSqls.length ? `\n${joinSqls.join('\n')}` : '';
     const joinedFrom = `${from}${joinsSuffix}`;
     const diagnostics: Diagnostics = {};
@@ -355,7 +399,10 @@ export class SqlPlanner {
     return Object.keys(diagnostics).length ? diagnostics : null;
   }
 
-  buildJoinPlan(baseTable, neededTables) {
+  buildJoinPlan(
+    baseTable: string,
+    neededTables: string[],
+  ): { tables?: string[]; joins?: Relationship[]; error?: string } {
     const tables: string[] = [baseTable];
     const joins: Relationship[] = [];
     for (const table of neededTables) {

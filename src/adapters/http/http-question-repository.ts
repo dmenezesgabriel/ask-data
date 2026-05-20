@@ -1,9 +1,7 @@
-import type { QuestionRepository } from '@/core/application/ports';
+import type { ReadOnlyRepository } from '@/core/application/ports';
 import type { Question } from '@/core/entities';
 
-import { NotImplementedError } from './http-error';
-
-export class HttpQuestionRepository implements QuestionRepository {
+export class HttpQuestionRepository implements ReadOnlyRepository<Question> {
   constructor(private readonly baseUrl: string = '/api/questions') {}
 
   async list(): Promise<Question[]> {
@@ -17,13 +15,5 @@ export class HttpQuestionRepository implements QuestionRepository {
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`Failed to get question: ${res.status}`);
     return res.json() as Promise<Question>;
-  }
-
-  async save(_question: Question): Promise<void> {
-    throw new NotImplementedError(`${this.baseUrl} save`);
-  }
-
-  async delete(id: string): Promise<void> {
-    throw new NotImplementedError(`${this.baseUrl}/${id} delete`);
   }
 }

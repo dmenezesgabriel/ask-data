@@ -7,3 +7,4 @@ export type { IdGenerator } from './id-generator';
 export type { QueryEngine } from './query-engine';
 export type { QueryPort } from './query-port';
 export type { QuestionRepository } from './question-repository';
+export type { ReadOnlyRepository } from './read-only-repository';

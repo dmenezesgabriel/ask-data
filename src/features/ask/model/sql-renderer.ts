@@ -1,10 +1,12 @@
 import type { CellValue, WhereCondition } from '../../../shared/types/index';
-import { escapeSqlString, quoteIdent } from '../../../shared/utils/utils';
+import { escapeSqlString, isNumericType, quoteIdent } from '../../../shared/utils/utils';
 
 export class SqlRenderer {
   renderCondition(cond: Exclude<WhereCondition, { kind: 'date_range' }>): string {
     switch (cond.kind) {
       case 'eq':
+        if (isNumericType(cond.fieldType))
+          return `${cond.tableAlias}.${quoteIdent(cond.column)} = ${Number(cond.value)}`;
         return `${cond.tableAlias}.${quoteIdent(cond.column)} = '${escapeSqlString(cond.value)}'`;
       case 'in': {
         const list = cond.values.map((v) => `'${escapeSqlString(v)}'`).join(', ');

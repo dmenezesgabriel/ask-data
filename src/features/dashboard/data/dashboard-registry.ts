@@ -1,5 +1,7 @@
 import { parse as parseYaml } from 'yaml';
 
+import { generateUniqueSlug } from '@/shared/utils/slug';
+
 import type { DashboardConfig } from '../../../shared/types/index';
 import { migrateDashboards } from '../../datasource/model/datasource-migration';
 import portableBiDashboardYaml from './dashboards/portable-bi-dashboard.yaml?raw';
@@ -58,53 +60,39 @@ function savePersistedDashboards(entries: DashboardEntry[]): void {
   }
 }
 
-// Merge static YAML dashboards with persisted dashboards from localStorage.
 const persistedEntries: DashboardEntry[] =
   typeof window !== 'undefined' ? loadPersistedDashboards() : [];
 
-const entries: DashboardEntry[] = [...staticEntries, ...persistedEntries];
+// Single internal map — eliminates the parallel array+object that could diverge.
+const _entries = new Map<string, DashboardEntry>();
+for (const entry of [...staticEntries, ...persistedEntries]) {
+  _entries.set(entry.slug, entry);
+}
 
-export const dashboardList: DashboardEntry[] = entries;
-
-export const dashboardRegistry: Record<string, DashboardConfig> = Object.fromEntries(
-  entries.map((e) => [e.slug, e.config]),
-);
+export function getDashboards(): DashboardEntry[] {
+  return [..._entries.values()];
+}
 
 export function getDashboardBySlug(slug: string): DashboardConfig | undefined {
-  return dashboardRegistry[slug];
+  return _entries.get(slug)?.config;
 }
 
 export function addDashboard(config: DashboardConfig): string {
-  // ensure unique slug
   const base = titleToSlug(config.title) || 'dashboard';
-  let slug = base;
-  let i = 1;
-  while (dashboardRegistry[slug]) {
-    slug = `${base}-${i++}`;
-  }
-
+  const slug = generateUniqueSlug(base, (s) => _entries.has(s));
   const entry: DashboardEntry = { slug, config, source: 'user' };
-
-  dashboardList.push(entry);
-  dashboardRegistry[slug] = entry.config;
-
-  // only persist user-added dashboards (those not in staticEntries)
-  const persistedOnly = dashboardList.filter((e) => e.source === 'user');
-  savePersistedDashboards(persistedOnly);
-
+  _entries.set(slug, entry);
+  savePersistedDashboards([..._entries.values()].filter((e) => e.source === 'user'));
   return slug;
 }
 
 export function deleteDashboard(slug: string): void {
-  const idx = dashboardList.findIndex((e) => e.slug === slug);
-  if (idx === -1) return;
-  const entry = dashboardList[idx];
+  const entry = _entries.get(slug);
+  if (!entry) return;
   if (entry.source === 'yaml') {
     console.warn(`Cannot delete YAML-seeded dashboard: "${slug}"`);
     return;
   }
-  dashboardList.splice(idx, 1);
-  delete dashboardRegistry[slug];
-  const persistedOnly = dashboardList.filter((e) => e.source === 'user');
-  savePersistedDashboards(persistedOnly);
+  _entries.delete(slug);
+  savePersistedDashboards([..._entries.values()].filter((e) => e.source === 'user'));
 }

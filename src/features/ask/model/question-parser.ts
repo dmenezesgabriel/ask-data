@@ -1,12 +1,39 @@
 import type {
   AnalysisType,
   CatalogField,
+  CellValue,
   ClarificationPending,
+  DateRange,
   Entity,
   FieldRole,
+  IntentFilter,
   IntentMetric,
   ParseOptions,
+  SortDirection,
 } from '../../../shared/types/index';
+
+type DateInfo = {
+  dateRange: DateRange | null;
+  questionWithoutDate?: string | null;
+};
+
+type Superlative = {
+  field?: CatalogField;
+  metric?: IntentMetric;
+  direction?: string;
+} | null;
+
+type ResolvedParse = {
+  metric: IntentMetric;
+  limit: number;
+  sortDirection: string;
+  isRanking: boolean;
+  isYoY: boolean;
+  timeGrain: string | null;
+  isCount: boolean;
+  superlative: Superlative;
+};
+
 import { norm, singularize } from '../../../shared/utils/utils';
 import { DateRangeParser } from './date-range-parser';
 import { IntentCueDetector } from './intent-cue-detector';
@@ -72,7 +99,7 @@ export class QuestionParser {
     this.getDefaultTimeField = getDefaultTimeField;
   }
 
-  async parse(question, options: ParseOptions = {}) {
+  async parse(question: string, options: ParseOptions = {}) {
     const dateInfo = this.dateRangeParser.parse(question, this.getDefaultTimeField());
     const fullQ = norm(question);
     const q = norm(dateInfo.questionWithoutDate || question);
@@ -88,7 +115,14 @@ export class QuestionParser {
     return this.resolveIntent(question, fullQ, q, dateInfo, warnings, options);
   }
 
-  async resolveIntent(question, fullQ, q, dateInfo, warnings, options) {
+  async resolveIntent(
+    question: string,
+    fullQ: string,
+    q: string,
+    dateInfo: DateInfo,
+    warnings: string[],
+    options: ParseOptions,
+  ) {
     const topOrBottom = [this.termAlternation('top'), this.termAlternation('bottom')]
       .filter(Boolean)
       .join('|');
@@ -138,7 +172,15 @@ export class QuestionParser {
     });
   }
 
-  async buildIntentResult(question, q, fullQ, dateInfo, warnings, options: ParseOptions, resolved) {
+  async buildIntentResult(
+    question: string,
+    q: string,
+    fullQ: string,
+    dateInfo: DateInfo,
+    warnings: string[],
+    options: ParseOptions,
+    resolved: ResolvedParse,
+  ) {
     const { metric, limit, sortDirection, isRanking, isYoY, timeGrain, isCount, superlative } =
       resolved;
     const dimensionsResult = await this.resolveDimensions(
@@ -176,7 +218,7 @@ export class QuestionParser {
         filters: finalFilters,
         dateRange: dateInfo.dateRange,
         shareValues: share?.values,
-        sort: { by: 'value', direction: sortDirection },
+        sort: { by: 'value', direction: sortDirection as SortDirection },
         limit: comparison ? Math.max(limit, comparison.values.length) : limit,
         timeGrain:
           timeGrain || (finalDimensions.some((d) => d.role === 'time') ? 'month' : undefined),
@@ -185,7 +227,7 @@ export class QuestionParser {
     };
   }
 
-  unsupportedMetricError(question, unsupportedMetric) {
+  unsupportedMetricError(question: string, unsupportedMetric: string) {
     const measures = this.catalog().filter((f) => f.role === 'measure');
     const available = measures.map((f) => f.label).join(', ') || 'none';
     return {
@@ -196,7 +238,14 @@ export class QuestionParser {
     };
   }
 
-  listIntent(question, q, dateInfo, listField, warnings, options: ParseOptions = {}) {
+  listIntent(
+    question: string,
+    q: string,
+    dateInfo: DateInfo,
+    listField: CatalogField,
+    warnings: string[],
+    options: ParseOptions = {},
+  ) {
     const filters = this.filterResolver.resolve(q, options.clarification);
     if (filters.clarification) return this.withOriginalQuestion(filters, question);
     return {
@@ -214,7 +263,11 @@ export class QuestionParser {
     };
   }
 
-  async resolveMetric(q, isCount, superlative) {
+  async resolveMetric(
+    q: string,
+    isCount: boolean,
+    superlative: Superlative,
+  ): Promise<IntentMetric> {
     if (!isCount)
       return (
         superlative?.metric ||
@@ -234,7 +287,7 @@ export class QuestionParser {
       : { kind: 'count_star', label: 'Records' };
   }
 
-  detectChange(q) {
+  detectChange(q: string): { startYear: number; endYear: number } | null {
     if (!this.hasTerm(q, 'change')) return null;
     const explicitYears = [...q.matchAll(/\b(19\d{2}|20\d{2})\b/g)].map((match) =>
       Number(match[1]),
@@ -249,7 +302,11 @@ export class QuestionParser {
     return null;
   }
 
-  buildShare(q, filters, dimensions) {
+  buildShare(
+    q: string,
+    filters: IntentFilter[],
+    dimensions: CatalogField[],
+  ): { dimensions: CatalogField[]; filters: IntentFilter[]; values: CellValue[] | null } | null {
     if (!this.hasTerm(q, 'share')) return null;
     if (dimensions.length) return { dimensions, filters, values: null };
     const contributionFilter = (filters || []).find(
@@ -263,7 +320,11 @@ export class QuestionParser {
     };
   }
 
-  buildComparison(q, filters, dimensions) {
+  buildComparison(
+    q: string,
+    filters: IntentFilter[],
+    dimensions: CatalogField[],
+  ): { values: CellValue[]; dimensions: CatalogField[]; filters: IntentFilter[] } | null {
     if (!this.hasTerm(q, 'comparison')) return null;
     const groups = new Map();
     for (const filter of filters || []) {
@@ -274,8 +335,8 @@ export class QuestionParser {
     }
     const group = [...groups.values()].find((item) => item.filters.length >= 2);
     if (!group) return null;
-    const values = [...new Set(group.filters.map((filter) => filter.value))];
-    const comparisonFilter = {
+    const values = [...new Set(group.filters.map((filter) => filter.value))] as CellValue[];
+    const comparisonFilter: IntentFilter = {
       field: group.field,
       operator: 'IN',
       values,
@@ -293,12 +354,17 @@ export class QuestionParser {
     };
   }
 
-  withOriginalQuestion(result, question) {
+  withOriginalQuestion(result, question: string) {
     if (result.clarification?.pending) result.clarification.pending.originalQuestion = question;
     return result;
   }
 
-  async resolveTimeDimension(q, timeGrain, dimensions, warnings) {
+  async resolveTimeDimension(
+    q: string,
+    timeGrain: string | null,
+    dimensions: CatalogField[],
+    warnings: string[],
+  ): Promise<void> {
     if ((timeGrain || this.hasTerm(q, 'overTime')) && !dimensions.some((d) => d.role === 'time')) {
       const timeField = this.getDefaultTimeField();
       if (timeField) dimensions.unshift(timeField);
@@ -401,7 +467,7 @@ export class QuestionParser {
     return { field, metric, direction };
   }
 
-  detectUnsupportedMetric(q) {
+  detectUnsupportedMetric(q: string): string | null {
     const knownMetricTerms = new Set(
       this.catalog()
         .filter((f) => f.role === 'measure')
@@ -413,7 +479,7 @@ export class QuestionParser {
     return term && !knownMetricTerms.has(term) ? term : null;
   }
 
-  extractTopDimensionPhrase(q) {
+  extractTopDimensionPhrase(q: string): string | null {
     const topOrBottom = [this.termAlternation('top'), this.termAlternation('bottom')]
       .filter(Boolean)
       .join('|');
@@ -429,7 +495,7 @@ export class QuestionParser {
       : null;
   }
 
-  extractByPhrases(q) {
+  extractByPhrases(q: string): string[] {
     const by = this.termAlternation('by');
     if (!by) return [];
     const byRe = new RegExp(`\\b(?:${by})\\b\\s*`, 'i');
@@ -453,13 +519,13 @@ export class QuestionParser {
       .filter(Boolean);
   }
 
-  terms(group) {
+  terms(group: string): string[] {
     return this.termMatcher.terms(group);
   }
-  termAlternation(group) {
+  termAlternation(group: string): string {
     return this.termMatcher.alternation(group);
   }
-  hasTerm(q, group) {
+  hasTerm(q: string, group: string): boolean {
     return this.termMatcher.has(q, group);
   }
 }

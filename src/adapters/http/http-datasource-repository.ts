@@ -1,9 +1,7 @@
-import type { DatasourceRepository } from '@/core/application/ports';
+import type { ReadOnlyRepository } from '@/core/application/ports';
 import type { Datasource } from '@/core/entities';
 
-import { NotImplementedError } from './http-error';
-
-export class HttpDatasourceRepository implements DatasourceRepository {
+export class HttpDatasourceRepository implements ReadOnlyRepository<Datasource> {
   constructor(private readonly baseUrl: string = '/api/datasources') {}
 
   async list(): Promise<Datasource[]> {
@@ -17,13 +15,5 @@ export class HttpDatasourceRepository implements DatasourceRepository {
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`Failed to get datasource: ${res.status}`);
     return res.json() as Promise<Datasource>;
-  }
-
-  async save(_datasource: Datasource): Promise<void> {
-    throw new NotImplementedError(`${this.baseUrl} save`);
-  }
-
-  async delete(id: string): Promise<void> {
-    throw new NotImplementedError(`${this.baseUrl}/${id} delete`);
   }
 }

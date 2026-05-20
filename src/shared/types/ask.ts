@@ -397,7 +397,7 @@ export interface JoinPlanProvider {
 }
 
 export type WhereCondition =
-  | { kind: 'eq'; tableAlias: string; column: string; value: CellValue }
+  | { kind: 'eq'; tableAlias: string; column: string; value: CellValue; fieldType?: string }
   | { kind: 'in'; tableAlias: string; column: string; values: CellValue[] }
   | { kind: 'date_range'; dateExpr: string; start: string; end: string }
   | { kind: 'month_of_year'; dateExpr: string; month: number };

@@ -11,6 +11,32 @@ describe('SqlRenderer', () => {
       ).toBe(`t0."Region" = 'East'`);
     });
 
+    it('renders numeric eq condition as unquoted literal', () => {
+      const renderer = new SqlRenderer();
+      expect(
+        renderer.renderCondition({
+          kind: 'eq',
+          tableAlias: 't0',
+          column: 'Qty',
+          value: 42,
+          fieldType: 'INTEGER',
+        }),
+      ).toBe(`t0."Qty" = 42`);
+    });
+
+    it('renders string eq condition with single quotes when fieldType is VARCHAR', () => {
+      const renderer = new SqlRenderer();
+      expect(
+        renderer.renderCondition({
+          kind: 'eq',
+          tableAlias: 't0',
+          column: 'Region',
+          value: 'East',
+          fieldType: 'VARCHAR',
+        }),
+      ).toBe(`t0."Region" = 'East'`);
+    });
+
     it('escapes single quotes in eq value', () => {
       const renderer = new SqlRenderer();
       expect(

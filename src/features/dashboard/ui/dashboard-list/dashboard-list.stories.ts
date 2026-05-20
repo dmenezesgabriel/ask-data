@@ -50,7 +50,7 @@ const meta = {
       description: {
         component:
           'Landing page listing all available dashboards as a CRUD table. ' +
-          'Reads `dashboardList` from the registry (static YAML + localStorage). ' +
+          'Reads `getDashboards()` from the registry (static YAML + localStorage). ' +
           'Each row has View, Edit, and Delete (user-created only) icon buttons.',
       },
     },

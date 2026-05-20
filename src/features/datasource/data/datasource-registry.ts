@@ -1,4 +1,5 @@
 import type { Datasource as DataSourceConfig } from '@/core/entities';
+import { generateUniqueSlug, nameToSlug } from '@/shared/utils/slug';
 
 import { createEmptyDatasourceConfig } from '../model/datasource-config';
 import { parseDatasourceYaml } from '../model/datasource-yaml';
@@ -78,27 +79,14 @@ export function getDatasourceByUrl(url: string): DataSourceConfig | undefined {
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
-function generateUniqueSlug(base: string): string {
-  const slug =
-    base
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '') || 'datasource';
-
-  if (!getDatasourceBySlug(slug)) return slug;
-
-  let n = 2;
-  while (getDatasourceBySlug(`${slug}-${n}`)) n++;
-  return `${slug}-${n}`;
-}
-
 export function addDatasource(
   partial: Omit<DataSourceConfig, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'source'> &
     Partial<Pick<DataSourceConfig, 'slug'>>,
 ): DataSourceConfig {
   const base = partial.name ?? 'Untitled Datasource';
-  const slug = partial.slug ?? generateUniqueSlug(base);
+  const slug =
+    partial.slug ??
+    generateUniqueSlug(nameToSlug(base, 'datasource'), (s) => !!getDatasourceBySlug(s));
 
   if (getDatasourceBySlug(slug)) {
     throw new Error(`Datasource slug already exists: "${slug}"`);

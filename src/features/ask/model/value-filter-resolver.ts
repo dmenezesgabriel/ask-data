@@ -34,16 +34,24 @@ export class ValueFilterResolver {
     this.localizedTerms = localizedTerms;
   }
 
-  resolve(q, clarification: ClarificationPending | null | undefined = null) {
+  resolve(q: string, clarification: ClarificationPending | null | undefined = null) {
     const matches = this.findMatches(q);
     const byValue = new Map<string, ValueItem[]>();
+    const seenValues = new Set<string>();
     for (const match of matches.sort(
       (a, b) => b.normalizedValue.length - a.normalizedValue.length,
     )) {
-      if ([...byValue.keys()].some((v) => v.includes(match.normalizedValue))) continue;
-      if (!byValue.has(match.normalizedValue)) byValue.set(match.normalizedValue, []);
-      const bucket = byValue.get(match.normalizedValue);
-      if (bucket) bucket.push(match);
+      if (seenValues.has(match.normalizedValue)) continue;
+      let dominated = false;
+      for (const v of byValue.keys()) {
+        if (v.includes(match.normalizedValue)) {
+          dominated = true;
+          break;
+        }
+      }
+      if (dominated) continue;
+      seenValues.add(match.normalizedValue);
+      byValue.set(match.normalizedValue, [match]);
     }
     return this.toFilters(q, byValue, clarification);
   }

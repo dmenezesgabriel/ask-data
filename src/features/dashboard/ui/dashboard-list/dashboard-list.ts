@@ -3,7 +3,7 @@ import { LayoutGrid } from 'lucide';
 
 import { CollectionList } from '../../../../shared/ui/collection-list/collection-list';
 import { icon } from '../../../../shared/utils/icons';
-import { type DashboardEntry, dashboardList, deleteDashboard } from '../../dashboard-service';
+import { type DashboardEntry, deleteDashboard, getDashboards } from '../../dashboard-service';
 import { getPersistedWidgetCount } from '../dashboard-workspace/dashboard-workspace-model';
 
 export class DashboardList extends CollectionList {
@@ -32,7 +32,7 @@ export class DashboardList extends CollectionList {
   }
 
   protected override get itemCount(): number {
-    return dashboardList.length;
+    return getDashboards().length;
   }
 
   protected override get itemCountLabel(): string {
@@ -83,7 +83,8 @@ export class DashboardList extends CollectionList {
   }
 
   protected override _renderListItems(): TemplateResult {
-    if (dashboardList.length === 0) {
+    const dashboards = getDashboards();
+    if (dashboards.length === 0) {
       return html`
         <div class="collection-list-empty">
           <p>No dashboards yet. Create your first dashboard to get started.</p>
@@ -98,7 +99,7 @@ export class DashboardList extends CollectionList {
           <span class="collection-list-col collection-list-col-meta">Widgets</span>
           <span class="collection-list-col collection-list-col-actions"></span>
         </div>
-        ${dashboardList.map(
+        ${dashboards.map(
           (entry: DashboardEntry) => html`
             <div
               class="collection-list-row"

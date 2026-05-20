@@ -134,7 +134,13 @@
       "Bash(sudo tee /proc/sys/fs/inotify/max_user_watches)",
       "Bash(pkill -f \"vite --host\")",
       "Bash(CHOKIDAR_USEPOLLING=false CHOKIDAR_INTERVAL=0 npm run dev)",
-      "Bash(CHOKIDAR_USEPOLLING=1 npx vite --host 0.0.0.0)"
+      "Bash(CHOKIDAR_USEPOLLING=1 npx vite --host 0.0.0.0)",
+      "Bash(mkdir -p /home/gabriel-menezes/Documents/repos/ask-data/tasks/issues)",
+      "Bash(mkdir -p /home/gabriel-menezes/Documents/repos/ask-data/docs/adrs)",
+      "Bash(sed -i 's|tasks/issues/002-activate-composition-container.md`|tasks/issues/002-activate-composition-container.md` \\(Task 002\\)|' /home/gabriel-menezes/Documents/repos/ask-data/docs/adrs/006-registry-retirement-and-data-migration.md)",
+      "Bash(sed -i 's|tasks/issues/003-http-adapter-write-interface.md`|tasks/issues/009-http-adapter-write-interface.md` \\(Task 009\\)|' /home/gabriel-menezes/Documents/repos/ask-data/docs/adrs/007-http-adapter-write-interface.md)",
+      "Bash(sed -i 's|docs/adrs/001-registry-retirement-and-data-migration.md|docs/adrs/006-registry-retirement-and-data-migration.md|g' /home/gabriel-menezes/Documents/repos/ask-data/tasks/issues/002-activate-composition-container.md)",
+      "Bash(sed -i 's|docs/adrs/002-http-adapter-write-interface.md|docs/adrs/007-http-adapter-write-interface.md|g' /home/gabriel-menezes/Documents/repos/ask-data/tasks/issues/009-http-adapter-write-interface.md)"
     ]
   }
 }

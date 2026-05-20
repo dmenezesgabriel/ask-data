@@ -7,7 +7,7 @@ import { parse as parseYaml } from 'yaml';
 
 import type { DashboardConfig } from '../../../shared/types/index';
 import { createEmptyDashboardConfig } from '../model/dashboard-config';
-import { dashboardRegistry, titleToSlug } from './dashboard-registry';
+import { getDashboardBySlug, titleToSlug } from './dashboard-registry';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rawYaml = readFileSync(resolve(__dirname, './dashboards/portable-bi-dashboard.yaml'), 'utf8');
@@ -81,13 +81,11 @@ describe('dashboard-registry: persistence contract', () => {
     const second = createEmptyDashboardConfig('Executive Overview');
 
     expect(addDashboard(first)).toBe('executive-overview');
-    expect(addDashboard(second)).toBe('executive-overview-1');
+    expect(addDashboard(second)).toBe('executive-overview-2');
 
-    expect(getDashboardBySlug('portable-bi-dashboard')).toEqual(
-      dashboardRegistry['portable-bi-dashboard'],
-    );
+    expect(getDashboardBySlug('portable-bi-dashboard')).toBeDefined();
     expect(getDashboardBySlug('executive-overview')).toBe(first);
-    expect(getDashboardBySlug('executive-overview-1')).toBe(second);
+    expect(getDashboardBySlug('executive-overview-2')).toBe(second);
   });
 
   it('persists added dashboards through a localStorage-backed reload', async () => {
@@ -104,20 +102,37 @@ describe('dashboard-registry: persistence contract', () => {
     expect(secondLoad.getDashboardBySlug('customer-health')).toEqual(created);
   });
 
+  it('getDashboards includes a dashboard immediately after addDashboard', async () => {
+    const { localStorage } = createLocalStorageMock();
+    const { addDashboard, getDashboards } = await importFreshDashboardRegistry(localStorage);
+    const config = createEmptyDashboardConfig('New Board');
+    const slug = addDashboard(config);
+    expect(getDashboards().some((e) => e.slug === slug)).toBe(true);
+  });
+
+  it('getDashboardBySlug returns undefined after deleteDashboard', async () => {
+    const { localStorage } = createLocalStorageMock();
+    const { addDashboard, deleteDashboard, getDashboardBySlug } =
+      await importFreshDashboardRegistry(localStorage);
+    const slug = addDashboard(createEmptyDashboardConfig('Temp'));
+    deleteDashboard(slug);
+    expect(getDashboardBySlug(slug)).toBeUndefined();
+  });
+
   it('falls back to the static list when persisted JSON is corrupt', async () => {
     const baseline = createLocalStorageMock();
     const fresh = await importFreshDashboardRegistry(baseline.localStorage);
-    const baselineSlugs = fresh.dashboardList.map((entry) => entry.slug);
+    const baselineSlugs = fresh.getDashboards().map((entry) => entry.slug);
 
     const corrupt = createLocalStorageMock({ [PERSIST_KEY]: '{not valid json' });
     const loaded = await importFreshDashboardRegistry(corrupt.localStorage);
 
-    expect(loaded.dashboardList.map((entry) => entry.slug)).toEqual(baselineSlugs);
+    expect(loaded.getDashboards().map((entry) => entry.slug)).toEqual(baselineSlugs);
   });
 });
 
 describe('dashboard-registry: observable formatting contract', () => {
-  const config = dashboardRegistry['portable-bi-dashboard'];
+  const config = getDashboardBySlug('portable-bi-dashboard')!;
 
   it('total-sales KPI has format: currency', () => {
     const kpi = config.kpis.find((k) => k.id === 'total-sales');
@@ -130,7 +145,6 @@ describe('dashboard-registry: observable formatting contract', () => {
   });
 
   it('other KPIs are not affected by currency formatting', () => {
-    const config = dashboardRegistry['portable-bi-dashboard'];
     const others = config.kpis.filter((k) => k.id !== 'total-sales');
     for (const kpi of others) {
       expect(kpi.format).toBeUndefined();

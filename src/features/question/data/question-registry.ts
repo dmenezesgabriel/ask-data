@@ -1,4 +1,5 @@
 import type { Question as QuestionConfig } from '@/core/entities';
+import { generateUniqueSlug, nameToSlug } from '@/shared/utils/slug';
 
 import { migrateQuestions } from '../../datasource/model/datasource-migration';
 import { createEmptyQuestionConfig } from '../model/question-config';
@@ -72,24 +73,10 @@ export function getQuestionBySlug(slug: string): QuestionConfig | undefined {
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
-function generateUniqueSlug(base: string): string {
-  const slug =
-    base
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '') || 'question';
-
-  if (!getQuestionBySlug(slug)) return slug;
-
-  let n = 2;
-  while (getQuestionBySlug(`${slug}-${n}`)) n++;
-  return `${slug}-${n}`;
-}
-
 export function addQuestion(partial: Partial<QuestionConfig>): QuestionConfig {
   const base = partial.title ?? 'Untitled Question';
-  const slug = partial.slug ?? generateUniqueSlug(base);
+  const slug =
+    partial.slug ?? generateUniqueSlug(nameToSlug(base, 'question'), (s) => !!getQuestionBySlug(s));
 
   if (getQuestionBySlug(slug)) {
     throw new Error(`Question slug already exists: "${slug}"`);

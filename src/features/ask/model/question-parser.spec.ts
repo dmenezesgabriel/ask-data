@@ -86,6 +86,59 @@ function makeParser({
   });
 }
 
+// UT-001 / UT-002: detectUnsupportedMetric
+describe('QuestionParser.detectUnsupportedMetric()', () => {
+  function makeParserWithTermFirst(firstReturn: string | null, catalogFields: CatalogField[]) {
+    return new QuestionParser({
+      catalog: () => catalogFields,
+      entities: () => [],
+      termMatcher: {
+        terms: () => [],
+        alternation: () => null,
+        has: () => false,
+        patternFromTerm: () => null,
+        first: (_q: string, _group: string) => firstReturn,
+      } as unknown as QuestionParser['termMatcher'],
+      intentCues: {
+        isListRequest: () => false,
+        isYearOverYear: () => false,
+        timeGrain: () => null,
+        superlativeDirection: () => null,
+        extractSuperlativeSubject: () => null,
+        listFieldHint: () => null,
+        extractListPhrase: () => null,
+      } as unknown as QuestionParser['intentCues'],
+      filterResolver: {
+        resolve: () => ({ filters: [] }),
+      } as unknown as QuestionParser['filterResolver'],
+      dateRangeParser: {
+        parse: () => ({ dateRange: null, questionWithoutDate: null }),
+      } as unknown as QuestionParser['dateRangeParser'],
+      localizedTerms: () => [],
+      resolveFieldPhrase: async () => ({ field: undefined }),
+      findBestFieldInText: async () => null,
+      getDefaultMetric: () => revenueField,
+      getDefaultTimeField: () => undefined,
+    });
+  }
+
+  it('UT-001: returns null when the detected term matches a catalog measure field', () => {
+    const profitField = makeField({
+      id: 'sales::Profit',
+      column: 'Profit',
+      label: 'Profit',
+      role: 'measure',
+    });
+    const parser = makeParserWithTermFirst('profit', [profitField]);
+    expect(parser.detectUnsupportedMetric('show profit')).toBeNull();
+  });
+
+  it('UT-002: returns the term when it does not match any catalog measure field', () => {
+    const parser = makeParserWithTermFirst('profit', [revenueField]);
+    expect(parser.detectUnsupportedMetric('show profit')).toBe('profit');
+  });
+});
+
 // UT-003: QuestionParser returns valid AskIntent for "top 5 products by revenue"
 describe('UT-003: parse() returns valid AskIntent for ranking queries', () => {
   it('UT-003: "top 5 products by revenue" produces a ranking intent', async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { dashboardRegistry } from '../data/dashboard-registry';
+import { getDashboardBySlug } from '../data/dashboard-registry';
 import { createEmptyDashboardConfig } from './dashboard-config';
 
 describe('createEmptyDashboardConfig', () => {
@@ -33,7 +33,7 @@ describe('createEmptyDashboardConfig', () => {
     config.dataSourceSlugs!.push('tmp-ds');
     config.askData.defaultQuestion = 'temporary';
 
-    const seeded = dashboardRegistry['portable-bi-dashboard'];
+    const seeded = getDashboardBySlug('portable-bi-dashboard')!;
     expect(seeded.dataSourceSlugs).toHaveLength(3);
     expect(seeded.askData.defaultQuestion).toBe('sales by region');
   });

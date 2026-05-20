@@ -3,11 +3,22 @@ import { createLogger } from '@/shared/observability/logger';
 
 import type {
   CatalogField,
+  CellValue,
+  DateProfile,
   Entity,
   EntityConfig,
   FieldConfig,
   Relationship,
 } from '../../../shared/types/index';
+
+interface SchemaRow {
+  column_name?: unknown;
+  columnName?: unknown;
+  name?: unknown;
+  column_type?: unknown;
+  columnType?: unknown;
+  type?: unknown;
+}
 import {
   addMonths,
   asIsoDate,
@@ -106,11 +117,21 @@ export class CatalogBuilder {
     return { catalog: fields, relationships, ambiguousRelationships, entities };
   }
 
-  async buildField({ table, rowCount, col, overrides }) {
-    const column = col.column_name || col.columnName || col.name;
-    const type = col.column_type || col.columnType || col.type || '';
+  async buildField({
+    table,
+    rowCount,
+    col,
+    overrides,
+  }: {
+    table: string;
+    rowCount: number;
+    col: SchemaRow;
+    overrides: Map<string, FieldConfig>;
+  }): Promise<CatalogField | null> {
+    const column = String(col.column_name || col.columnName || col.name || '');
+    const type = String(col.column_type || col.columnType || col.type || '');
     if (!column) return null;
-    const override = overrides.get(fieldKey(table, column)) || {};
+    const override: Partial<FieldConfig> = overrides.get(fieldKey(table, column)) ?? {};
     const sampleRows = toRows(
       await this.duckDBManager.query(
         `SELECT ${quoteIdent(column)} AS v FROM ${quoteIdent(table)} WHERE ${quoteIdent(column)} IS NOT NULL LIMIT ${this.askConfig.profiling?.maxSampleRows || 1000}`,
@@ -161,7 +182,7 @@ export class CatalogBuilder {
     return field;
   }
 
-  async profileTimeField(field) {
+  async profileTimeField(field: CatalogField): Promise<DateProfile | null> {
     try {
       const expr = this.timeSqlExpression(field, quoteIdent(field.table));
       const sql = `SELECT MIN(CAST(${expr} AS DATE)) AS min_date, MAX(CAST(${expr} AS DATE)) AS max_date FROM ${quoteIdent(field.table)} WHERE ${expr} IS NOT NULL`;
@@ -186,7 +207,10 @@ export class CatalogBuilder {
     }
   }
 
-  scoreAndClassifyRelationships(byColumn) {
+  scoreAndClassifyRelationships(byColumn: Map<string, CatalogField[]>): {
+    accepted: Relationship[];
+    ambiguous: Relationship[];
+  } {
     const accepted: Relationship[] = [];
     const ambiguous: Relationship[] = [];
     for (const matches of byColumn.values()) {
@@ -194,10 +218,14 @@ export class CatalogBuilder {
         for (let j = i + 1; j < matches.length; j++) {
           const rel = this.scoreRelationship(matches[i], matches[j]);
           if (!rel) continue;
-          if (rel.confidence >= (this.askConfig.relationshipInference?.autoAcceptThreshold || 0.85))
+          if (
+            (rel.confidence ?? 0) >=
+            (this.askConfig.relationshipInference?.autoAcceptThreshold || 0.85)
+          )
             accepted.push(rel);
           else if (
-            rel.confidence >= (this.askConfig.relationshipInference?.ambiguousThreshold || 0.6)
+            (rel.confidence ?? 0) >=
+            (this.askConfig.relationshipInference?.ambiguousThreshold || 0.6)
           )
             ambiguous.push(rel);
         }
@@ -206,7 +234,10 @@ export class CatalogBuilder {
     return { accepted, ambiguous };
   }
 
-  inferRelationships(fields, _tableProfiles) {
+  inferRelationships(
+    fields: CatalogField[],
+    _tableProfiles: Map<string, { rowCount: number }>,
+  ): { relationships: Relationship[]; ambiguousRelationships: Relationship[] } {
     const explicit = this.config.relationships || this.askConfig.relationships || [];
     if (explicit.length)
       return {
@@ -227,7 +258,7 @@ export class CatalogBuilder {
     return { relationships: accepted, ambiguousRelationships: ambiguous };
   }
 
-  scoreRelationship(a, b) {
+  scoreRelationship(a: CatalogField, b: CatalogField): Relationship | null {
     if (a.table === b.table) return null;
     const overlap = this.sampleOverlap(a.samples, b.samples);
     const aUnique = a.cardinality / Math.max(1, a.rowCount);
@@ -246,7 +277,7 @@ export class CatalogBuilder {
     };
   }
 
-  sampleOverlap(aValues, bValues) {
+  sampleOverlap(aValues: CellValue[], bValues: CellValue[]): number {
     const a = new Set(aValues.map(String));
     const b = new Set(bValues.map(String));
     if (!a.size || !b.size) return 0;

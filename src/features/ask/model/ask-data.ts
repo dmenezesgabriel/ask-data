@@ -541,7 +541,8 @@ export class AskDataEngine {
     );
   }
 
-  measurePriority(field) {
+  measurePriority(field: CatalogField): number {
+    if (field.priority > 0) return 1000 + field.priority;
     const n = norm(field.label + ' ' + field.column);
     const names = [
       'sales',
@@ -555,7 +556,7 @@ export class AskDataEngine {
       'value',
     ];
     const index = names.findIndex((name) => n.includes(name));
-    return (field.priority || 0) + (index >= 0 ? 100 - index : 0);
+    return index >= 0 ? 100 - index : 0;
   }
 
   getDefaultTimeField() {

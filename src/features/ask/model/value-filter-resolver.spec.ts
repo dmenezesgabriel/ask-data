@@ -569,4 +569,24 @@ describe('ValueFilterResolver', () => {
       expect(result.clarification!.choices.length).toBe(2);
     });
   });
+
+  describe('resolve() performance with large value catalog', () => {
+    it('resolves a single match across 500 value items within 50ms', () => {
+      const items = Array.from({ length: 500 }, (_, i) =>
+        makeValueItem({
+          field: regionField,
+          value: `Region${i}`,
+          normalizedValue: `region${i}`,
+        }),
+      );
+      const resolver = makeResolver({ valueItems: items });
+      const start = Date.now();
+      const result = resolver.resolve('show sales for region42');
+      const elapsed = Date.now() - start;
+      expect(elapsed).toBeLessThan(50);
+      expect(result.filters).toBeDefined();
+      expect(result.filters!.length).toBe(1);
+      expect(result.filters![0].value).toBe('Region42');
+    });
+  });
 });
