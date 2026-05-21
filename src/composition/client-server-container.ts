@@ -8,6 +8,7 @@ import { GetDatasource } from '@/core/application/use-cases/datasources/get-data
 import { ListDatasources } from '@/core/application/use-cases/datasources/list-datasources';
 import { GetQuestion } from '@/core/application/use-cases/questions/get-question';
 import { ListQuestions } from '@/core/application/use-cases/questions/list-questions';
+import { GetDashboardBySlug } from '@/features/dashboard/model/get-dashboard-by-slug';
 
 export function createClientServerContainer() {
   const datasourceRepo = new HttpDatasourceRepository();
@@ -25,6 +26,7 @@ export function createClientServerContainer() {
 
     getDashboard: new GetDashboard(dashboardRepo),
     listDashboards: new ListDashboards(dashboardRepo),
+    getDashboardBySlug: new GetDashboardBySlug(),
   };
 }
 

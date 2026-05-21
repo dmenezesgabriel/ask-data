@@ -106,6 +106,15 @@ describe('datasource-registry', () => {
     expect(ds.source).toBe('user');
   });
 
+  it('addDatasource produces distinct UUIDs for same-millisecond calls (UT-003)', () => {
+    const ds1 = registry.addDatasource({ name: 'A', type: 'csv', url: 'https://x.com/a1.csv' });
+    const ds2 = registry.addDatasource({ name: 'B', type: 'csv', url: 'https://x.com/b1.csv' });
+    expect(ds1.id).not.toBe(ds2.id);
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    expect(ds1.id).toMatch(uuidPattern);
+    expect(ds2.id).toMatch(uuidPattern);
+  });
+
   it('getDatasourceBySlug returns undefined for unknown slug', () => {
     expect(registry.getDatasourceBySlug('ghost')).toBeUndefined();
   });
@@ -144,7 +153,7 @@ describe('datasource-registry', () => {
   it('deleteDatasource removes datasource from localStorage', () => {
     const ds = registry.addDatasource({ name: 'Stored', type: 'csv', url: 'https://x.com/s.csv' });
     registry.deleteDatasource(ds.slug);
-    const raw = ls.store.get('persisted_datasources_v1');
+    const raw = ls.store.get('persisted_datasources_v2');
     const stored: DataSourceConfig[] = raw ? JSON.parse(raw) : [];
     expect(stored.some((d) => d.slug === ds.slug)).toBe(false);
   });
@@ -172,9 +181,24 @@ describe('datasource-registry', () => {
     expect(list.some((d) => d.source === 'user')).toBe(true);
   });
 
+  it('addDatasource does not throw when localStorage.setItem throws QuotaExceededError', async () => {
+    const throwingLs: LocalStorageMock = {
+      getItem: () => null,
+      setItem: () => {
+        throw new DOMException('QuotaExceededError', 'QuotaExceededError');
+      },
+      removeItem: () => {},
+      clear: () => {},
+    };
+    const reg = await importFreshRegistry(throwingLs);
+    expect(() =>
+      reg.addDatasource({ name: 'Quota Test', type: 'csv', url: 'https://x.com/q.csv' }),
+    ).not.toThrow();
+  });
+
   it('persists user datasources to localStorage across reloads', async () => {
     registry.addDatasource({ name: 'Persisted', type: 'csv', url: 'https://x.com/p.csv' });
-    const raw = ls.store.get('persisted_datasources_v1');
+    const raw = ls.store.get('persisted_datasources_v2');
     expect(raw).toBeTruthy();
     const parsed = JSON.parse(raw!);
     expect(parsed[0].name).toBe('Persisted');

@@ -111,7 +111,7 @@ describe('question-registry', () => {
   it('deleteQuestion removes question from localStorage', () => {
     const q = registry.addQuestion({ title: 'Stored' });
     registry.deleteQuestion(q.slug);
-    const raw = ls.store.get('persisted_questions_v1');
+    const raw = ls.store.get('persisted_questions_v2');
     const stored: QuestionConfig[] = raw ? JSON.parse(raw) : [];
     expect(stored.some((x) => x.slug === q.slug)).toBe(false);
   });
@@ -137,12 +137,25 @@ describe('question-registry', () => {
 
   it('persists user questions to localStorage across reloads', async () => {
     registry.addQuestion({ title: 'Persisted' });
-    const raw = ls.store.get('persisted_questions_v1');
+    const raw = ls.store.get('persisted_questions_v2');
     expect(raw).toBeTruthy();
     const parsed = JSON.parse(raw!);
     expect(parsed[0].title).toBe('Persisted');
 
     const reloaded = await importFreshRegistry(ls.localStorage);
     expect(reloaded.getQuestionBySlug(parsed[0].slug)?.title).toBe('Persisted');
+  });
+
+  it('addQuestion does not throw when localStorage.setItem throws QuotaExceededError (UT-002)', async () => {
+    const throwingLs: LocalStorageMock = {
+      getItem: () => null,
+      setItem: () => {
+        throw new DOMException('QuotaExceededError', 'QuotaExceededError');
+      },
+      removeItem: () => {},
+      clear: () => {},
+    };
+    const reg = await importFreshRegistry(throwingLs);
+    expect(() => reg.addQuestion({ title: 'Quota Test' })).not.toThrow();
   });
 });

@@ -9,7 +9,7 @@ import topProductsYaml from './questions/top-products.yaml?raw';
 
 // ── Storage ──────────────────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'persisted_questions_v1';
+const STORAGE_KEY = 'persisted_questions_v2';
 
 function loadPersistedQuestions(): QuestionConfig[] {
   try {
@@ -35,7 +35,11 @@ function loadPersistedQuestions(): QuestionConfig[] {
 
 function persistQuestions(questions: QuestionConfig[]): void {
   const userQuestions = questions.filter((q) => q.source === 'user');
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(userQuestions));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userQuestions));
+  } catch {
+    // localStorage may be unavailable or at quota; proceed without persisting
+  }
 }
 
 // ── Seed questions (YAML-sourced) ─────────────────────────────────────────────
@@ -59,12 +63,10 @@ export function registerSeedQuestion(q: QuestionConfig): void {
   }
 })();
 
-// ── In-memory registry ────────────────────────────────────────────────────────
-
-let _userQuestions: QuestionConfig[] = loadPersistedQuestions();
+// ── Registry (reads from storage on every call — no stale in-memory cache) ───
 
 export function questionList(): QuestionConfig[] {
-  return [..._seedQuestions, ..._userQuestions];
+  return [..._seedQuestions, ...loadPersistedQuestions()];
 }
 
 export function getQuestionBySlug(slug: string): QuestionConfig | undefined {
@@ -89,13 +91,13 @@ export function addQuestion(partial: Partial<QuestionConfig>): QuestionConfig {
     source: 'user',
   };
 
-  _userQuestions = [..._userQuestions, question];
-  persistQuestions(_userQuestions);
+  persistQuestions([...loadPersistedQuestions(), question]);
   return question;
 }
 
 export function updateQuestion(slug: string, changes: Partial<QuestionConfig>): QuestionConfig {
-  const existing = _userQuestions.find((q) => q.slug === slug);
+  const current = loadPersistedQuestions();
+  const existing = current.find((q) => q.slug === slug);
   if (!existing)
     throw new Error(`Cannot update question: slug "${slug}" not found or is read-only`);
 
@@ -107,8 +109,7 @@ export function updateQuestion(slug: string, changes: Partial<QuestionConfig>): 
     updatedAt: new Date().toISOString(),
   };
 
-  _userQuestions = _userQuestions.map((q) => (q.slug === slug ? updated : q));
-  persistQuestions(_userQuestions);
+  persistQuestions(current.map((q) => (q.slug === slug ? updated : q)));
   return updated;
 }
 
@@ -118,6 +119,5 @@ export function deleteQuestion(slug: string): void {
   if (question.source === 'yaml') {
     throw new Error(`Cannot delete YAML-seeded question: "${slug}"`);
   }
-  _userQuestions = _userQuestions.filter((q) => q.slug !== slug);
-  persistQuestions(_userQuestions);
+  persistQuestions(loadPersistedQuestions().filter((q) => q.slug !== slug));
 }

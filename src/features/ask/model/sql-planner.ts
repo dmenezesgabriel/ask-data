@@ -314,7 +314,7 @@ export class SqlPlanner {
       const groupedLabelExpr =
         intent.dimensions.length === 1
           ? `CAST(d1 AS VARCHAR)`
-          : intent.dimensions.map((_, i) => `CAST(d${i + 1} AS VARCHAR}`).join(` || ' / ' || `);
+          : intent.dimensions.map((_, i) => `CAST(d${i + 1} AS VARCHAR)`).join(` || ' / ' || `);
       const orderBy =
         intent.dimensions[0]?.role === 'time'
           ? 'label ASC'

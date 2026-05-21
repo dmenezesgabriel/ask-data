@@ -1,4 +1,4 @@
-import type { CatalogField, SemanticMatchingConfig } from '../../../shared/types/index';
+import type { CatalogField, FieldRole, SemanticMatchingConfig } from '../../../shared/types/index';
 import { cosineSimilarity, norm } from '../../../shared/utils/utils';
 
 export class SemanticFieldMatcher {
@@ -41,7 +41,7 @@ export class SemanticFieldMatcher {
     this.queryCache = new Map();
   }
 
-  async matchField(text, roles, catalog) {
+  async matchField(text: string, roles: FieldRole[], catalog: CatalogField[]) {
     const clean = norm(text);
     if (!this.enabled || !clean || clean.length < 2) return null;
     const ready = await this.initialize(catalog);
@@ -71,7 +71,7 @@ export class SemanticFieldMatcher {
     return { field: best.field, score: best.score };
   }
 
-  async initialize(catalog) {
+  async initialize(catalog: CatalogField[]) {
     const catalogKey = catalog.map((field) => field.id).join('|');
     if (this.extractor && this.catalogKey === catalogKey) return true;
     if (this.loading) return this.loading;
@@ -79,7 +79,7 @@ export class SemanticFieldMatcher {
     return this.loading;
   }
 
-  async load(catalog, catalogKey) {
+  async load(catalog: CatalogField[], catalogKey: string) {
     try {
       const { pipeline, env, LogLevel } = await import('@huggingface/transformers');
       env.logLevel = LogLevel.ERROR;
@@ -112,7 +112,7 @@ export class SemanticFieldMatcher {
     }
   }
 
-  fieldText(field) {
+  fieldText(field: CatalogField) {
     const displayLabel = this.helpers.displayLabel?.(field) || field.label || field.column;
     const localizedTerms = this.helpers.localizedTerms?.(field) || [];
     return [
@@ -128,7 +128,7 @@ export class SemanticFieldMatcher {
       .join('. ');
   }
 
-  async embedOne(text) {
+  async embedOne(text: string) {
     const key = norm(text);
     if (this.queryCache.has(key)) return this.queryCache.get(key);
     const [embedding] = await this.embedBatch([text]);

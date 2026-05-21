@@ -1,26 +1,48 @@
-import type { DatasourceRepository } from '@/core/application/ports';
+import type { Clock, DatasourceRepository } from '@/core/application/ports';
 import type { Datasource } from '@/core/entities';
 
-const STORAGE_KEY = 'persisted_datasources_v1';
+const V2_KEY = 'persisted_datasources_v2';
+const V1_KEY = 'persisted_datasources_v1';
 
-function loadAll(): Datasource[] {
+function parse(raw: string | null): Datasource[] {
+  if (!raw) return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Datasource[]) : [];
+    return JSON.parse(raw) as Datasource[];
   } catch {
     return [];
   }
 }
 
+function loadAll(): Datasource[] {
+  return parse(localStorage.getItem(V2_KEY));
+}
+
 function persist(items: Datasource[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(V2_KEY, JSON.stringify(items));
   } catch {
     // ignore write errors (private browsing, storage full, etc.)
   }
 }
 
+function migrateV1toV2(): void {
+  if (localStorage.getItem(V2_KEY) !== null) return;
+  const v1Raw = localStorage.getItem(V1_KEY);
+  if (!v1Raw) return;
+  const records = parse(v1Raw);
+  persist(records);
+  try {
+    localStorage.removeItem(V1_KEY);
+  } catch {
+    // ignore — v2 was written; best-effort cleanup of v1
+  }
+}
+
 export class LocalStorageDatasourceRepository implements DatasourceRepository {
+  constructor(private readonly clock: Clock) {
+    migrateV1toV2();
+  }
+
   async list(): Promise<Datasource[]> {
     return loadAll();
   }
@@ -33,7 +55,7 @@ export class LocalStorageDatasourceRepository implements DatasourceRepository {
     const items = loadAll();
     const idx = items.findIndex((d) => d.id === datasource.id);
     if (idx >= 0) {
-      items[idx] = { ...datasource, updatedAt: new Date().toISOString() };
+      items[idx] = { ...datasource, updatedAt: this.clock.now() };
     } else {
       items.push(datasource);
     }

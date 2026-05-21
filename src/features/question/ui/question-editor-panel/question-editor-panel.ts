@@ -12,6 +12,7 @@ import type {
 } from '@/core/entities';
 import { getDbService } from '@/shared/services/db-service';
 
+import type { CellValue } from '../../../../shared/types/index';
 import { SQL } from '../../../../shared/ui/code-editor';
 import { toRows } from '../../../../shared/utils/utils';
 import { AskDataEngine } from '../../../ask/model/ask-data';
@@ -104,11 +105,11 @@ export class QuestionEditorPanel extends LitElement {
           if (!result.rows.length) {
             this._previewError = 'Natural language query returned no results.';
           } else {
-            const labels = result.rows.map((r) =>
-              String(r.label ?? r.name ?? Object.values(r)[0] ?? ''),
+            const labels = result.rows.map((r: Record<string, CellValue>) =>
+              String(r['label'] ?? r['name'] ?? Object.values(r)[0] ?? ''),
             );
-            const values = result.rows.map((r) =>
-              Number(r.value ?? Object.values(r).find((v) => typeof v === 'number') ?? 0),
+            const values = result.rows.map((r: Record<string, CellValue>) =>
+              Number(r['value'] ?? Object.values(r).find((v) => typeof v === 'number') ?? 0),
             );
             this._previewData = { labels, values, rows: result.rows };
           }

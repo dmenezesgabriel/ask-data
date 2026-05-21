@@ -326,12 +326,12 @@ export class QuestionParser {
     dimensions: CatalogField[],
   ): { values: CellValue[]; dimensions: CatalogField[]; filters: IntentFilter[] } | null {
     if (!this.hasTerm(q, 'comparison')) return null;
-    const groups = new Map();
+    const groups = new Map<string, { field: CatalogField; filters: IntentFilter[] }>();
     for (const filter of filters || []) {
       if (filter.operator && filter.operator !== '=') continue;
       const key = filter.field.id;
       if (!groups.has(key)) groups.set(key, { field: filter.field, filters: [] });
-      groups.get(key).filters.push(filter);
+      groups.get(key)!.filters.push(filter);
     }
     const group = [...groups.values()].find((item) => item.filters.length >= 2);
     if (!group) return null;
@@ -436,7 +436,7 @@ export class QuestionParser {
     return dimensions;
   }
 
-  async detectListField(q, options: ParseOptions = {}) {
+  async detectListField(q: string, options: ParseOptions = {}) {
     if (!this.intentCues.isListRequest(q)) return null;
     if (await this.findBestFieldInText(q, 'measure')) return null;
     const hintedField = this.intentCues.listFieldHint(q);
@@ -459,7 +459,7 @@ export class QuestionParser {
       : null;
   }
 
-  async detectSuperlative(q, options: ParseOptions = {}) {
+  async detectSuperlative(q: string, options: ParseOptions = {}) {
     const direction = this.intentCues.superlativeDirection(q);
     if (!direction) return null;
     const phrase = this.intentCues.extractSuperlativeSubject(q);

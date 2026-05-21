@@ -33,10 +33,6 @@ const makeValueItem = (overrides: Partial<ValueItem> & Pick<ValueItem, 'field'>)
 const regionField = makeField({ id: 'sales::Region', column: 'Region', label: 'Region' });
 const categoryField = makeField({ id: 'sales::Category', column: 'Category', label: 'Category' });
 const statusField = makeField({ id: 'sales::Status', column: 'Status', label: 'Status' });
-const _countryField = makeField({ id: 'sales::Country', column: 'Country', label: 'Country' });
-
-const _displayLabel = (field: CatalogField) => field.label;
-const _localizedTerms = () => [] as string[];
 
 function makeResolver(options: {
   valueItems?: ValueItem[];
@@ -227,6 +223,7 @@ describe('ValueFilterResolver', () => {
       ];
       const { clarified } = resolver.resolveAmbiguousField('sales in north', items, uniqueFields, {
         slot: 'filterField',
+        originalQuestion: null,
         valueNormalized: 'north',
         fieldId: 'sales::Region',
       });
@@ -245,6 +242,7 @@ describe('ValueFilterResolver', () => {
       ];
       const { clarified } = resolver.resolveAmbiguousField('sales in north', items, uniqueFields, {
         slot: 'filterField',
+        originalQuestion: null,
         valueNormalized: 'different',
         fieldId: 'sales::Region',
       });

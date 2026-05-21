@@ -19,16 +19,17 @@ import { DeleteQuestion } from '@/core/application/use-cases/questions/delete-qu
 import { GetQuestion } from '@/core/application/use-cases/questions/get-question';
 import { ListQuestions } from '@/core/application/use-cases/questions/list-questions';
 import { UpdateQuestion } from '@/core/application/use-cases/questions/update-question';
+import { GetDashboardBySlug } from '@/features/dashboard/model/get-dashboard-by-slug';
 import { DuckDBDataSourceManager } from '@/infra/data-sources/data-source-manager';
 import { duckDBManager } from '@/infra/db/db';
 import { setDbService } from '@/shared/services/db-service';
 
 export function createClientOnlyContainer() {
-  const datasourceRepo = new LocalStorageDatasourceRepository();
-  const questionRepo = new LocalStorageQuestionRepository();
-  const dashboardRepo = new LocalStorageDashboardRepository();
-  const idGenerator = new CryptoIdGenerator();
   const clock = new SystemClock();
+  const idGenerator = new CryptoIdGenerator();
+  const datasourceRepo = new LocalStorageDatasourceRepository(clock);
+  const questionRepo = new LocalStorageQuestionRepository(clock);
+  const dashboardRepo = new LocalStorageDashboardRepository();
   const queryEngine = new DuckDbWasmQueryEngine();
 
   setDbService({
@@ -56,7 +57,23 @@ export function createClientOnlyContainer() {
     deleteDashboard: new DeleteDashboard(dashboardRepo),
     getDashboard: new GetDashboard(dashboardRepo),
     listDashboards: new ListDashboards(dashboardRepo),
+    getDashboardBySlug: new GetDashboardBySlug(),
   };
 }
 
-export type AppContainer = ReturnType<typeof createClientOnlyContainer>;
+// Write-only methods are optional so both client-only and client-server containers satisfy
+// this interface without a cast. AppShell and other client-only callers can use non-null
+// assertion (!) because they run exclusively in the browser where all methods are present.
+type _Full = ReturnType<typeof createClientOnlyContainer>;
+type _WriteKeys =
+  | 'createDatasource'
+  | 'updateDatasource'
+  | 'deleteDatasource'
+  | 'createQuestion'
+  | 'updateQuestion'
+  | 'deleteQuestion'
+  | 'createDashboard'
+  | 'updateDashboard'
+  | 'deleteDashboard';
+
+export type AppContainer = Omit<_Full, _WriteKeys> & Partial<Pick<_Full, _WriteKeys>>;

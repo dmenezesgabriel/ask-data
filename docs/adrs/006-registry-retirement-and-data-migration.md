@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted — Option 2 (new `v2` key with one-time migration on first load)
 
 ## Date
 
@@ -21,7 +21,17 @@ Proposed
 
 ## Decision
 
-Open — to be decided before `tasks/issues/014-activate-composition-container.md` (Task 014) is started.
+**Option 2 — New key (`v2`) with a one-time migration on first load.**
+
+`LocalStorageDatasourceRepository` and `LocalStorageQuestionRepository` write to and read from
+`persisted_datasources_v2` and `persisted_questions_v2` respectively. On first instantiation, each
+repository checks whether the v2 key exists. If it does not but a v1 key does, it reads the v1
+records, writes them to v2, and removes the v1 key. Failed parses are silently discarded (empty
+list is written to v2; v1 is still removed to prevent repeated failed-migration attempts).
+
+The dashboard adapter is excluded from this migration: the `Dashboard` entity shape is
+structurally incompatible with the legacy `DashboardConfig` shape stored in
+`persisted_dashboards_v1`, so a lossless migration is deferred to a future task.
 
 ## Options Considered
 

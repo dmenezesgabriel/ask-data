@@ -32,13 +32,13 @@ describe('createClientOnlyContainer', () => {
     expect(container.createDatasource).toBeDefined();
     expect(container.deleteQuestion).toBeDefined();
 
-    // Verify LocalStorage backing: after create, localStorage has data
+    // Verify LocalStorage backing: after create, localStorage has data under v2 key
     await container.createDatasource.execute({
       name: 'Probe',
       type: 'csv',
       url: 'https://x.com/f.csv',
     });
-    expect(store.get('persisted_datasources_v1')).toBeTruthy();
+    expect(store.get('persisted_datasources_v2')).toBeTruthy();
   });
 });
 
@@ -63,6 +63,58 @@ describe('createClientServerContainer', () => {
     // Verify HTTP backing: list() calls fetch
     await container.listDatasources.execute();
     expect(fetchMock).toHaveBeenCalledWith('/api/datasources');
+  });
+});
+
+// UT-003: Both containers structurally satisfy AppContainer without casts
+describe('UT-003: AppContainer structural compatibility', () => {
+  it('createClientOnlyContainer() satisfies AppContainer', async () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      },
+      clear: () => {
+        store.clear();
+      },
+    });
+    vi.resetModules();
+
+    const { createClientOnlyContainer } = await import('./client-only-container');
+    const container = createClientOnlyContainer();
+
+    // All required read-only fields present
+    expect(container.getDatasource).toBeDefined();
+    expect(container.listDatasources).toBeDefined();
+    expect(container.getQuestion).toBeDefined();
+    expect(container.listQuestions).toBeDefined();
+    expect(container.getDashboard).toBeDefined();
+    expect(container.listDashboards).toBeDefined();
+    // Write fields present in client-only container
+    expect(container.createDatasource).toBeDefined();
+    expect(container.createQuestion).toBeDefined();
+    expect(container.createDashboard).toBeDefined();
+  });
+
+  it('createClientServerContainer() satisfies AppContainer (read-only fields only)', async () => {
+    vi.resetModules();
+
+    const { createClientServerContainer } = await import('./client-server-container');
+    const container = createClientServerContainer();
+
+    // All required read-only fields present
+    expect(container.getDatasource).toBeDefined();
+    expect(container.listDatasources).toBeDefined();
+    expect(container.getQuestion).toBeDefined();
+    expect(container.listQuestions).toBeDefined();
+    expect(container.getDashboard).toBeDefined();
+    expect(container.listDashboards).toBeDefined();
+    // Write fields absent (server container is read-only)
+    expect((container as Record<string, unknown>).createDatasource).toBeUndefined();
   });
 });
 

@@ -8,7 +8,7 @@ export class IntentCueDetector {
     this.termMatcher = termMatcher;
   }
 
-  isListRequest(text) {
+  isListRequest(text: string) {
     return (
       (this.termMatcher.has(text, 'listAction') || this.termMatcher.has(text, 'listKind')) &&
       (this.termMatcher.has(text, 'listAvailability') ||
@@ -18,13 +18,13 @@ export class IntentCueDetector {
     );
   }
 
-  listFieldHint(text) {
+  listFieldHint(text: string) {
     if (this.termMatcher.has(text, 'listSubcategory')) return 'sub category';
     if (this.termMatcher.has(text, 'listCategory')) return 'category';
     return null;
   }
 
-  extractListPhrase(text) {
+  extractListPhrase(text: string) {
     const action = this.termMatcher.alternation('listAction');
     const availability = this.termMatcher.alternation('listAvailability');
     if (!action) return null;
@@ -36,7 +36,7 @@ export class IntentCueDetector {
     return this.cleanListPhrase(phrase);
   }
 
-  cleanListPhrase(phrase) {
+  cleanListPhrase(phrase: string) {
     const prepositions = this.termMatcher.alternation('prepositions');
     const kind = this.termMatcher.alternation('listKind');
     return phrase
@@ -45,13 +45,13 @@ export class IntentCueDetector {
       .trim();
   }
 
-  superlativeDirection(text) {
+  superlativeDirection(text: string) {
     if (this.termMatcher.has(text, 'bottom') || this.termMatcher.has(text, 'least')) return 'ASC';
     if (this.termMatcher.has(text, 'top') || this.termMatcher.has(text, 'most')) return 'DESC';
     return null;
   }
 
-  extractSuperlativeSubject(text) {
+  extractSuperlativeSubject(text: string) {
     const mostOrLeast = [
       this.termMatcher.alternation('most'),
       this.termMatcher.alternation('least'),
@@ -78,11 +78,11 @@ export class IntentCueDetector {
     return null;
   }
 
-  isYearOverYear(text) {
+  isYearOverYear(text: string) {
     return this.termMatcher.has(text, 'yearOverYear');
   }
 
-  timeGrain(text) {
+  timeGrain(text: string) {
     if (this.termMatcher.has(text, 'dayGrain')) return 'day';
     if (this.termMatcher.has(text, 'monthGrain') || this.termMatcher.has(text, 'overTime'))
       return 'month';

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { QueryPort } from '../query/query-port';
+import type { QueryPort } from '@/core/application/ports';
+
 import { DuckDBManager } from './db';
 
 describe('QueryPort', () => {

@@ -70,7 +70,7 @@ export class FieldSearchIndex {
     this.index.addAll(docs);
   }
 
-  search(query, roles): { field: CatalogField; score: number }[] {
+  search(query: string, roles: FieldRole[]): { field: CatalogField; score: number }[] {
     const clean = norm(query);
     if (!clean) return [];
     return this.index
@@ -89,7 +89,7 @@ export class TextSearchFieldMatchStrategy {
     this.fieldSearchIndex = fieldSearchIndex;
   }
 
-  async matchPhrase(phrase, roles) {
+  async matchPhrase(phrase: string, roles: FieldRole[]) {
     const index = this.fieldSearchIndex();
     if (!index) return null;
     const results = index.search(phrase, roles).slice(0, 4);
@@ -103,7 +103,7 @@ export class TextSearchFieldMatchStrategy {
     return { field: results[0].field, score: Math.min(0.9, results[0].score / 3) };
   }
 
-  async findInText(text, role) {
+  async findInText(text: string, role: FieldRole) {
     const index = this.fieldSearchIndex();
     if (!index) return null;
     const result = index.search(text, [role])[0];
@@ -134,7 +134,7 @@ export class ExactFieldMatchStrategy {
     this.termMatcher = termMatcher;
   }
 
-  async matchPhrase(phrase, roles) {
+  async matchPhrase(phrase: string, roles: FieldRole[]) {
     const clean = norm(phrase);
     if (!clean) return { field: null };
     const direct = this.directMatches(clean, roles);
@@ -145,7 +145,7 @@ export class ExactFieldMatchStrategy {
     return { field: direct[0].field };
   }
 
-  async findInText(text, role) {
+  async findInText(text: string, role: FieldRole) {
     const candidates: { field: CatalogField; score: number }[] = [];
     for (const field of this.catalog().filter((field) => field.role === role)) {
       for (const term of this.fieldTerms(field)) {
@@ -164,7 +164,7 @@ export class ExactFieldMatchStrategy {
     return candidates[0]?.field || null;
   }
 
-  directMatches(clean, roles) {
+  directMatches(clean: string, roles: FieldRole[]) {
     const byField = new Map();
     for (const field of this.catalog().filter((field) => roles.includes(field.role))) {
       for (const term of this.fieldTerms(field)) {
@@ -179,7 +179,7 @@ export class ExactFieldMatchStrategy {
     return [...byField.values()];
   }
 
-  fieldTerms(field) {
+  fieldTerms(field: CatalogField) {
     return [
       ...new Set(
         [field.label, field.column, ...(field.synonyms || []), ...this.activeTerms(field)]
@@ -189,7 +189,7 @@ export class ExactFieldMatchStrategy {
     ];
   }
 
-  activeTerms(field) {
+  activeTerms(field: CatalogField) {
     return [this.displayLabel(field), ...this.localizedTerms(field)].map(norm).filter(Boolean);
   }
 }
@@ -201,7 +201,7 @@ export class FuseFieldMatchStrategy {
     this.fieldFuse = fieldFuse;
   }
 
-  async matchPhrase(phrase, roles) {
+  async matchPhrase(phrase: string, roles: FieldRole[]) {
     const fuse = this.fieldFuse();
     if (!fuse) return null;
     const results = fuse
@@ -233,11 +233,11 @@ export class SemanticFieldMatchStrategy {
     this.catalog = catalog;
   }
 
-  async matchPhrase(phrase, roles) {
+  async matchPhrase(phrase: string, roles: FieldRole[]) {
     return this.semanticMatcher.matchField(norm(phrase), roles, this.catalog());
   }
 
-  async findInText(text, role) {
+  async findInText(text: string, role: FieldRole) {
     const result = await this.semanticMatcher.matchField(text, [role], this.catalog());
     return result?.ambiguous ? null : result?.field || null;
   }
@@ -260,8 +260,8 @@ export class FieldResolver {
   }
 
   async resolvePhrase(
-    phrase,
-    roles,
+    phrase: string,
+    roles: FieldRole[],
     clarification: ClarificationPending | null | undefined = null,
   ) {
     if (!norm(phrase)) return { field: undefined };
@@ -292,7 +292,7 @@ export class FieldResolver {
     return { field: undefined };
   }
 
-  async findInText(text, role) {
+  async findInText(text: string, role: FieldRole) {
     for (const strategy of this.strategies) {
       const field = await strategy.findInText?.(text, role);
       if (field) return field;

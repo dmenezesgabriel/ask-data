@@ -9,7 +9,7 @@ import sampleSalesYaml from './datasources/sample-sales.yaml?raw';
 
 // ── Storage ──────────────────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'persisted_datasources_v1';
+const STORAGE_KEY = 'persisted_datasources_v2';
 
 function loadPersistedDatasources(): DataSourceConfig[] {
   try {
@@ -22,7 +22,11 @@ function loadPersistedDatasources(): DataSourceConfig[] {
 
 function persistDatasources(datasources: DataSourceConfig[]): void {
   const userDatasources = datasources.filter((d) => d.source === 'user');
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(userDatasources));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userDatasources));
+  } catch {
+    // localStorage may be unavailable or at quota; proceed without persisting
+  }
 }
 
 // ── Seed datasources (YAML-sourced) ──────────────────────────────────────────
@@ -60,12 +64,10 @@ export function registerSeedDatasource(d: DataSourceConfig): void {
   }
 })();
 
-// ── In-memory registry ────────────────────────────────────────────────────────
-
-let _userDatasources: DataSourceConfig[] = loadPersistedDatasources();
+// ── Registry (reads from storage on every call — no stale in-memory cache) ───
 
 export function datasourceList(): DataSourceConfig[] {
-  return [..._seedDatasources, ..._userDatasources];
+  return [..._seedDatasources, ...loadPersistedDatasources()];
 }
 
 export function getDatasourceBySlug(slug: string): DataSourceConfig | undefined {
@@ -96,15 +98,14 @@ export function addDatasource(
   const datasource: DataSourceConfig = {
     ...createEmptyDatasourceConfig(),
     ...partial,
-    id: `datasource-${Date.now()}`,
+    id: crypto.randomUUID(),
     slug,
     source: 'user',
     createdAt: now,
     updatedAt: now,
   };
 
-  _userDatasources = [..._userDatasources, datasource];
-  persistDatasources(_userDatasources);
+  persistDatasources([...loadPersistedDatasources(), datasource]);
   return datasource;
 }
 
@@ -112,7 +113,8 @@ export function updateDatasource(
   slug: string,
   changes: Partial<DataSourceConfig>,
 ): DataSourceConfig {
-  const existing = _userDatasources.find((d) => d.slug === slug);
+  const current = loadPersistedDatasources();
+  const existing = current.find((d) => d.slug === slug);
   if (!existing) {
     throw new Error(`Cannot update datasource: slug "${slug}" not found or is read-only`);
   }
@@ -125,8 +127,7 @@ export function updateDatasource(
     updatedAt: new Date().toISOString(),
   };
 
-  _userDatasources = _userDatasources.map((d) => (d.slug === slug ? updated : d));
-  persistDatasources(_userDatasources);
+  persistDatasources(current.map((d) => (d.slug === slug ? updated : d)));
   return updated;
 }
 
@@ -136,6 +137,5 @@ export function deleteDatasource(slug: string): void {
   if (datasource.source === 'yaml') {
     throw new Error(`Cannot delete YAML-seeded datasource: "${slug}"`);
   }
-  _userDatasources = _userDatasources.filter((d) => d.slug !== slug);
-  persistDatasources(_userDatasources);
+  persistDatasources(loadPersistedDatasources().filter((d) => d.slug !== slug));
 }

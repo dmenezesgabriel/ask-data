@@ -408,6 +408,12 @@ Given('a user datasource {string} exists', async function (this: BrowserWorld, n
   await this.page.waitForSelector('app-dashboard', { timeout: 10000 });
 });
 
+Given('a legacy v1 datasource {string} exists', async function (this: BrowserWorld, name: string) {
+  await this.injectLegacyDatasource(name);
+  await this.page.reload();
+  await this.page.waitForSelector('app-dashboard', { timeout: 10000 });
+});
+
 When(
   'I delete the datasource {string} from the list',
   async function (this: BrowserWorld, name: string) {
@@ -504,7 +510,7 @@ Then(
   'the datasource {string} should exist in the registry',
   async function (this: BrowserWorld, slug: string) {
     const exists = await this.page.evaluate((s) => {
-      const raw = localStorage.getItem('persisted_datasources_v1');
+      const raw = localStorage.getItem('persisted_datasources_v2');
       if (!raw) return false;
       const items: Array<{ slug: string }> = JSON.parse(raw);
       return items.some((d) => d.slug === s);
@@ -535,7 +541,7 @@ Then(
   'the datasource {string} should have URL {string}',
   async function (this: BrowserWorld, slug: string, url: string) {
     const storedUrl = await this.page.evaluate((s) => {
-      const raw = localStorage.getItem('persisted_datasources_v1');
+      const raw = localStorage.getItem('persisted_datasources_v2');
       if (!raw) return null;
       const items: Array<{ slug: string; url: string }> = JSON.parse(raw);
       return items.find((d) => d.slug === s)?.url ?? null;
@@ -683,7 +689,7 @@ Then(
   'the legacy question should have dataSourceSlugs referencing that datasource',
   async function (this: BrowserWorld) {
     const hasSlugs = await this.page.evaluate(() => {
-      const raw = localStorage.getItem('persisted_questions_v1');
+      const raw = localStorage.getItem('persisted_questions_v2');
       if (!raw) return false;
       const questions: Array<{ slug: string; dataSourceSlugs?: string[] }> = JSON.parse(raw);
       const legacy = questions.find((q) => q.slug === 'legacy-q');

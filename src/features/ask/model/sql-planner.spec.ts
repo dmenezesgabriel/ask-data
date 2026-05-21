@@ -203,6 +203,23 @@ describe('SqlPlanner', () => {
       );
       expect(result.sql).toContain('LIMIT 10');
     });
+
+    it('generates valid CAST expressions for two dimensions (UT-001)', () => {
+      const planner = makePlanner({
+        relationships: () => threeTableRelationships,
+      });
+      const result = planner.plan(
+        makeIntent({
+          analysisType: 'ranking',
+          dimensions: [regionField, categoryField],
+        }),
+      );
+      expect(result.error).toBeUndefined();
+      expect(result.sql).toContain('CAST(d1 AS VARCHAR)');
+      expect(result.sql).toContain('CAST(d2 AS VARCHAR)');
+      expect(result.sql).not.toContain('CAST(d1 AS VARCHAR}');
+      expect(result.sql).not.toContain('CAST(d2 AS VARCHAR}');
+    });
   });
 
   describe('plan() - trend', () => {

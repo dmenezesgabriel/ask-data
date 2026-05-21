@@ -9,12 +9,15 @@ import '../../features/dashboard/ui/dashboard-list';
 
 import { html, LitElement, type TemplateResult } from 'lit';
 
-import { addDashboard, getDashboardBySlug } from '../../features/dashboard/data/dashboard-registry';
+import { container } from '../../composition/app-container';
 import { createEmptyDashboardConfig } from '../../features/dashboard/model/dashboard-config';
-import { addDatasource } from '../../features/datasource/data/datasource-registry';
-import { addQuestion } from '../../features/question/data/question-registry';
-import { createEmptyQuestionConfig } from '../../features/question/model/question-config';
 import { parseHash, type Route, routeToHash } from '../routing/hash-routes';
+
+function slugToTitle(s: string): string {
+  if (!s) return 'New Dashboard';
+  if (s === 'new') return 'New Dashboard';
+  return s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export class AppShell extends LitElement {
   static override readonly properties = {
@@ -47,23 +50,47 @@ export class AppShell extends LitElement {
     window.location.hash = routeToHash(route);
   }
 
-  private _onDashboardCreate(e: CustomEvent<{ name: string }>): void {
-    const cfg = createEmptyDashboardConfig(e.detail.name);
-    const slug = addDashboard(cfg);
-    this._navigate({ view: 'editor', slug, isNew: true });
+  private async _onDashboardCreate(e: CustomEvent<{ name: string }>): Promise<void> {
+    try {
+      const name = e.detail.name;
+      await container.createDashboard!.execute({ name });
+      const slug =
+        name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '') || 'dashboard';
+      this._navigate({ view: 'editor', slug, isNew: true });
+    } catch (err) {
+      console.error('[app-shell] Failed to create dashboard:', err);
+    }
   }
 
-  private _onQuestionCreate(e: CustomEvent<{ name: string }>): void {
-    const q = addQuestion({
-      ...createEmptyQuestionConfig(),
-      title: e.detail.name,
-    });
-    this._navigate({ view: 'question-editor', slug: q.slug, isNew: true });
+  private async _onQuestionCreate(e: CustomEvent<{ name: string }>): Promise<void> {
+    try {
+      const q = await container.createQuestion!.execute({
+        title: e.detail.name,
+        type: 'chart',
+        chartType: 'bar',
+        queryType: 'sql',
+        query: '',
+      });
+      this._navigate({ view: 'question-editor', slug: q.slug, isNew: true });
+    } catch (err) {
+      console.error('[app-shell] Failed to create question:', err);
+    }
   }
 
-  private _onDatasourceCreate(e: CustomEvent<{ name: string }>): void {
-    const ds = addDatasource({ name: e.detail.name, type: 'csv', url: '' });
-    this._navigate({ view: 'datasource-editor', slug: ds.slug, isNew: true });
+  private async _onDatasourceCreate(e: CustomEvent<{ name: string }>): Promise<void> {
+    try {
+      const ds = await container.createDatasource!.execute({
+        name: e.detail.name,
+        type: 'csv',
+        url: '',
+      });
+      this._navigate({ view: 'datasource-editor', slug: ds.slug, isNew: true });
+    } catch (err) {
+      console.error('[app-shell] Failed to create datasource:', err);
+    }
   }
 
   override render(): TemplateResult {
@@ -107,15 +134,9 @@ export class AppShell extends LitElement {
 
     if (r.view === 'editor') {
       const { slug, isNew } = r;
-      function slugToTitle(s: string) {
-        if (!s) return 'New Dashboard';
-        if (s === 'new') return 'New Dashboard';
-        return s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-      }
-
       const config = isNew
         ? createEmptyDashboardConfig(slugToTitle(slug))
-        : getDashboardBySlug(slug);
+        : container.getDashboardBySlug.execute(slug);
       if (!config) {
         return html`
           <div class="dashboard-not-found">

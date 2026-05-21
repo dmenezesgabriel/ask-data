@@ -38,3 +38,20 @@ Feature: Datasource collection page
     Then the top navigation should have a "Datasources" link
     When I click the "Datasources" nav link
     Then I should be on the datasources collection page
+
+  # E2E-001: datasource created via AppShell persists to localStorage v2 and survives reload
+  Scenario: Created datasource persists across page reload
+    When I navigate to "#/datasources"
+    And I click "New Datasource"
+    And I enter the datasource name "Persistent DS"
+    And I click "Create"
+    Then I should be on a datasource editor page
+    When I reload the app
+    And I navigate to "#/datasources"
+    Then the datasource list should contain "Persistent DS"
+
+  # REG-001: legacy v1 data migrates to v2 on first boot — no data loss
+  Scenario: Legacy v1 datasources are preserved after v1-to-v2 migration
+    Given a legacy v1 datasource "Migrated DS" exists
+    When I navigate to "#/datasources"
+    Then the datasource list should contain "Migrated DS"

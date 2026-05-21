@@ -56,7 +56,7 @@ export class ValueFilterResolver {
     return this.toFilters(q, byValue, clarification);
   }
 
-  findMatches(q) {
+  findMatches(q: string) {
     const matches: ValueItem[] = [];
     const seen = new Set<string>();
     const addMatch = (item: ValueItem, matchScore = 1, matchSource = 'exact') => {
@@ -114,7 +114,12 @@ export class ValueFilterResolver {
     }
   }
 
-  resolveAmbiguousField(q, items, uniqueFields, clarification) {
+  resolveAmbiguousField(
+    q: string,
+    items: ValueItem[],
+    uniqueFields: ValueItem[],
+    clarification: ClarificationPending | null | undefined,
+  ) {
     const clarified =
       clarification?.slot === 'filterField' &&
       clarification.valueNormalized === items[0].normalizedValue
@@ -131,7 +136,7 @@ export class ValueFilterResolver {
   }
 
   toFilters(
-    q,
+    q: string,
     byValue: Map<string, ValueItem[]>,
     clarification: ClarificationPending | null | undefined = null,
   ) {

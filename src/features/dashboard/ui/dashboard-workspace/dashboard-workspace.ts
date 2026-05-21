@@ -259,10 +259,14 @@ export class DashboardWorkspace extends LitElement {
       widgetId: widget.id,
       query: widget.query ?? '',
     });
-    const result = await this._askEngine.ask(widget.query, {});
+    const result = await this._askEngine.ask(widget.query ?? '', {});
     if ('rows' in result && 'sql' in result) {
-      const labels = result.rows.map((r) => String(r.label ?? r.name ?? ''));
-      const values = result.rows.map((r) => Number(r.value ?? r.sales ?? r.count ?? 0));
+      const labels = result.rows.map((r: Record<string, CellValue>) =>
+        String(r['label'] ?? r['name'] ?? ''),
+      );
+      const values = result.rows.map((r: Record<string, CellValue>) =>
+        Number(r['value'] ?? r['sales'] ?? r['count'] ?? 0),
+      );
       return { labels, values, rows: result.rows };
     }
     return { labels: [], values: [] };
@@ -278,17 +282,6 @@ export class DashboardWorkspace extends LitElement {
     const isSql = widget.queryType === 'sql' || this._isSqlQuery(widget.query);
 
     return isSql ? this._executeSqlQuery(widget) : this._executeAskQuery(widget);
-  }
-
-  private _syncSheetData(): void {
-    if (!this.activeSheetId) return;
-    if (this._dataCache[this.activeSheetId]) {
-      this.sheetData = { ...this._dataCache[this.activeSheetId] };
-      this.widgetErrors = { ...(this._widgetErrorCache[this.activeSheetId] ?? {}) };
-      this._emitSheetDataLoaded({ dashboardId: this.activeSheetId, source: 'cache' });
-    } else {
-      this._refreshWidgetData();
-    }
   }
 
   private _onWidgetSelect(e: CustomEvent<{ id: string }>): void {

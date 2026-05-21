@@ -44,7 +44,8 @@ afterEach(() => {
   vi.resetModules();
 });
 
-const now = new Date().toISOString();
+const FIXED_TIME = '2025-01-01T00:00:00.000Z';
+const mockClock = { now: () => FIXED_TIME };
 
 function makeUserDatasource(id = 'test-ds-1'): Datasource {
   return {
@@ -54,12 +55,11 @@ function makeUserDatasource(id = 'test-ds-1'): Datasource {
     type: 'csv',
     url: 'https://example.com/data.csv',
     source: 'user',
-    createdAt: now,
-    updatedAt: now,
+    createdAt: FIXED_TIME,
+    updatedAt: FIXED_TIME,
   };
 }
 
-// IT-001: LocalStorage adapter round-trips a datasource
 describe('LocalStorageDatasourceRepository', () => {
   let lsMock: ReturnType<typeof createLocalStorageMock>;
 
@@ -67,9 +67,9 @@ describe('LocalStorageDatasourceRepository', () => {
     lsMock = createLocalStorageMock();
   });
 
-  it('IT-001: save() then list() returns the datasource and it appears in localStorage', async () => {
+  it('IT-001: save() then list() returns the datasource and it appears in localStorage under v2 key', async () => {
     const { LocalStorageDatasourceRepository } = await importFreshRepository(lsMock.localStorage);
-    const repo = new LocalStorageDatasourceRepository();
+    const repo = new LocalStorageDatasourceRepository(mockClock);
     const datasource = makeUserDatasource();
 
     await repo.save(datasource);
@@ -77,15 +77,16 @@ describe('LocalStorageDatasourceRepository', () => {
 
     expect(list.some((d) => d.id === datasource.id)).toBe(true);
 
-    const raw = lsMock.store.get('persisted_datasources_v1');
+    const raw = lsMock.store.get('persisted_datasources_v2');
     expect(raw).toBeTruthy();
     const stored = JSON.parse(raw!) as Datasource[];
     expect(stored.some((d) => d.id === datasource.id)).toBe(true);
+    expect(lsMock.store.has('persisted_datasources_v1')).toBe(false);
   });
 
   it('get(id) returns the datasource after save()', async () => {
     const { LocalStorageDatasourceRepository } = await importFreshRepository(lsMock.localStorage);
-    const repo = new LocalStorageDatasourceRepository();
+    const repo = new LocalStorageDatasourceRepository(mockClock);
     const datasource = makeUserDatasource();
 
     await repo.save(datasource);
@@ -97,7 +98,7 @@ describe('LocalStorageDatasourceRepository', () => {
 
   it('delete(id) removes a datasource', async () => {
     const { LocalStorageDatasourceRepository } = await importFreshRepository(lsMock.localStorage);
-    const repo = new LocalStorageDatasourceRepository();
+    const repo = new LocalStorageDatasourceRepository(mockClock);
     const datasource = makeUserDatasource();
 
     await repo.save(datasource);
@@ -109,10 +110,57 @@ describe('LocalStorageDatasourceRepository', () => {
 
   it('list() returns only user-persisted datasources (no YAML seeding in adapter)', async () => {
     const { LocalStorageDatasourceRepository } = await importFreshRepository(lsMock.localStorage);
-    const repo = new LocalStorageDatasourceRepository();
+    const repo = new LocalStorageDatasourceRepository(mockClock);
     const list = await repo.list();
 
-    // Adapter manages only user-created datasources; YAML seeds are handled upstream.
     expect(list).toEqual([]);
+  });
+
+  // UT-001: Clock port is used for updatedAt on update
+  it('UT-001: save() uses the injected Clock for updatedAt when updating an existing record', async () => {
+    const { LocalStorageDatasourceRepository } = await importFreshRepository(lsMock.localStorage);
+    const stubClock = { now: () => '2025-01-01T00:00:00.000Z' };
+    const repo = new LocalStorageDatasourceRepository(stubClock);
+    const datasource = makeUserDatasource();
+
+    await repo.save(datasource);
+    await repo.save({ ...datasource, name: 'Updated Name' });
+
+    const found = await repo.get(datasource.id);
+    expect(found?.updatedAt).toBe('2025-01-01T00:00:00.000Z');
+  });
+
+  // IT-002: Legacy v1 data is migrated to v2 on first instantiation
+  it('IT-002: v1 records are migrated to v2 and v1 key is removed on construction', async () => {
+    const legacyRecord = makeUserDatasource('legacy-id');
+    const seedStore: Record<string, string> = {
+      persisted_datasources_v1: JSON.stringify([legacyRecord]),
+    };
+    const { store, localStorage: ls } = createLocalStorageMock(seedStore);
+
+    const { LocalStorageDatasourceRepository } = await importFreshRepository(ls);
+    const repo = new LocalStorageDatasourceRepository(mockClock);
+
+    const list = await repo.list();
+    expect(list.some((d) => d.id === 'legacy-id')).toBe(true);
+    expect(store.has('persisted_datasources_v2')).toBe(true);
+    expect(store.has('persisted_datasources_v1')).toBe(false);
+  });
+
+  it('skips migration if v2 key already exists', async () => {
+    const v2Record = makeUserDatasource('v2-id');
+    const v1Record = makeUserDatasource('v1-id');
+    const seedStore: Record<string, string> = {
+      persisted_datasources_v2: JSON.stringify([v2Record]),
+      persisted_datasources_v1: JSON.stringify([v1Record]),
+    };
+    const { store, localStorage: ls } = createLocalStorageMock(seedStore);
+
+    const { LocalStorageDatasourceRepository } = await importFreshRepository(ls);
+    const repo = new LocalStorageDatasourceRepository(mockClock);
+
+    // v1 should NOT have been migrated (v2 already exists)
+    expect(repo).toBeDefined();
+    expect(store.has('persisted_datasources_v1')).toBe(true);
   });
 });

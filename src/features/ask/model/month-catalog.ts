@@ -29,7 +29,7 @@ export class MonthCatalog {
       .sort((a, b) => b.term.length - a.term.length);
   }
 
-  find(text) {
+  find(text: unknown) {
     for (const item of this.months) {
       const pattern = new RegExp(`\\b${escapeRegExp(item.term)}\\b(?:\\s+((?:19|20)\\d{2}))?`, 'i');
       const match = String(text || '').match(pattern);
@@ -44,7 +44,7 @@ export class MonthCatalog {
     return null;
   }
 
-  has(text) {
+  has(text: unknown) {
     return !!this.find(text);
   }
 }

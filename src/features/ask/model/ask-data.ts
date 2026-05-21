@@ -4,10 +4,18 @@ import Fuse from 'fuse.js';
 
 import { createLogger } from '../../../shared/observability/logger';
 import type {
+  AskIntent,
   CatalogField,
+  ClarificationPending,
+  DateRange,
+  DiagnosticDateParse,
+  DiagnosticFilterSelectivity,
+  DiagnosticJoinFanout,
   Entity,
   FieldFuse,
+  IntentFilter,
   ParseOptions,
+  PlannedSql,
   Relationship,
   ValueFuse,
   ValueItem,
@@ -17,6 +25,7 @@ import { fieldKey, norm, toRows } from '../../../shared/utils/utils';
 import { CatalogBuilder } from './catalog-builder';
 import { DateRangeParser } from './date-range-parser';
 import { DiagnosticRunner } from './diagnostic-runner';
+import type { Labelable } from './intent-describer';
 import { IntentDescriber } from './intent-describer';
 import { NarrativeGenerator, type NarrativeResult } from './narrative-generator';
 import { QuestionParser } from './question-parser';
@@ -231,38 +240,43 @@ export class AskDataEngine {
     return buildVocabulary(this.askConfig.vocabulary);
   }
 
-  terms(group) {
+  terms(group: string) {
     return this.termMatcher.terms(group);
   }
 
-  termAlternation(group) {
+  termAlternation(group: string) {
     return this.termMatcher.alternation(group);
   }
 
-  hasTerm(q, group) {
+  hasTerm(q: string, group: string) {
     return this.termMatcher.has(q, group);
   }
 
-  localizedMapValue(map, fallback) {
+  localizedMapValue<T>(map: Record<string, T> | null | undefined, fallback: T): T {
     if (!map) return fallback;
     return (
-      map[this.locale] ||
-      map[this.localeFamily] ||
-      Object.entries(map).find(([key]) => key.toLowerCase().startsWith(this.localeFamily))?.[1] ||
+      (map[this.locale] as T | undefined) ||
+      (map[this.localeFamily] as T | undefined) ||
+      (Object.entries(map).find(([key]) => key.toLowerCase().startsWith(this.localeFamily))?.[1] as
+        | T
+        | undefined) ||
       fallback
     );
   }
 
-  localizedTerms(item) {
+  localizedTerms(item: {
+    localizedSynonyms?: Record<string, string[]>;
+    localizedTerms?: Record<string, string[]>;
+  }): string[] {
     const map = item.localizedSynonyms || item.localizedTerms;
     if (!map) return [];
-    const active = this.localizedMapValue(map, []);
-    const all = Object.values(map).flat().filter(Boolean);
+    const active = this.localizedMapValue(map, [] as string[]);
+    const all = Object.values(map).flat().filter(Boolean) as string[];
     return [...new Set([...(Array.isArray(active) ? active : []), ...all])];
   }
 
-  displayLabel(item) {
-    return this.localizedMapValue(item.labels, item.label || item.column || '');
+  displayLabel(item: Labelable): string {
+    return this.localizedMapValue(item.labels ?? {}, item.label || item.column || '') as string;
   }
 
   async initialize() {
@@ -356,7 +370,7 @@ export class AskDataEngine {
     });
   }
 
-  async ask(question, options: ParseOptions = {}) {
+  async ask(question: string, options: ParseOptions = {}) {
     const askSpan = this.logger.span('ask', { question });
     const totalStarted = performance.now();
 
@@ -488,27 +502,27 @@ export class AskDataEngine {
     }
   }
 
-  parseQuestion(question, options: ParseOptions = {}) {
+  parseQuestion(question: string, options: ParseOptions = {}) {
     return this.questionParser.parse(question, options);
   }
 
-  async evaluateJoinFanout(fanout) {
+  async evaluateJoinFanout(fanout: DiagnosticJoinFanout) {
     return this.diagnosticRunner.evaluateJoinFanout(fanout);
   }
 
-  async evaluateFilterSelectivity(selectivity) {
+  async evaluateFilterSelectivity(selectivity: DiagnosticFilterSelectivity) {
     return this.diagnosticRunner.evaluateFilterSelectivity(selectivity);
   }
 
-  async evaluateDateParse(dateParse) {
+  async evaluateDateParse(dateParse: DiagnosticDateParse) {
     return this.diagnosticRunner.evaluateDateParse(dateParse);
   }
 
-  async evaluateDiagnostics(planned) {
+  async evaluateDiagnostics(planned: PlannedSql) {
     return this.diagnosticRunner.evaluateDiagnostics(planned.diagnostics || {});
   }
 
-  fieldClarification(pending, message, fields) {
+  fieldClarification(pending: ClarificationPending, message: string, fields: CatalogField[]) {
     const candidates = fields.map((field) => ({
       label: `${this.displayLabel(field)} (${field.table}.${field.column})`,
       fieldId: field.id,
@@ -566,39 +580,39 @@ export class AskDataEngine {
     );
   }
 
-  timeSqlExpression(field, alias) {
+  timeSqlExpression(field: CatalogField, alias: string) {
     return this.sqlPlanner.timeSqlExpression(field, alias);
   }
 
-  planSql(intent) {
+  planSql(intent: AskIntent) {
     return this.sqlPlanner.plan(intent);
   }
 
-  buildJoinPlan(baseTable, neededTables) {
+  buildJoinPlan(baseTable: string, neededTables: string[]) {
     return this.sqlPlanner.buildJoinPlan(baseTable, neededTables);
   }
 
-  findRelationshipPath(startTables, targetTable) {
+  findRelationshipPath(startTables: string[], targetTable: string) {
     return this.sqlPlanner.findRelationshipPath(startTables, targetTable);
   }
 
-  describeMetricPart(intent) {
+  describeMetricPart(intent: AskIntent) {
     return this.intentDescriber.describeMetricPart(intent);
   }
 
-  describeFilterParts(filters) {
+  describeFilterParts(filters: IntentFilter[]) {
     return this.intentDescriber.describeFilterParts(filters);
   }
 
-  describeDatePart(dateRange) {
+  describeDatePart(dateRange: DateRange | null | undefined) {
     return this.intentDescriber.describeDatePart(dateRange);
   }
 
-  describeIntent(intent) {
+  describeIntent(intent: AskIntent) {
     return this.intentDescriber.describeIntent(intent);
   }
 
-  describeEvidence(intent) {
+  describeEvidence(intent: AskIntent) {
     return this.intentDescriber.describeEvidence(intent);
   }
 }

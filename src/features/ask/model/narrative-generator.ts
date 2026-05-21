@@ -495,7 +495,7 @@ export class NarrativeGenerator {
     return 'Analysis complete. Check the narratives above for details.';
   }
 
-  generateNaturalLanguageQuestion(summary: string, intent: AskIntent): string {
+  generateNaturalLanguageQuestion(_summary: string, intent: AskIntent): string {
     const question = intent.question || '';
 
     const verb = intent.analysisType === 'trend' ? 'over time' : 'by category';

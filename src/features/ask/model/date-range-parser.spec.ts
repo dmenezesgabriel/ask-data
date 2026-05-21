@@ -90,7 +90,7 @@ describe('DateRangeParser', () => {
     });
 
     it('returns null dateRange when field is null', () => {
-      const result = parser.parse('sales in 2017', null as unknown as DateProfile);
+      const result = parser.parse('sales in 2017', null);
       expect(result.dateRange).toBeNull();
     });
 

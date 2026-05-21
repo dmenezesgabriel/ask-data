@@ -1,4 +1,18 @@
 import type { CatalogField, DateRange } from '../../../shared/types/index';
+
+type ChronoResult = {
+  text: string;
+  index: number;
+  start?: { date?: () => Date };
+  end?: { date?: () => Date };
+};
+
+type RelativePeriodSpec = {
+  group: string;
+  start?: string;
+  end?: string;
+  calendar?: string;
+};
 import {
   addDays,
   addMonths,
@@ -20,7 +34,7 @@ export class RelativePeriodDateParser {
     this.textTools = textTools;
   }
 
-  parse(question, field) {
+  parse(question: string, field: CatalogField) {
     const profile = field.dateProfile;
     const specs = [
       { group: 'latestYear', start: profile?.latestYearStart, end: profile?.latestYearEnd },
@@ -41,7 +55,7 @@ export class RelativePeriodDateParser {
     return null;
   }
 
-  rangeFor(spec) {
+  rangeFor(spec: RelativePeriodSpec) {
     if (!spec.calendar) return spec.start && spec.end ? { start: spec.start, end: spec.end } : null;
     if (spec.calendar === 'year') {
       const year = new Date().getFullYear();
@@ -64,7 +78,7 @@ export class NamedMonthDateParser {
     this.textTools = textTools;
   }
 
-  parse(question, field) {
+  parse(question: string, field: CatalogField) {
     const match = this.monthCatalog.find(question);
     if (!match) return null;
     const questionWithoutDate = this.textTools.removeRange(
@@ -140,7 +154,7 @@ export class ChronoDateParser {
     this.textTools = textTools;
   }
 
-  parse(question, field) {
+  parse(question: string, field: CatalogField) {
     if (!this.primaryParser?.parse) return null;
     const result =
       this.findResult(
@@ -159,7 +173,7 @@ export class ChronoDateParser {
     };
   }
 
-  findResult(results, strictNumeric = false) {
+  findResult(results: ChronoResult[], strictNumeric = false) {
     return results.find(
       (result) =>
         this.hasDateCue(result.text) &&
@@ -167,7 +181,7 @@ export class ChronoDateParser {
     );
   }
 
-  hasDateCue(text) {
+  hasDateCue(text: string) {
     const normalized = norm(text);
     return (
       this.termMatcher.has(normalized, 'dateCue') ||
@@ -177,11 +191,11 @@ export class ChronoDateParser {
     );
   }
 
-  isAmbiguousNumericDate(text) {
+  isAmbiguousNumericDate(text: unknown) {
     return /\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?/.test(String(text || ''));
   }
 
-  toDateRange(result, field) {
+  toDateRange(result: ChronoResult, field: CatalogField) {
     const text = norm(result.text);
     const startDate = result.start?.date?.();
     if (!startDate || Number.isNaN(startDate.getTime())) return null;
@@ -219,7 +233,7 @@ export class ExplicitYearDateParser {
     this.textTools = textTools;
   }
 
-  parse(question, field) {
+  parse(question: string, field: CatalogField) {
     const match = String(question || '').match(/\b(?:in|em|no|na)?\s*((?:19|20)\d{2})\b/i);
     if (!match) return null;
     const year = Number(match[1]);
@@ -259,7 +273,7 @@ export class DateRangeParser {
     ];
   }
 
-  parse(question, field) {
+  parse(question: string, field: CatalogField | null | undefined) {
     if (!field) return { dateRange: null, questionWithoutDate: question };
     for (const parser of this.parsers) {
       const result = parser.parse(question, field);

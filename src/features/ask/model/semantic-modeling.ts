@@ -145,10 +145,6 @@ export class AutoFieldRoleDetector {
     return { role: 'dimension', confidence: 0.6, reasoning: 'Default role for unknown types' };
   }
 
-  private isNumericType(type: string): boolean {
-    return /^(?:int|bigint|float|double|decimal)/i.test(type);
-  }
-
   private detectNumericRole(
     signature: FieldSignature,
     normalizedColumn: string,

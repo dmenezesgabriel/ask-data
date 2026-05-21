@@ -358,7 +358,7 @@ export class BrowserWorld {
         existing.push(q);
         localStorage.setItem(key, JSON.stringify(existing));
       },
-      { key: 'persisted_questions_v1', q: question as Record<string, unknown> },
+      { key: 'persisted_questions_v2', q: question as Record<string, unknown> },
     );
     this._lastQuestionSlug = slug;
   }
@@ -418,9 +418,40 @@ export class BrowserWorld {
         existing.push(d);
         localStorage.setItem(key, JSON.stringify(existing));
       },
-      { key: 'persisted_datasources_v1', d: ds as Record<string, unknown> },
+      { key: 'persisted_datasources_v2', d: ds as Record<string, unknown> },
     );
     this._lastDatasourceSlug = slug;
+  }
+
+  async injectLegacyDatasource(
+    name: string,
+    url = 'https://example.com/legacy.csv',
+  ): Promise<void> {
+    const slug =
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') || 'datasource';
+    const now = new Date().toISOString();
+    const ds = {
+      id: slug,
+      slug,
+      name,
+      description: '',
+      type: 'csv',
+      url,
+      source: 'user',
+      createdAt: now,
+      updatedAt: now,
+    };
+    await this.page.evaluate(
+      ({ key, d }: { key: string; d: Record<string, unknown> }) => {
+        const existing: unknown[] = JSON.parse(localStorage.getItem(key) ?? '[]');
+        existing.push(d);
+        localStorage.setItem(key, JSON.stringify(existing));
+      },
+      { key: 'persisted_datasources_v1', d: ds as Record<string, unknown> },
+    );
   }
 
   async deleteDatasourceFromList(name: string): Promise<void> {
