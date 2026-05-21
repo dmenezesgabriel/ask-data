@@ -29,5 +29,3 @@ export function createClientServerContainer() {
     getDashboardBySlug: new GetDashboardBySlug(),
   };
 }
-
-export type ClientServerContainer = ReturnType<typeof createClientServerContainer>;
