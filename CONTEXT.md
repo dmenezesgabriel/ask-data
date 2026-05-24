@@ -1,100 +1,83 @@
-# Project Context: ask-data
+# Project Context
 
-ask-data is a client-side natural-language-to-SQL analytics tool. Users connect datasources (CSV, JSON, DuckDB), ask questions in plain English or Portuguese, and receive charts and tables powered by DuckDB WASM running in the browser.
+This file defines the domain vocabulary for Portable BI. Use these terms consistently in task names, requirements, acceptance criteria, tests, code, and ADRs.
 
-The codebase is being refactored toward hexagonal architecture so the UI, storage, query engine, and deployment mode are independently replaceable.
+---
 
-```mermaid
-erDiagram
-    Datasource {
-        string id
-        string name
-        string slug
-        string type
-        string createdAt
-        string updatedAt
-    }
-    Question {
-        string id
-        string name
-        string slug
-        string datasourceId
-        string createdAt
-        string updatedAt
-    }
-    Dashboard {
-        string id
-        string title
-        string slug
-        string createdAt
-        string updatedAt
-    }
-    DashboardWidget {
-        string id
-        string questionId
-        string dashboardId
-    }
-    AskDataResponse {
-        string datasourceId
-        string question
-        string sql
-        string analysisType
-    }
-    QueryResult {
-        string[] columns
-        unknown[] rows
-    }
-    Dashboard ||--o{ DashboardWidget : contains
-    DashboardWidget }o--|| Question : references
-    Question }o--|| Datasource : queries
-    AskDataResponse ||--|| QueryResult : wraps
-```
+## Domain terms
 
-## Domain Vocabulary
+### Portable BI
 
-**Datasource** — A named data source (CSV, JSON, Parquet, DuckDB) that the user connects to. Stored as `Datasource` in `src/core/entities/datasource.ts`. Previously named `DataSourceConfig` in `src/shared/types/`.
+**Definition**: A browser-first business intelligence application for connecting data, asking analytical questions, and building interactive dashboards.
+**Usage**: Product name, repository domain, and top-level system context.
+**Constraints**: The product must support client-only deployment while keeping client-server, serverless, monolith, and microservice deployment modes viable.
 
-**Question** — A saved natural-language query paired with a datasource. Stores the NL question text, the resolved SQL, and visualization preferences. Stored as `Question` in `src/core/entities/question.ts`. Previously named `QuestionConfig`.
+### Datasource
 
-**Dashboard** — A named collection of `DashboardWidget`s. Stored as `Dashboard` in `src/core/entities/dashboard.ts`.
+**Definition**: A user or seed-defined data input such as CSV, Parquet, or JSON that can be queried by the BI engine.
+**Usage**: `Datasource` entity, datasource list/editor UI, datasource repository ports, datasource connector extension point.
+**Constraints**: Storage location, loading mechanism, and execution runtime are adapter details.
 
-**DashboardWidget** — A positioned widget on a dashboard that references one `Question`. Stored as `DashboardWidget` in `src/core/entities/dashboard.ts`.
+### Question
 
-**QueryResult** — The raw result of a SQL query: `{ columns: string[]; rows: unknown[] }`. Lives in `src/core/entities/query-result.ts`.
+**Definition**: A reusable analytical query definition that can be executed directly or embedded in a dashboard widget.
+**Usage**: `Question` entity, question list/editor UI, question repository ports, ask/query workflows.
+**Constraints**: A question may be backed by SQL or natural language, but UI components must not own query execution infrastructure.
 
-**AskDataRequest** — Input to the `AskData` use case: `{ question: string; datasourceId: string }` plus optional clarification context.
+### Dashboard
 
-**AskDataResponse** — Output of the `AskData` use case: the resolved `AskIntent`, generated SQL, `QueryResult`, chart decision, and narrative. Lives in `src/core/entities/ask.ts`.
+**Definition**: A BI workspace containing widgets, layout, filters, and interactions for exploring data.
+**Usage**: `Dashboard` entity, dashboard editor/workspace UI, dashboard repository ports, widget extension point.
+**Constraints**: Dashboard persistence format must be owned behind contracts so legacy `DashboardConfig` and future dashboard entities can migrate safely.
 
-**AskIntent** — The parsed representation of a natural-language question: analysis type, metrics, dimensions, filters, date range. Internal to the ask model layer.
+### Ask Data
 
-**Port** — A TypeScript interface in `src/core/application/ports/` that defines what the application needs (e.g., `DatasourceRepository`, `QueryEngine`) without specifying how it is implemented.
+**Definition**: The natural-language analytics capability that parses a user question, plans SQL, executes it, and returns a result with explanation and visualization guidance.
+**Usage**: `AskData` use case, ask input/result UI, ask engine port, semantic modeling modules.
+**Constraints**: Text search, semantic matching, model choice, SQL execution, and database runtime are replaceable details.
 
-**Adapter** — A concrete implementation of a port. Lives in `src/adapters/`. Never imported by `core` or `features`.
+### Semantic Model
 
-**Use Case** — A class in `src/core/application/use-cases/` that orchestrates business actions using only ports and entity types. Example: `CreateDatasource`, `AskData`.
+**Definition**: Metadata that describes fields, entities, relationships, vocabulary, and defaults used to translate analytical intent into executable queries.
+**Usage**: Ask Data configuration, catalog builder, field matcher, query planner, datasource/dashboard configuration.
+**Constraints**: The model is a BI domain concept and should not depend on Fuse, MiniSearch, Transformers.js, DuckDB, or UI types.
 
-**Composition Container** — A factory function in `src/composition/` that wires concrete adapters into use cases. The app startup picks one container based on `VITE_RUNTIME_MODE`.
+### Extension Point
 
-**QueryEngine** — The port interface that abstracts SQL query execution: `execute({ datasourceId, sql }) → Promise<QueryResult>`. Implemented by `DuckDbWasmQueryEngine` in the browser and `MemoryQueryEngine` in tests.
+**Definition**: A stable platform contract that lets built-in or final-user extensions contribute behavior without importing application internals.
+**Usage**: Datasource connector, query engine, semantic matcher, widget renderer, exporter, storage provider, and UI contribution contracts.
+**Constraints**: Extensions register capabilities through composition-controlled registries and receive only stable platform APIs.
 
-**Registry** — The current (pre-refactor) term for feature-local data files that call `localStorage` directly (e.g., `datasource-registry.ts`). Being replaced by `LocalStorage*Repository` adapters.
+### Capability
 
-**YAML Seed** — Static YAML configuration files under `src/features/*/data/` that provide pre-seeded demo datasources, questions, and dashboards. Will be wrapped behind a `YamlSeed*Repository` adapter.
+**Definition**: A named behavior available at runtime, such as a datasource type, visualization type, query executor, or ask strategy.
+**Usage**: Feature flag evaluation, extension registration, UI availability checks, and deployment composition.
+**Constraints**: UI reads capabilities; it does not inspect concrete adapter classes or deployment mode.
 
-**Catalog** — The in-memory semantic description of a datasource: field names, roles (measure/dimension/time/key), sample values, cardinalities, and detected relationships. Built by `CatalogBuilder` in the ask model layer.
+### Deployment Mode
 
-**AskDataEngine** — The central class in `src/features/ask/model/ask-data.ts` that coordinates catalog building, question parsing, SQL planning, query execution, result analysis, and narrative generation. Being refactored into the `AskData` use case.
+**Definition**: A runtime topology such as client-only, client-server, serverless, monolith, or microservice deployment.
+**Usage**: Composition containers, adapter selection, HTTP/serverless entrypoints, and operational documentation.
+**Constraints**: Deployment mode must not change core application use case contracts.
 
-## Layer Rules (post-refactor)
+---
 
-```
-src/features/*/ui     →  src/core/application/use-cases
-src/core/use-cases    →  src/core/application/ports + src/core/entities
-src/adapters          →  src/core/application/ports + src/core/entities
-src/composition       →  everything (wiring only)
-src/infra             →  framework bootstrap only
-```
+## Decisions and constraints
 
-`core` must not import from `features`, `adapters`, `infra`, or `shared/ui`.
-`features` must not import from `adapters`, `infra`, or peer feature folders.
+### Architecture direction
+
+Portable BI should follow Clean Architecture dependency direction: domain and application contracts point inward, while UI, storage, frameworks, databases, HTTP, serverless handlers, and deployment wiring stay outside.
+
+### Extensibility direction
+
+Extensibility is a product requirement. Extension APIs must be explicit and stable enough for final-user plugins, while internal modules remain private.
+
+### Deployment direction
+
+Client-only deployment is a required supported mode, not a prototype shortcut. Other deployment modes must be enabled by adapters and composition rather than by changing core use cases.
+
+---
+
+## Out of scope
+
+This planning batch does not implement authentication, authorization, marketplace distribution, extension sandboxing, remote plugin installation, or production microservice extraction.

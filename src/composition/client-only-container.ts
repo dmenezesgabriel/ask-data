@@ -24,6 +24,8 @@ import { DuckDBDataSourceManager } from '@/infra/data-sources/data-source-manage
 import { duckDBManager } from '@/infra/db/db';
 import { setDbService } from '@/shared/services/db-service';
 
+import { createPlatformRegistry } from './platform-capabilities';
+
 export function createClientOnlyContainer() {
   const clock = new SystemClock();
   const idGenerator = new CryptoIdGenerator();
@@ -31,6 +33,7 @@ export function createClientOnlyContainer() {
   const questionRepo = new LocalStorageQuestionRepository(clock);
   const dashboardRepo = new LocalStorageDashboardRepository();
   const queryEngine = new DuckDbWasmQueryEngine();
+  const platformRegistry = createPlatformRegistry();
 
   setDbService({
     query: (sql) => duckDBManager.query(sql),
@@ -39,6 +42,7 @@ export function createClientOnlyContainer() {
   });
 
   return {
+    platformRegistry,
     queryEngine,
     createDatasource: new CreateDatasource(datasourceRepo, idGenerator, clock),
     updateDatasource: new UpdateDatasource(datasourceRepo, clock),

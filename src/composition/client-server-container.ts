@@ -10,13 +10,17 @@ import { GetQuestion } from '@/core/application/use-cases/questions/get-question
 import { ListQuestions } from '@/core/application/use-cases/questions/list-questions';
 import { GetDashboardBySlug } from '@/features/dashboard/model/get-dashboard-by-slug';
 
+import { createPlatformRegistry } from './platform-capabilities';
+
 export function createClientServerContainer() {
   const datasourceRepo = new HttpDatasourceRepository();
   const questionRepo = new HttpQuestionRepository();
   const dashboardRepo = new HttpDashboardRepository();
   const queryEngine = new HttpQueryEngine();
+  const platformRegistry = createPlatformRegistry();
 
   return {
+    platformRegistry,
     queryEngine,
     getDatasource: new GetDatasource(datasourceRepo),
     listDatasources: new ListDatasources(datasourceRepo),
