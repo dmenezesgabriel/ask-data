@@ -39,6 +39,7 @@ export interface Dashboard {
   widgets: DashboardWidget[];
   layout: Position[];
   filters?: DashboardFilterConfig[];
+  source?: 'yaml' | 'user';
   createdAt?: string;
   updatedAt?: string;
 }

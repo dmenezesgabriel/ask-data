@@ -5,7 +5,42 @@ import { html } from 'lit';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { vi } from 'vitest';
 
-import { addQuestion, deleteQuestion } from '../../data/question-registry';
+import type { Question } from '@/core/entities';
+import { setCatalogService } from '@/shared/services/catalog-service';
+
+const seedQuestions: Question[] = [
+  {
+    id: 'sales-by-region',
+    slug: 'sales-by-region',
+    title: 'Sales by Region',
+    type: 'chart',
+    chartType: 'bar',
+    queryType: 'sql',
+    query: 'SELECT 1',
+    source: 'yaml',
+    createdAt: '',
+    updatedAt: '',
+  },
+];
+
+function installStoryCatalog(extra: Question[] = []): void {
+  let questions = [...seedQuestions, ...extra];
+  setCatalogService({
+    listQuestions: { execute: async () => questions },
+    getQuestion: {
+      execute: async (id: string) => questions.find((item) => item.id === id) ?? null,
+    },
+    deleteQuestion: {
+      execute: async (id: string) => {
+        questions = questions.filter((item) => item.id !== id);
+      },
+    },
+    listDatasources: { execute: async () => [] },
+    getDatasource: { execute: async () => null },
+    listDashboards: { execute: async () => [] },
+    getDashboard: { execute: async () => null },
+  });
+}
 
 type QuestionListArgs = {
   onQuestionSelect: (slug: string) => void;
@@ -17,6 +52,12 @@ const meta = {
   title: 'Organisms/Question List',
   component: 'question-list',
   tags: ['autodocs'],
+  decorators: [
+    (story) => {
+      installStoryCatalog();
+      return story() as Node;
+    },
+  ],
   render: ({ onQuestionSelect, onQuestionCreate, onQuestionDelete }: QuestionListArgs) =>
     html`<question-list
       @question-select=${(e: CustomEvent<{ slug: string }>) => onQuestionSelect(e.detail.slug)}
@@ -54,7 +95,7 @@ const meta = {
       description: {
         component:
           'Landing page listing all available questions as a CRUD table. ' +
-          'Reads `questionList()` from the registry (YAML seeds + localStorage). ' +
+          'Reads through use-case-backed catalog data (YAML seeds + persisted user records). ' +
           'Each row has View, Edit, and Delete (user-created only) icon buttons.',
       },
     },
@@ -169,13 +210,25 @@ export const DeleteReadOnlyHidden: Story = {
 export const DeleteItem: Story = {
   name: 'Interaction — Delete User Question',
   tags: ['!autodocs'],
-  loaders: [
-    () => {
-      const q = addQuestion({ title: 'Story Temp Question', type: 'table' });
-      return { testSlug: q.slug };
+  decorators: [
+    (story) => {
+      installStoryCatalog([
+        {
+          id: 'story-temp-question',
+          slug: 'story-temp-question',
+          title: 'Story Temp Question',
+          type: 'table',
+          queryType: 'sql',
+          query: 'SELECT 1',
+          source: 'user',
+          createdAt: '',
+          updatedAt: '',
+        },
+      ]);
+      return story() as Node;
     },
   ],
-  play: async ({ canvas, args, loaded }) => {
+  play: async ({ canvas, args }) => {
     // The component needs to pick up the newly added question.
     // Find the delete button for our test question.
     const row = await canvas.findByText('Story Temp Question');
@@ -185,16 +238,9 @@ export const DeleteItem: Story = {
     vi.spyOn(window, 'confirm').mockReturnValueOnce(true);
     await userEvent.click(deleteBtn as HTMLElement);
 
-    await expect(args.onQuestionDelete).toHaveBeenCalledWith(loaded.testSlug);
+    await expect(args.onQuestionDelete).toHaveBeenCalledWith('story-temp-question');
     await waitFor(() => {
       expect(canvas.queryByText('Story Temp Question')).not.toBeInTheDocument();
     });
-
-    // Clean up: ensure the question is removed even if the test failed mid-way
-    try {
-      deleteQuestion(loaded.testSlug as string);
-    } catch {
-      // Already deleted — that's fine
-    }
   },
 };

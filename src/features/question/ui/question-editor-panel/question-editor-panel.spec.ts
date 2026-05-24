@@ -1,9 +1,10 @@
 import '../../../dashboard/ui/widget';
 import './index';
 
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import type { Question as QuestionConfig } from '@/core/entities';
+import type { Datasource, Question as QuestionConfig } from '@/core/entities';
+import { setCatalogService } from '@/shared/services/catalog-service';
 
 import { QuestionEditorPanel } from './question-editor-panel';
 
@@ -33,11 +34,46 @@ function cleanup(el: HTMLElement): void {
   el.remove();
 }
 
+async function updateComplete(el: QuestionEditorPanel): Promise<void> {
+  await el.updateComplete;
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await el.updateComplete;
+}
+
+function installCatalogService(): void {
+  const datasources: Datasource[] = [
+    {
+      id: 'superstore-sales',
+      slug: 'superstore-sales',
+      name: 'Superstore Sales',
+      type: 'csv',
+      url: 'https://example.com/sales.csv',
+      source: 'yaml',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+  ];
+  setCatalogService({
+    listDatasources: { execute: async () => datasources },
+    getDatasource: {
+      execute: async (id: string) => datasources.find((datasource) => datasource.id === id) ?? null,
+    },
+    listQuestions: { execute: async () => [] },
+    getQuestion: { execute: async () => null },
+    listDashboards: { execute: async () => [] },
+    getDashboard: { execute: async () => null },
+  });
+}
+
 describe('QuestionEditorPanel', () => {
+  beforeEach(() => {
+    installCatalogService();
+  });
+
   describe('_renderPreview()', () => {
     it('renders app-widget (not the old widget tag) when preview data is set', async () => {
       const el = mount({ config: makeConfig() });
-      await el.updateComplete;
+      await updateComplete(el);
 
       // Inject preview data by calling runPreview's internal state directly via the public method path:
       // We reach the preview state by accessing the private field via a cast.
@@ -47,7 +83,7 @@ describe('QuestionEditorPanel', () => {
         rows: [],
       };
       el.requestUpdate();
-      await el.updateComplete;
+      await updateComplete(el);
 
       expect(el.querySelector('app-widget')).not.toBeNull();
       expect(el.querySelector('widget')).toBeNull();
@@ -56,7 +92,7 @@ describe('QuestionEditorPanel', () => {
 
     it('does not render app-widget when there is no preview data', async () => {
       const el = mount({ config: makeConfig() });
-      await el.updateComplete;
+      await updateComplete(el);
 
       expect(el.querySelector('app-widget')).toBeNull();
       cleanup(el);
@@ -64,7 +100,7 @@ describe('QuestionEditorPanel', () => {
 
     it('renders placeholder when no datasource slugs are configured', async () => {
       const el = mount({ config: makeConfig({ dataSourceSlugs: [] }) });
-      await el.updateComplete;
+      await updateComplete(el);
 
       expect(el.querySelector('.qep-preview-placeholder')?.textContent).toContain(
         'Link a datasource',
@@ -74,7 +110,7 @@ describe('QuestionEditorPanel', () => {
 
     it('renders "Run preview" placeholder when datasource slugs are set but no preview yet', async () => {
       const el = mount({ config: makeConfig() });
-      await el.updateComplete;
+      await updateComplete(el);
 
       expect(el.querySelector('.qep-preview-placeholder')?.textContent).toContain('Run preview');
       cleanup(el);

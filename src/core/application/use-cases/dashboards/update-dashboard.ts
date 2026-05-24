@@ -1,6 +1,8 @@
 import type { Clock, DashboardRepository } from '@/core/application/ports';
 import type { Dashboard } from '@/core/entities';
 
+import { recordCatalogMutation } from '../catalog-mutation-logger';
+
 export type UpdateDashboardInput = Partial<Omit<Dashboard, 'id' | 'createdAt' | 'updatedAt'>>;
 
 export class UpdateDashboard {
@@ -15,7 +17,9 @@ export class UpdateDashboard {
       throw new Error(`Dashboard not found: ${id}`);
     }
     const updated: Dashboard = { ...existing, ...patch, id, updatedAt: this.clock.now() };
-    await this.dashboards.save(updated);
-    return updated;
+    return recordCatalogMutation('dashboard', 'update', async () => {
+      await this.dashboards.save(updated);
+      return updated;
+    });
   }
 }

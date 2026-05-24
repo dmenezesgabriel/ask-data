@@ -1,6 +1,8 @@
 import type { Clock, QuestionRepository } from '@/core/application/ports';
 import type { Question } from '@/core/entities';
 
+import { recordCatalogMutation } from '../catalog-mutation-logger';
+
 export type UpdateQuestionInput = Partial<Omit<Question, 'id' | 'createdAt' | 'updatedAt'>>;
 
 export class UpdateQuestion {
@@ -15,7 +17,9 @@ export class UpdateQuestion {
       throw new Error(`Question not found: ${id}`);
     }
     const updated: Question = { ...existing, ...patch, id, updatedAt: this.clock.now() };
-    await this.questions.save(updated);
-    return updated;
+    return recordCatalogMutation('question', 'update', async () => {
+      await this.questions.save(updated);
+      return updated;
+    });
   }
 }

@@ -1,5 +1,8 @@
 import type { Clock, IdGenerator, QuestionRepository } from '@/core/application/ports';
 import type { Question } from '@/core/entities';
+import { generateUniqueSlug, nameToSlug } from '@/shared/utils/slug';
+
+import { recordCatalogMutation } from '../catalog-mutation-logger';
 
 export type CreateQuestionInput = {
   title: string;
@@ -25,18 +28,21 @@ export class CreateQuestion {
 
   async execute(input: CreateQuestionInput): Promise<Question> {
     const now = this.clock.now();
+    const existing = await this.questions.list();
+    const slug = generateUniqueSlug(nameToSlug(input.title, 'question'), (candidate) =>
+      existing.some((question) => question.slug === candidate),
+    );
     const question: Question = {
       ...input,
       id: this.idGenerator.create(),
-      slug: input.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, ''),
+      slug,
       source: input.source ?? 'user',
       createdAt: now,
       updatedAt: now,
     };
-    await this.questions.save(question);
-    return question;
+    return recordCatalogMutation('question', 'create', async () => {
+      await this.questions.save(question);
+      return question;
+    });
   }
 }

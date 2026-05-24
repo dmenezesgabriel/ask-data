@@ -1,6 +1,8 @@
 import type { Clock, DatasourceRepository } from '@/core/application/ports';
 import type { Datasource } from '@/core/entities';
 
+import { recordCatalogMutation } from '../catalog-mutation-logger';
+
 export type UpdateDatasourceInput = Partial<Omit<Datasource, 'id' | 'createdAt' | 'updatedAt'>>;
 
 export class UpdateDatasource {
@@ -15,7 +17,9 @@ export class UpdateDatasource {
       throw new Error(`Datasource not found: ${id}`);
     }
     const updated: Datasource = { ...existing, ...patch, id, updatedAt: this.clock.now() };
-    await this.datasources.save(updated);
-    return updated;
+    return recordCatalogMutation('datasource', 'update', async () => {
+      await this.datasources.save(updated);
+      return updated;
+    });
   }
 }

@@ -1,3 +1,5 @@
+import { setCatalogService } from '@/shared/services/catalog-service';
+
 import type { AppContainer } from './client-only-container';
 import { createClientOnlyContainer } from './client-only-container';
 import { createClientServerContainer } from './client-server-container';
@@ -16,3 +18,5 @@ if (mode && mode !== 'client-only' && mode !== 'client-server') {
 // read-only fields and lacks the optional write fields — no cast needed.
 export const container: AppContainer =
   mode === 'client-server' ? createClientServerContainer() : createClientOnlyContainer();
+
+setCatalogService(container);

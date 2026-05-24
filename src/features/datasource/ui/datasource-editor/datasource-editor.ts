@@ -4,13 +4,8 @@ import '../datasource-editor-panel/datasource-editor-panel';
 import { html, LitElement, type TemplateResult } from 'lit';
 
 import type { Datasource as DataSourceConfig } from '@/core/entities';
+import { getCatalogService } from '@/shared/services/catalog-service';
 
-import {
-  addDatasource,
-  deleteDatasource,
-  getDatasourceBySlug,
-  updateDatasource,
-} from '../../datasource-service';
 import { createEmptyDatasourceConfig } from '../../model/datasource-config';
 import { serializeDatasourceYaml } from '../../model/datasource-yaml';
 
@@ -22,6 +17,7 @@ export class DatasourceEditor extends LitElement {
     _isDirty: { state: true },
     _nameError: { state: true },
     _urlError: { state: true },
+    _loadError: { state: true },
   };
 
   slug = '';
@@ -31,6 +27,7 @@ export class DatasourceEditor extends LitElement {
   private _isDirty = false;
   private _nameError = '';
   private _urlError = '';
+  private _loadError = '';
 
   override createRenderRoot(): HTMLElement | DocumentFragment {
     return this;
@@ -47,14 +44,19 @@ export class DatasourceEditor extends LitElement {
     }
   }
 
-  private _loadConfig(): void {
+  private async _loadConfig(): Promise<void> {
+    this._loadError = '';
     if (this.isNew && this.slug && this.slug !== 'new') {
       // Shell pre-created the entry; load it so the name appears pre-filled.
-      this._config = getDatasourceBySlug(this.slug) ?? createEmptyDatasourceConfig();
+      this._config =
+        ((await getCatalogService().getDatasource.execute(this.slug)) as DataSourceConfig | null) ??
+        createEmptyDatasourceConfig();
     } else if (this.isNew) {
       this._config = createEmptyDatasourceConfig();
     } else {
-      this._config = getDatasourceBySlug(this.slug) ?? null;
+      this._config = (await getCatalogService().getDatasource.execute(
+        this.slug,
+      )) as DataSourceConfig | null;
     }
     this._isDirty = false;
     this._nameError = '';
@@ -81,30 +83,38 @@ export class DatasourceEditor extends LitElement {
     return valid;
   }
 
-  private _onSave(): void {
+  private async _onSave(): Promise<void> {
     if (!this._config) return;
     if (!this._validate()) return;
-    if (this.isNew && (!this.slug || this.slug === 'new')) {
-      const saved = addDatasource({
-        name: this._config.name,
-        type: this._config.type,
-        url: this._config.url,
-        description: this._config.description,
-      });
-      window.location.hash = `#/datasource/${saved.slug}`;
-    } else {
-      updateDatasource(this.slug, this._config);
-      if (this.isNew) window.location.hash = `#/datasource/${this.slug}`;
+    try {
+      if (this.isNew && (!this.slug || this.slug === 'new')) {
+        const saved = (await getCatalogService().createDatasource!.execute({
+          name: this._config.name,
+          type: this._config.type,
+          url: this._config.url,
+          description: this._config.description,
+        })) as DataSourceConfig;
+        window.location.hash = `#/datasource/${saved.slug}`;
+      } else {
+        await getCatalogService().updateDatasource!.execute(this.slug, this._config);
+        if (this.isNew) window.location.hash = `#/datasource/${this.slug}`;
+      }
+      this._isDirty = false;
+    } catch (error) {
+      this._loadError = error instanceof Error ? error.message : String(error);
     }
-    this._isDirty = false;
   }
 
-  private _onDelete(): void {
+  private async _onDelete(): Promise<void> {
     if (!this._config || this.isNew) return;
     if (this._config.source === 'yaml') return;
     if (!confirm(`Delete "${this._config.name}"? This cannot be undone.`)) return;
-    deleteDatasource(this.slug);
-    window.location.hash = '#/datasources';
+    try {
+      await getCatalogService().deleteDatasource!.execute(this._config.id);
+      window.location.hash = '#/datasources';
+    } catch (error) {
+      this._loadError = error instanceof Error ? error.message : String(error);
+    }
   }
 
   private _onExport(): void {
@@ -125,6 +135,7 @@ export class DatasourceEditor extends LitElement {
     }
 
     return html`
+      ${this._loadError ? html`<div class="warning" role="alert">${this._loadError}</div>` : ''}
       <datasource-editor-header
         .title=${this._config.name}
         .isNew=${this.isNew}

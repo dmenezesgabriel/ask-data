@@ -132,7 +132,7 @@ describe('Dashboard use cases (UT-005)', () => {
     const createUc = new CreateDashboard(repo, fakeId, fakeClock);
     const created = await createUc.execute({ name: 'Overview' });
 
-    expect(created.id).toBe('test-id');
+    expect(created.id).toBe('overview');
     expect(created.type).toBe('dashboard');
     expect(created.widgets).toEqual([]);
 

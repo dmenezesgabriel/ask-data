@@ -4,8 +4,7 @@ import { html, LitElement, nothing, type TemplateResult } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
 
 import type { Datasource as DataSourceConfig } from '@/core/entities';
-
-import { datasourceList } from '../../data/datasource-registry';
+import { getCatalogService } from '@/shared/services/catalog-service';
 
 export class DatasourcePicker extends LitElement {
   static override readonly properties = {
@@ -13,6 +12,9 @@ export class DatasourcePicker extends LitElement {
     selectedSlugs: { type: Array },
     _filter: { state: true },
     _pendingSlugs: { state: true },
+    _items: { state: true },
+    _loading: { state: true },
+    _error: { state: true },
   };
 
   open = false;
@@ -20,6 +22,9 @@ export class DatasourcePicker extends LitElement {
 
   private _filter = '';
   private _pendingSlugs: string[] = [];
+  private _items: DataSourceConfig[] = [];
+  private _loading = false;
+  private _error = '';
   private _dialogRef = createRef<HTMLDialogElement>();
 
   override updated(changed: Map<string, unknown>): void {
@@ -27,6 +32,7 @@ export class DatasourcePicker extends LitElement {
       if (this.open) {
         this._filter = '';
         this._pendingSlugs = [...this.selectedSlugs];
+        this._loadItems();
         try {
           this._dialogRef.value?.showModal();
         } catch (err) {
@@ -50,6 +56,18 @@ export class DatasourcePicker extends LitElement {
     }
   }
 
+  private async _loadItems(): Promise<void> {
+    this._loading = true;
+    this._error = '';
+    try {
+      this._items = (await getCatalogService().listDatasources.execute()) as DataSourceConfig[];
+    } catch (error) {
+      this._error = error instanceof Error ? error.message : String(error);
+    } finally {
+      this._loading = false;
+    }
+  }
+
   private _confirm(): void {
     this.dispatchEvent(
       new CustomEvent<string[]>('datasources-selected', {
@@ -69,9 +87,40 @@ export class DatasourcePicker extends LitElement {
     this.dispatchEvent(new CustomEvent('picker-close', { bubbles: true, composed: true }));
   }
 
+  private _renderItems(items: DataSourceConfig[]): TemplateResult | TemplateResult[] {
+    if (this._loading) return html`<p class="qpicker-empty">Loading datasources...</p>`;
+    if (this._error) {
+      return html`<p class="qpicker-empty" role="alert">
+        Unable to load datasources: ${this._error}
+      </p>`;
+    }
+    if (items.length === 0) return html`<p class="qpicker-empty">No datasources found.</p>`;
+    return items.map(
+      (ds: DataSourceConfig) => html`
+        <label class="qpicker-item qpicker-item-check">
+          <input
+            type="checkbox"
+            class="qpicker-checkbox"
+            .checked=${this._pendingSlugs.includes(ds.slug)}
+            @change=${() => this._toggle(ds.slug)}
+          />
+          <span class="qpicker-item-body">
+            <span class="qpicker-item-title">${ds.name}</span>
+            ${ds.description
+              ? html`<span class="qpicker-item-desc">${ds.description}</span>`
+              : nothing}
+          </span>
+          <span class="qpicker-item-type ds-type-badge ds-type-${ds.type}"
+            >${ds.type.toUpperCase()}</span
+          >
+        </label>
+      `,
+    );
+  }
+
   override render(): TemplateResult {
     const term = this._filter.toLowerCase();
-    const items = datasourceList().filter(
+    const items = this._items.filter(
       (ds) => !term || ds.name.toLowerCase().includes(term) || ds.url.toLowerCase().includes(term),
     );
 
@@ -100,31 +149,7 @@ export class DatasourcePicker extends LitElement {
           />
         </div>
 
-        <div class="qpicker-list">
-          ${items.length === 0
-            ? html`<p class="qpicker-empty">No datasources found.</p>`
-            : items.map(
-                (ds: DataSourceConfig) => html`
-                  <label class="qpicker-item qpicker-item-check">
-                    <input
-                      type="checkbox"
-                      class="qpicker-checkbox"
-                      .checked=${this._pendingSlugs.includes(ds.slug)}
-                      @change=${() => this._toggle(ds.slug)}
-                    />
-                    <span class="qpicker-item-body">
-                      <span class="qpicker-item-title">${ds.name}</span>
-                      ${ds.description
-                        ? html`<span class="qpicker-item-desc">${ds.description}</span>`
-                        : nothing}
-                    </span>
-                    <span class="qpicker-item-type ds-type-badge ds-type-${ds.type}"
-                      >${ds.type.toUpperCase()}</span
-                    >
-                  </label>
-                `,
-              )}
-        </div>
+        <div class="qpicker-list">${this._renderItems(items)}</div>
 
         <div class="qpicker-footer">
           <ui-button

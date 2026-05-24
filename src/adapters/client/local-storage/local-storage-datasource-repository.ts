@@ -1,14 +1,21 @@
 import type { Clock, DatasourceRepository } from '@/core/application/ports';
 import type { Datasource } from '@/core/entities';
+import { createLogger } from '@/shared/observability/logger';
 
 const V2_KEY = 'persisted_datasources_v2';
 const V1_KEY = 'persisted_datasources_v1';
+const logger = createLogger('catalog-repository');
 
 function parse(raw: string | null): Datasource[] {
   if (!raw) return [];
   try {
     return JSON.parse(raw) as Datasource[];
-  } catch {
+  } catch (error) {
+    logger.error('read.error', error, {
+      assetType: 'datasource',
+      operation: 'parse',
+      result: 'failure',
+    });
     return [];
   }
 }
@@ -20,7 +27,12 @@ function loadAll(): Datasource[] {
 function persist(items: Datasource[]): void {
   try {
     localStorage.setItem(V2_KEY, JSON.stringify(items));
-  } catch {
+  } catch (error) {
+    logger.error('write.error', error, {
+      assetType: 'datasource',
+      operation: 'persist',
+      result: 'failure',
+    });
     // ignore write errors (private browsing, storage full, etc.)
   }
 }

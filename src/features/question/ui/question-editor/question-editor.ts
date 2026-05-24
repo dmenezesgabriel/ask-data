@@ -4,14 +4,9 @@ import '../question-editor-panel';
 import { html, LitElement, type TemplateResult } from 'lit';
 
 import type { Question as QuestionConfig } from '@/core/entities';
+import { getCatalogService } from '@/shared/services/catalog-service';
 
 import { createEmptyQuestionConfig } from '../../model/question-config';
-import {
-  addQuestion,
-  deleteQuestion,
-  getQuestionBySlug,
-  updateQuestion,
-} from '../../question-service';
 
 export class QuestionEditor extends LitElement {
   static override readonly properties = {
@@ -19,6 +14,7 @@ export class QuestionEditor extends LitElement {
     isNew: { type: Boolean },
     _config: { state: true },
     _isDirty: { state: true },
+    _error: { state: true },
   };
 
   slug = '';
@@ -26,6 +22,7 @@ export class QuestionEditor extends LitElement {
 
   private _config: QuestionConfig | null = null;
   private _isDirty = false;
+  private _error = '';
 
   override createRenderRoot(): HTMLElement | DocumentFragment {
     return this;
@@ -42,14 +39,19 @@ export class QuestionEditor extends LitElement {
     }
   }
 
-  private _loadConfig(): void {
+  private async _loadConfig(): Promise<void> {
+    this._error = '';
     if (this.isNew && this.slug && this.slug !== 'new') {
       // Shell pre-created the entry; load it so the title appears pre-filled.
-      this._config = getQuestionBySlug(this.slug) ?? createEmptyQuestionConfig();
+      this._config =
+        ((await getCatalogService().getQuestion.execute(this.slug)) as QuestionConfig | null) ??
+        createEmptyQuestionConfig();
     } else if (this.isNew) {
       this._config = createEmptyQuestionConfig();
     } else {
-      this._config = getQuestionBySlug(this.slug) ?? null;
+      this._config = (await getCatalogService().getQuestion.execute(
+        this.slug,
+      )) as QuestionConfig | null;
     }
     this._isDirty = false;
   }
@@ -59,28 +61,42 @@ export class QuestionEditor extends LitElement {
     this._isDirty = true;
   }
 
-  private _onSave(): void {
+  private async _onSave(): Promise<void> {
     if (!this._config) return;
-    if (this.isNew) {
-      if (this.slug && this.slug !== 'new' && getQuestionBySlug(this.slug)) {
-        updateQuestion(this.slug, this._config);
-        window.location.hash = `#/question/${this.slug}`;
+    try {
+      if (this.isNew) {
+        if (
+          this.slug &&
+          this.slug !== 'new' &&
+          (await getCatalogService().getQuestion.execute(this.slug))
+        ) {
+          await getCatalogService().updateQuestion!.execute(this.slug, this._config);
+          window.location.hash = `#/question/${this.slug}`;
+        } else {
+          const saved = (await getCatalogService().createQuestion!.execute(
+            this._config,
+          )) as QuestionConfig;
+          window.location.hash = `#/question/${saved.slug}`;
+        }
       } else {
-        const saved = addQuestion(this._config);
-        window.location.hash = `#/question/${saved.slug}`;
+        await getCatalogService().updateQuestion!.execute(this.slug, this._config);
       }
-    } else {
-      updateQuestion(this.slug, this._config);
+      this._isDirty = false;
+    } catch (error) {
+      this._error = error instanceof Error ? error.message : String(error);
     }
-    this._isDirty = false;
   }
 
-  private _onDelete(): void {
+  private async _onDelete(): Promise<void> {
     if (!this._config || this.isNew) return;
     if (this._config.source === 'yaml') return;
     if (!confirm(`Delete "${this._config.title}"? This cannot be undone.`)) return;
-    deleteQuestion(this.slug);
-    window.location.hash = '#/questions';
+    try {
+      await getCatalogService().deleteQuestion!.execute(this._config.id);
+      window.location.hash = '#/questions';
+    } catch (error) {
+      this._error = error instanceof Error ? error.message : String(error);
+    }
   }
 
   override render(): TemplateResult {
@@ -89,6 +105,7 @@ export class QuestionEditor extends LitElement {
     }
 
     return html`
+      ${this._error ? html`<div class="warning" role="alert">${this._error}</div>` : ''}
       <question-editor-header
         .title=${this._config.title}
         .isNew=${this.isNew}

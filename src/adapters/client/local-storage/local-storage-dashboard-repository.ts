@@ -1,5 +1,6 @@
 import type { DashboardRepository } from '@/core/application/ports';
 import type { Dashboard } from '@/core/entities';
+import { createLogger } from '@/shared/observability/logger';
 
 /**
  * Persists Dashboard entities directly to localStorage.
@@ -23,12 +24,18 @@ import type { Dashboard } from '@/core/entities';
  * a future task once the migration strategy and entity mapping rules are agreed upon.
  */
 const STORAGE_KEY = 'persisted_entity_dashboards_v1';
+const logger = createLogger('catalog-repository');
 
 function load(): Dashboard[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as Dashboard[]) : [];
-  } catch {
+  } catch (error) {
+    logger.error('read.error', error, {
+      assetType: 'dashboard',
+      operation: 'parse',
+      result: 'failure',
+    });
     return [];
   }
 }
@@ -36,7 +43,12 @@ function load(): Dashboard[] {
 function persist(dashboards: Dashboard[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dashboards));
-  } catch {
+  } catch (error) {
+    logger.error('write.error', error, {
+      assetType: 'dashboard',
+      operation: 'persist',
+      result: 'failure',
+    });
     // localStorage unavailable; proceed without persisting
   }
 }

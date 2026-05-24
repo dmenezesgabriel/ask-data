@@ -19,7 +19,11 @@ import { DeleteQuestion } from '@/core/application/use-cases/questions/delete-qu
 import { GetQuestion } from '@/core/application/use-cases/questions/get-question';
 import { ListQuestions } from '@/core/application/use-cases/questions/list-questions';
 import { UpdateQuestion } from '@/core/application/use-cases/questions/update-question';
-import { GetDashboardBySlug } from '@/features/dashboard/model/get-dashboard-by-slug';
+import {
+  SeededDashboardRepository,
+  SeededDatasourceRepository,
+  SeededQuestionRepository,
+} from '@/features/catalog/data/seeded-catalog-repositories';
 import { DuckDBDataSourceManager } from '@/infra/data-sources/data-source-manager';
 import { duckDBManager } from '@/infra/db/db';
 import { setDbService } from '@/shared/services/db-service';
@@ -29,9 +33,11 @@ import { createPlatformRegistry } from './platform-capabilities';
 export function createClientOnlyContainer() {
   const clock = new SystemClock();
   const idGenerator = new CryptoIdGenerator();
-  const datasourceRepo = new LocalStorageDatasourceRepository(clock);
-  const questionRepo = new LocalStorageQuestionRepository(clock);
-  const dashboardRepo = new LocalStorageDashboardRepository();
+  const datasourceRepo = new SeededDatasourceRepository(
+    new LocalStorageDatasourceRepository(clock),
+  );
+  const questionRepo = new SeededQuestionRepository(new LocalStorageQuestionRepository(clock));
+  const dashboardRepo = new SeededDashboardRepository(new LocalStorageDashboardRepository());
   const queryEngine = new DuckDbWasmQueryEngine();
   const platformRegistry = createPlatformRegistry();
 
@@ -61,7 +67,6 @@ export function createClientOnlyContainer() {
     deleteDashboard: new DeleteDashboard(dashboardRepo),
     getDashboard: new GetDashboard(dashboardRepo),
     listDashboards: new ListDashboards(dashboardRepo),
-    getDashboardBySlug: new GetDashboardBySlug(),
   };
 }
 

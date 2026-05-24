@@ -4,6 +4,33 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
 
+import type { Dashboard } from '@/core/entities';
+import { setCatalogService } from '@/shared/services/catalog-service';
+
+const seedDashboards: Dashboard[] = [
+  {
+    id: 'portable-bi',
+    name: 'Portable BI',
+    type: 'dashboard',
+    widgets: [],
+    layout: [],
+    source: 'yaml',
+  },
+];
+
+function installStoryCatalog(): void {
+  setCatalogService({
+    listDashboards: { execute: async () => seedDashboards },
+    getDashboard: {
+      execute: async (id: string) => seedDashboards.find((item) => item.id === id) ?? null,
+    },
+    listDatasources: { execute: async () => [] },
+    getDatasource: { execute: async () => null },
+    listQuestions: { execute: async () => [] },
+    getQuestion: { execute: async () => null },
+  });
+}
+
 type DashboardListArgs = {
   onDashboardSelect: (slug: string) => void;
   onDashboardCreate: (name: string) => void;
@@ -14,6 +41,12 @@ const meta = {
   title: 'Organisms/Dashboard List',
   component: 'dashboard-list',
   tags: ['autodocs'],
+  decorators: [
+    (story) => {
+      installStoryCatalog();
+      return story() as Node;
+    },
+  ],
   render: ({ onDashboardSelect, onDashboardCreate, onDashboardDelete }: DashboardListArgs) =>
     html`<dashboard-list
       @dashboard-select=${(e: CustomEvent<{ slug: string }>) => onDashboardSelect(e.detail.slug)}
@@ -50,7 +83,7 @@ const meta = {
       description: {
         component:
           'Landing page listing all available dashboards as a CRUD table. ' +
-          'Reads `getDashboards()` from the registry (static YAML + localStorage). ' +
+          'Reads through use-case-backed catalog data (static YAML + persisted user records). ' +
           'Each row has View, Edit, and Delete (user-created only) icon buttons.',
       },
     },

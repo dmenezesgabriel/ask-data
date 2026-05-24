@@ -10,13 +10,13 @@ import type {
   Datasource as DataSourceConfig,
   Question as QuestionConfig,
 } from '@/core/entities';
+import { getCatalogService } from '@/shared/services/catalog-service';
 import { getDbService } from '@/shared/services/db-service';
 
 import type { CellValue } from '../../../../shared/types/index';
 import { SQL } from '../../../../shared/ui/code-editor';
 import { toRows } from '../../../../shared/utils/utils';
 import { AskDataEngine } from '../../../ask/model/ask-data';
-import { getDatasourceBySlug } from '../../../datasource/datasource-service';
 
 const WIDGET_TYPES = ['chart', 'table', 'kpi', 'text'] as const;
 const CHART_TYPES = [
@@ -39,6 +39,7 @@ export class QuestionEditorPanel extends LitElement {
     _previewError: { state: true },
     _previewLoading: { state: true },
     _pickerOpen: { state: true },
+    _datasources: { state: true },
   };
 
   config: QuestionConfig | null = null;
@@ -53,6 +54,12 @@ export class QuestionEditorPanel extends LitElement {
   private _previewError = '';
   private _previewLoading = false;
   private _pickerOpen = false;
+  private _datasources: DataSourceConfig[] = [];
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this._loadDatasources();
+  }
 
   override createRenderRoot(): HTMLElement | DocumentFragment {
     return this;
@@ -76,12 +83,25 @@ export class QuestionEditorPanel extends LitElement {
 
   private get _resolvedDataSources(): DataSourceConfig[] {
     const slugs = this.config?.dataSourceSlugs ?? [];
-    return slugs.map((s) => getDatasourceBySlug(s)).filter(Boolean) as DataSourceConfig[];
+    return slugs
+      .map((slug) => this._datasources.find((datasource) => datasource.slug === slug))
+      .filter(Boolean) as DataSourceConfig[];
   }
 
   private get _missingDatasourceSlugs(): string[] {
     const slugs = this.config?.dataSourceSlugs ?? [];
-    return slugs.filter((s) => !getDatasourceBySlug(s));
+    return slugs.filter(
+      (slug) => !this._datasources.some((datasource) => datasource.slug === slug),
+    );
+  }
+
+  private async _loadDatasources(): Promise<void> {
+    try {
+      this._datasources =
+        (await getCatalogService().listDatasources.execute()) as DataSourceConfig[];
+    } catch {
+      this._datasources = [];
+    }
   }
 
   async runPreview(): Promise<void> {

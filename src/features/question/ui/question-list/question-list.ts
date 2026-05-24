@@ -2,12 +2,28 @@ import { html, nothing, type TemplateResult } from 'lit';
 import { BarChart2, FileText, HelpCircle, MessageSquare, Table2, TrendingUp } from 'lucide';
 
 import type { Question as QuestionConfig } from '@/core/entities';
+import { getCatalogService } from '@/shared/services/catalog-service';
 
 import { CollectionList } from '../../../../shared/ui/collection-list/collection-list';
 import { icon } from '../../../../shared/utils/icons';
-import { deleteQuestion, questionList } from '../../question-service';
 
 export class QuestionList extends CollectionList {
+  static override readonly properties = {
+    ...CollectionList.properties,
+    _items: { state: true },
+    _loading: { state: true },
+    _error: { state: true },
+  };
+
+  private _items: QuestionConfig[] = [];
+  private _loading = true;
+  private _error = '';
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this._loadItems();
+  }
+
   public override get title(): string {
     return 'Questions';
   }
@@ -33,7 +49,7 @@ export class QuestionList extends CollectionList {
   }
 
   protected override get itemCount(): number {
-    return questionList().length;
+    return this._items.length;
   }
 
   protected override get itemCountLabel(): string {
@@ -54,6 +70,18 @@ export class QuestionList extends CollectionList {
     );
   }
 
+  private async _loadItems(): Promise<void> {
+    this._loading = true;
+    this._error = '';
+    try {
+      this._items = (await getCatalogService().listQuestions.execute()) as QuestionConfig[];
+    } catch (error) {
+      this._error = error instanceof Error ? error.message : String(error);
+    } finally {
+      this._loading = false;
+    }
+  }
+
   private _handleSelect(slug: string): void {
     this.dispatchEvent(
       new CustomEvent('question-select', {
@@ -66,8 +94,12 @@ export class QuestionList extends CollectionList {
 
   private _handleDelete(q: QuestionConfig): void {
     if (!confirm(`Delete "${q.title}"? This cannot be undone.`)) return;
-    deleteQuestion(q.slug);
-    this.requestUpdate();
+    getCatalogService()
+      .deleteQuestion!.execute(q.id)
+      .then(() => this._loadItems())
+      .catch((error: unknown) => {
+        this._error = error instanceof Error ? error.message : String(error);
+      });
     this.dispatchEvent(
       new CustomEvent('question-delete', {
         detail: { slug: q.slug },
@@ -88,8 +120,15 @@ export class QuestionList extends CollectionList {
   }
 
   protected override _renderListItems(): TemplateResult {
-    const questions = questionList();
-    if (questions.length === 0) {
+    if (this._loading) {
+      return html`<div class="collection-list-empty"><p>Loading questions...</p></div>`;
+    }
+    if (this._error) {
+      return html`<div class="collection-list-empty" role="alert">
+        <p>Unable to load questions: ${this._error}</p>
+      </div>`;
+    }
+    if (this._items.length === 0) {
       return html`
         <div class="collection-list-empty">
           <p>No questions yet. Create your first question to get started.</p>
@@ -104,7 +143,7 @@ export class QuestionList extends CollectionList {
           <span class="collection-list-col collection-list-col-meta">Type</span>
           <span class="collection-list-col collection-list-col-actions"></span>
         </div>
-        ${questions.map(
+        ${this._items.map(
           (q: QuestionConfig) => html`
             <div
               class="collection-list-row"

@@ -1,12 +1,31 @@
 import { html, type TemplateResult } from 'lit';
 import { LayoutGrid } from 'lucide';
 
+import type { Dashboard } from '@/core/entities';
+import { getCatalogService } from '@/shared/services/catalog-service';
+
 import { CollectionList } from '../../../../shared/ui/collection-list/collection-list';
 import { icon } from '../../../../shared/utils/icons';
-import { type DashboardEntry, deleteDashboard, getDashboards } from '../../dashboard-service';
+import { dashboardEntityToEntry, type DashboardEntry } from '../../model/dashboard-entity-mapper';
 import { getPersistedWidgetCount } from '../dashboard-workspace/dashboard-workspace-model';
 
 export class DashboardList extends CollectionList {
+  static override readonly properties = {
+    ...CollectionList.properties,
+    _items: { state: true },
+    _loading: { state: true },
+    _error: { state: true },
+  };
+
+  private _items: DashboardEntry[] = [];
+  private _loading = true;
+  private _error = '';
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this._loadItems();
+  }
+
   public override get title(): string {
     return 'Dashboards';
   }
@@ -32,7 +51,7 @@ export class DashboardList extends CollectionList {
   }
 
   protected override get itemCount(): number {
-    return getDashboards().length;
+    return this._items.length;
   }
 
   protected override get itemCountLabel(): string {
@@ -53,6 +72,20 @@ export class DashboardList extends CollectionList {
     );
   }
 
+  private async _loadItems(): Promise<void> {
+    this._loading = true;
+    this._error = '';
+    try {
+      this._items = ((await getCatalogService().listDashboards.execute()) as Dashboard[]).map(
+        dashboardEntityToEntry,
+      );
+    } catch (error) {
+      this._error = error instanceof Error ? error.message : String(error);
+    } finally {
+      this._loading = false;
+    }
+  }
+
   private _onSelect(slug: string): void {
     this.dispatchEvent(
       new CustomEvent('dashboard-select', { detail: { slug }, bubbles: true, composed: true }),
@@ -61,8 +94,12 @@ export class DashboardList extends CollectionList {
 
   private _onDelete(entry: DashboardEntry): void {
     if (!confirm(`Delete "${entry.config.title}"? This cannot be undone.`)) return;
-    deleteDashboard(entry.slug);
-    this.requestUpdate();
+    getCatalogService()
+      .deleteDashboard!.execute(entry.slug)
+      .then(() => this._loadItems())
+      .catch((error: unknown) => {
+        this._error = error instanceof Error ? error.message : String(error);
+      });
     this.dispatchEvent(
       new CustomEvent('dashboard-delete', {
         detail: { slug: entry.slug },
@@ -83,8 +120,15 @@ export class DashboardList extends CollectionList {
   }
 
   protected override _renderListItems(): TemplateResult {
-    const dashboards = getDashboards();
-    if (dashboards.length === 0) {
+    if (this._loading) {
+      return html`<div class="collection-list-empty"><p>Loading dashboards...</p></div>`;
+    }
+    if (this._error) {
+      return html`<div class="collection-list-empty" role="alert">
+        <p>Unable to load dashboards: ${this._error}</p>
+      </div>`;
+    }
+    if (this._items.length === 0) {
       return html`
         <div class="collection-list-empty">
           <p>No dashboards yet. Create your first dashboard to get started.</p>
@@ -99,7 +143,7 @@ export class DashboardList extends CollectionList {
           <span class="collection-list-col collection-list-col-meta">Widgets</span>
           <span class="collection-list-col collection-list-col-actions"></span>
         </div>
-        ${dashboards.map(
+        ${this._items.map(
           (entry: DashboardEntry) => html`
             <div
               class="collection-list-row"

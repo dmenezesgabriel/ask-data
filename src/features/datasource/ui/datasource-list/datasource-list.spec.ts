@@ -1,12 +1,63 @@
 import './datasource-list';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  addDatasource,
-  deleteDatasource,
-  getDatasourceBySlug,
-} from '../../data/datasource-registry';
+import type { Datasource } from '@/core/entities';
+import { getCatalogService, setCatalogService } from '@/shared/services/catalog-service';
+
+let items: Datasource[] = [];
+
+function createSeedDatasource(id: string, name: string): Datasource {
+  return {
+    id,
+    slug: id,
+    name,
+    type: 'csv',
+    url: `https://example.com/${id}.csv`,
+    source: 'yaml',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+}
+
+function installCatalogService(): void {
+  items = [
+    createSeedDatasource('sales', 'sales'),
+    createSeedDatasource('customer', 'customer'),
+    createSeedDatasource('product', 'product'),
+  ];
+  setCatalogService({
+    listDatasources: { execute: async () => items },
+    getDatasource: {
+      execute: async (id: string) => items.find((datasource) => datasource.id === id) ?? null,
+    },
+    createDatasource: {
+      execute: async (input: unknown) => {
+        const data = input as Pick<Datasource, 'name' | 'type' | 'url'>;
+        const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const datasource: Datasource = {
+          ...data,
+          id: slug,
+          slug,
+          source: 'user',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        };
+        items = [...items, datasource];
+        return datasource;
+      },
+    },
+    deleteDatasource: {
+      execute: async (id: string) => {
+        items = items.filter((datasource) => datasource.id !== id);
+      },
+    },
+    listQuestions: { execute: async () => [] },
+    getQuestion: { execute: async () => null },
+    listDashboards: { execute: async () => [] },
+    getDashboard: { execute: async () => null },
+  });
+}
 
 function mount(): HTMLElement {
   const el = document.createElement('datasource-list');
@@ -20,20 +71,26 @@ function cleanup(el: HTMLElement): void {
 
 async function updateComplete(el: HTMLElement): Promise<void> {
   await (el as unknown as { updateComplete: Promise<void> }).updateComplete;
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await (el as unknown as { updateComplete: Promise<void> }).updateComplete;
 }
 
 describe('DatasourceList', () => {
-  const createdSlugs: string[] = [];
+  const createdIds: string[] = [];
 
-  afterEach(() => {
-    for (const slug of createdSlugs) {
+  beforeEach(() => {
+    installCatalogService();
+  });
+
+  afterEach(async () => {
+    for (const id of createdIds) {
       try {
-        deleteDatasource(slug);
+        await getCatalogService().deleteDatasource!.execute(id);
       } catch {
         /* ignore */
       }
     }
-    createdSlugs.length = 0;
+    createdIds.length = 0;
   });
 
   describe('rendering', () => {
@@ -68,8 +125,12 @@ describe('DatasourceList', () => {
     });
 
     it('shows delete button only for user-sourced entries', async () => {
-      const ds = addDatasource({ name: 'tmp', type: 'csv', url: 'https://x.com/a.csv' });
-      createdSlugs.push(ds.slug);
+      const ds = (await getCatalogService().createDatasource!.execute({
+        name: 'tmp',
+        type: 'csv',
+        url: 'https://x.com/a.csv',
+      })) as Datasource;
+      createdIds.push(ds.id);
 
       const el = mount();
       await updateComplete(el);
@@ -127,8 +188,12 @@ describe('DatasourceList', () => {
 
   describe('datasource-delete event', () => {
     it('dispatches datasource-delete and removes entry after confirming delete', async () => {
-      const ds = addDatasource({ name: 'to-delete', type: 'csv', url: 'https://x.com/d.csv' });
-      createdSlugs.push(ds.slug);
+      const ds = (await getCatalogService().createDatasource!.execute({
+        name: 'to-delete',
+        type: 'csv',
+        url: 'https://x.com/d.csv',
+      })) as Datasource;
+      createdIds.push(ds.id);
 
       const el = mount();
       await updateComplete(el);
@@ -144,18 +209,23 @@ describe('DatasourceList', () => {
 
       const deleteBtn = el.querySelector<HTMLButtonElement>('button[aria-label="Delete"]');
       deleteBtn?.click();
+      await updateComplete(el);
 
       window.confirm = origConfirm;
 
       expect(received).toHaveLength(1);
       expect(received[0]).toBe(ds.slug);
-      expect(getDatasourceBySlug(ds.slug)).toBeUndefined();
+      expect(await getCatalogService().getDatasource.execute(ds.id)).toBeNull();
       cleanup(el);
     });
 
     it('does not delete when confirm is cancelled', async () => {
-      const ds = addDatasource({ name: 'no-delete', type: 'csv', url: 'https://x.com/e.csv' });
-      createdSlugs.push(ds.slug);
+      const ds = (await getCatalogService().createDatasource!.execute({
+        name: 'no-delete',
+        type: 'csv',
+        url: 'https://x.com/e.csv',
+      })) as Datasource;
+      createdIds.push(ds.id);
 
       const el = mount();
       await updateComplete(el);
@@ -168,7 +238,7 @@ describe('DatasourceList', () => {
 
       window.confirm = origConfirm;
 
-      expect(getDatasourceBySlug(ds.slug)).toBeDefined();
+      expect(await getCatalogService().getDatasource.execute(ds.id)).toBeDefined();
       cleanup(el);
     });
   });

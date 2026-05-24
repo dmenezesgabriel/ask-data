@@ -12,6 +12,7 @@ import type {
 } from '@/core/entities';
 import type { Question as QuestionConfig } from '@/core/entities';
 import { createLogger } from '@/shared/observability/logger';
+import { getCatalogService } from '@/shared/services/catalog-service';
 import { getDbService } from '@/shared/services/db-service';
 
 import type {
@@ -22,7 +23,6 @@ import type {
 } from '../../../../shared/types/index';
 import { escapeSqlString, quoteIdent, toRows } from '../../../../shared/utils/utils';
 import { AskDataEngine } from '../../../ask/model/ask-data';
-import { getDatasourceBySlug } from '../../../datasource/datasource-service';
 import { DASHBOARD_CONFIG } from '../../model/dashboard-config';
 import {
   configToDashboard,
@@ -73,6 +73,7 @@ export class DashboardWorkspace extends LitElement {
     _showOverflow: { state: true },
     _overflowMenuAlign: { state: true },
     _importError: { state: true },
+    _datasources: { state: true },
   };
 
   config: DashboardConfig;
@@ -96,6 +97,7 @@ export class DashboardWorkspace extends LitElement {
   private _showOverflow = false;
   private _overflowMenuAlign: 'left' | 'right' = 'left';
   private _importError = '';
+  private _datasources: DataSourceConfig[] = [];
   private _askEngine: AskDataEngine;
   private _dataReady: boolean = false;
   private _dataCache: Record<
@@ -173,7 +175,18 @@ export class DashboardWorkspace extends LitElement {
 
   private get _resolvedDataSources(): DataSourceConfig[] {
     const slugs = this.config?.dataSourceSlugs ?? [];
-    return slugs.map((s) => getDatasourceBySlug(s)).filter(Boolean) as DataSourceConfig[];
+    return slugs
+      .map((slug) => this._datasources.find((datasource) => datasource.slug === slug))
+      .filter(Boolean) as DataSourceConfig[];
+  }
+
+  private async _loadDatasources(): Promise<void> {
+    try {
+      this._datasources =
+        (await getCatalogService().listDatasources.execute()) as DataSourceConfig[];
+    } catch {
+      this._datasources = [];
+    }
   }
 
   private _viewsCreated = false;
@@ -684,6 +697,7 @@ export class DashboardWorkspace extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+    this._loadDatasources();
     document.addEventListener('click', this._onDocumentClick);
     document.addEventListener('keydown', this._onDocumentKeydown);
   }

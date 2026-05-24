@@ -2,12 +2,28 @@ import { html, nothing, type TemplateResult } from 'lit';
 import { Database } from 'lucide';
 
 import type { Datasource as DataSourceConfig } from '@/core/entities';
+import { getCatalogService } from '@/shared/services/catalog-service';
 
 import { CollectionList } from '../../../../shared/ui/collection-list/collection-list';
 import { icon } from '../../../../shared/utils/icons';
-import { datasourceList, deleteDatasource } from '../../datasource-service';
 
 export class DatasourceList extends CollectionList {
+  static override readonly properties = {
+    ...CollectionList.properties,
+    _items: { state: true },
+    _loading: { state: true },
+    _error: { state: true },
+  };
+
+  private _items: DataSourceConfig[] = [];
+  private _loading = true;
+  private _error = '';
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this._loadItems();
+  }
+
   public override get title(): string {
     return 'Datasources';
   }
@@ -33,7 +49,7 @@ export class DatasourceList extends CollectionList {
   }
 
   protected override get itemCount(): number {
-    return datasourceList().length;
+    return this._items.length;
   }
 
   protected override get itemCountLabel(): string {
@@ -54,6 +70,18 @@ export class DatasourceList extends CollectionList {
     );
   }
 
+  private async _loadItems(): Promise<void> {
+    this._loading = true;
+    this._error = '';
+    try {
+      this._items = (await getCatalogService().listDatasources.execute()) as DataSourceConfig[];
+    } catch (error) {
+      this._error = error instanceof Error ? error.message : String(error);
+    } finally {
+      this._loading = false;
+    }
+  }
+
   private _handleSelect(slug: string): void {
     this.dispatchEvent(
       new CustomEvent('datasource-select', {
@@ -66,8 +94,12 @@ export class DatasourceList extends CollectionList {
 
   private _handleDelete(ds: DataSourceConfig): void {
     if (!confirm(`Delete "${ds.name}"? This cannot be undone.`)) return;
-    deleteDatasource(ds.slug);
-    this.requestUpdate();
+    getCatalogService()
+      .deleteDatasource!.execute(ds.id)
+      .then(() => this._loadItems())
+      .catch((error: unknown) => {
+        this._error = error instanceof Error ? error.message : String(error);
+      });
     this.dispatchEvent(
       new CustomEvent('datasource-delete', {
         detail: { slug: ds.slug },
@@ -82,8 +114,15 @@ export class DatasourceList extends CollectionList {
   }
 
   protected override _renderListItems(): TemplateResult {
-    const items = datasourceList();
-    if (items.length === 0) {
+    if (this._loading) {
+      return html`<div class="collection-list-empty"><p>Loading datasources...</p></div>`;
+    }
+    if (this._error) {
+      return html`<div class="collection-list-empty" role="alert">
+        <p>Unable to load datasources: ${this._error}</p>
+      </div>`;
+    }
+    if (this._items.length === 0) {
       return html`
         <div class="collection-list-empty">
           <p>No datasources yet. Create your first datasource to get started.</p>
@@ -98,7 +137,7 @@ export class DatasourceList extends CollectionList {
           <span class="collection-list-col collection-list-col-meta">Type</span>
           <span class="collection-list-col collection-list-col-actions"></span>
         </div>
-        ${items.map(
+        ${this._items.map(
           (ds: DataSourceConfig) => html`
             <div
               class="collection-list-row"
