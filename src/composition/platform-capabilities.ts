@@ -51,18 +51,6 @@ export const defaultPlatformContributions: readonly PlatformContribution[] = [
   chartRenderer('histogram'),
 ];
 
-export const fileDatasourceConnector: DatasourceConnector = {
-  capability: {
-    id: 'datasource.connector.csv',
-    displayName: 'File datasource',
-    contributionType: 'datasource-connector',
-    enabled: true,
-    featureFlagKey: 'datasource.csv',
-  },
-  accepts: (datasource) => datasource.type === 'csv',
-  load: async () => ({ columns: [], rows: [] }),
-};
-
 export type PlatformRegistryOptions = {
   contributions?: readonly PlatformContribution[];
   featureFlags?: FeatureFlagProvider;

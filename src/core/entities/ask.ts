@@ -120,7 +120,6 @@ export interface AskDataConfig {
   relationships?: Relationship[];
 }
 
-export type Filters = Record<string, string>;
 export type PrimitiveCell = string | number | bigint | boolean | Date | null | undefined;
 export type CellValue = PrimitiveCell | Record<string, unknown> | unknown[];
 export type DataRow = Record<string, CellValue>;

@@ -98,15 +98,6 @@ export interface Relationship {
 }
 
 /** @deprecated Import from `@/core/entities/ask`. */
-export interface SemanticModel {
-  fields: FieldConfig[];
-  entities?: EntityConfig[];
-  relationships?: Relationship[];
-  vocabulary?: Vocabulary;
-  defaultMetric?: SourceColumnRef & { aggregation?: string };
-}
-
-/** @deprecated Import from `@/core/entities/ask`. */
 export interface AskDataConfig {
   enabled?: boolean;
   locale?: string;

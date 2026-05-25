@@ -29,7 +29,6 @@ export type {
   EvidenceItem,
   FieldConfig,
   FieldRole,
-  Filters,
   IntentFilter,
   IntentMetric,
   Narrative,
