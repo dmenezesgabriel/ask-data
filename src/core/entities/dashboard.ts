@@ -58,6 +58,7 @@ export interface Dashboard {
   widgets: DashboardWidget[];
   layout: Position[];
   filters?: DashboardFilterConfig[];
+  dataSourceSlugs?: string[];
   source?: 'yaml' | 'user';
   createdAt?: string;
   updatedAt?: string;

@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { DataSourceManager, QueryPort } from '@/core/application/ports';
 import type { DashboardWidget as WidgetConfig } from '@/core/entities';
+import type { CatalogService } from '@/shared/services/catalog-service';
+import { setCatalogService } from '@/shared/services/catalog-service';
 
 import { DashboardWorkspace } from './dashboard-workspace';
 
@@ -115,8 +117,12 @@ describe('DashboardWorkspace — overflow menu alignment', () => {
 
 describe('DashboardWorkspace query execution', () => {
   it('UT-003: delegates dashboard widget SQL through injected query and datasource ports', async () => {
-    const queryPort: QueryPort = { query: vi.fn().mockResolvedValue({ rows: [{ label: 'West', value: 7 }] }) };
-    const dataSourceManager: DataSourceManager = { createViews: vi.fn().mockResolvedValue(undefined) };
+    const queryPort: QueryPort = {
+      query: vi.fn().mockResolvedValue({ rows: [{ label: 'West', value: 7 }] }),
+    };
+    const dataSourceManager: DataSourceManager = {
+      createViews: vi.fn().mockResolvedValue(undefined),
+    };
     const el = mount();
     el.queryPort = queryPort;
     el.dataSourceManager = dataSourceManager;
@@ -147,7 +153,9 @@ describe('DashboardWorkspace query execution', () => {
     expect(dataSourceManager.createViews).toHaveBeenCalledWith([
       expect.objectContaining({ slug: 'sales' }),
     ]);
-    expect(queryPort.query).toHaveBeenCalledWith('SELECT region AS label, sales AS value FROM sales');
+    expect(queryPort.query).toHaveBeenCalledWith(
+      'SELECT region AS label, sales AS value FROM sales',
+    );
     expect(result.labels).toEqual(['West']);
     expect(result.values).toEqual([7]);
     cleanup(el);
@@ -155,7 +163,9 @@ describe('DashboardWorkspace query execution', () => {
 
   it('UX-001: shows recoverable feedback when dashboard widget execution fails', async () => {
     const queryPort: QueryPort = { query: vi.fn().mockRejectedValue(new Error('Widget failed')) };
-    const dataSourceManager: DataSourceManager = { createViews: vi.fn().mockResolvedValue(undefined) };
+    const dataSourceManager: DataSourceManager = {
+      createViews: vi.fn().mockResolvedValue(undefined),
+    };
     const el = mount();
     el.queryPort = queryPort;
     el.dataSourceManager = dataSourceManager;
@@ -198,11 +208,70 @@ describe('DashboardWorkspace query execution', () => {
       updateComplete: Promise<void>;
     };
     await canvas.updateComplete;
-    const widgetEl = el.querySelector('app-widget') as HTMLElement & { updateComplete: Promise<void> };
+    const widgetEl = el.querySelector('app-widget') as HTMLElement & {
+      updateComplete: Promise<void>;
+    };
     await widgetEl.updateComplete;
 
     expect(el.widgetErrors['widget-1']).toContain('Widget failed');
     expect(el.querySelector('[role="alert"]')?.textContent).toContain('Widget failed');
+    cleanup(el);
+  });
+});
+
+describe('DashboardWorkspace datasource loading race condition', () => {
+  it('REG-001: awaits _loadDatasources before creating views resolving from catalog service', async () => {
+    const queryPort: QueryPort = {
+      query: vi.fn().mockResolvedValue({ rows: [{ label: 'West', value: 7 }] }),
+    };
+    const dataSourceManager: DataSourceManager = {
+      createViews: vi.fn().mockResolvedValue(undefined),
+    };
+    setCatalogService({
+      listDatasources: {
+        execute: vi
+          .fn()
+          .mockResolvedValue([
+            { id: 'sales', slug: 'sales', name: 'sales', type: 'csv', url: '/data/sales.csv' },
+          ]),
+      },
+      getDatasource: { execute: vi.fn() },
+      listQuestions: { execute: vi.fn().mockResolvedValue([]) },
+      getQuestion: { execute: vi.fn() },
+      listDashboards: { execute: vi.fn().mockResolvedValue([]) },
+      getDashboard: { execute: vi.fn() },
+    } satisfies Partial<CatalogService> as unknown as CatalogService);
+
+    const el = mount();
+    el.queryPort = queryPort;
+    el.dataSourceManager = dataSourceManager;
+    el.config = { ...el.config, dataSourceSlugs: ['sales'], filters: [] };
+
+    // Do NOT pre-set _datasources — the fix ensures _loadDatasources
+    // resolves _before_ _resolvedDataSources is read
+
+    const widget: WidgetConfig = {
+      id: 'widget-1',
+      type: 'chart',
+      title: 'Sales',
+      queryType: 'sql',
+      query: 'SELECT region AS label, sales AS value FROM sales',
+    };
+
+    const result = await (
+      el as unknown as {
+        _executeSqlQuery(widget: WidgetConfig): Promise<{ labels: string[]; values: number[] }>;
+      }
+    )._executeSqlQuery(widget);
+
+    expect(dataSourceManager.createViews).toHaveBeenCalledWith([
+      expect.objectContaining({ slug: 'sales' }),
+    ]);
+    expect(queryPort.query).toHaveBeenCalledWith(
+      'SELECT region AS label, sales AS value FROM sales',
+    );
+    expect(result.labels).toEqual(['West']);
+    expect(result.values).toEqual([7]);
     cleanup(el);
   });
 });

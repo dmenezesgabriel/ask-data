@@ -87,6 +87,7 @@ function dashboardConfigToEntity(
     widgets,
     layout: config.layout ?? [],
     filters: config.filters,
+    dataSourceSlugs: config.dataSourceSlugs,
     source,
   };
 }

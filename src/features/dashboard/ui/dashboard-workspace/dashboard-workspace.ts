@@ -180,19 +180,29 @@ export class DashboardWorkspace extends LitElement {
       .filter(Boolean) as DataSourceConfig[];
   }
 
+  private _loadDatasourcesPromise: Promise<void> | null = null;
+
   private async _loadDatasources(): Promise<void> {
-    try {
-      this._datasources =
-        (await getCatalogService().listDatasources.execute()) as DataSourceConfig[];
-    } catch {
-      this._datasources = [];
-    }
+    if (this._loadDatasourcesPromise) return this._loadDatasourcesPromise;
+    this._loadDatasourcesPromise = (async () => {
+      try {
+        this._datasources =
+          (await getCatalogService().listDatasources.execute()) as DataSourceConfig[];
+        this._viewsCreated = false;
+      } catch {
+        if (this._datasources.length === 0) {
+          this._datasources = [];
+        }
+      }
+    })();
+    return this._loadDatasourcesPromise;
   }
 
   private _viewsCreated = false;
 
   private async _ensureViewsCreated(): Promise<void> {
     if (this._viewsCreated) return;
+    await this._loadDatasources();
     const sources = this._resolvedDataSources;
     if (!this.dataSourceManager) throw new Error('Dashboard datasource manager is not configured.');
     try {

@@ -23,6 +23,7 @@ export function dashboardEntityToConfig(dashboard: Dashboard): DashboardConfig {
     ...config,
     filters: dashboard.filters ?? [],
     layout: dashboard.layout ?? [],
+    dataSourceSlugs: dashboard.dataSourceSlugs ?? [],
     kpis: widgets
       .filter((widget) => isWidgetType(widget, 'kpi'))
       .map((widget) => ({
