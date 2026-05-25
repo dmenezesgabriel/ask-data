@@ -1,8 +1,8 @@
 import type { Clock, IdGenerator, QuestionRepository } from '@/core/application/ports';
 import type { Question } from '@/core/entities';
-import { generateUniqueSlug, nameToSlug } from '@/shared/utils/slug';
 
 import { recordCatalogMutation } from '../catalog-mutation-logger';
+import { generateUniqueSlug, nameToSlug } from '../slug';
 
 export type CreateQuestionInput = {
   title: string;

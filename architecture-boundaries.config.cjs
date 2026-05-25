@@ -1,7 +1,7 @@
 const architectureLayers = {
   core: {
     paths: ['src/core/**'],
-    allowedDependencies: ['core', 'shared'],
+    allowedDependencies: ['core'],
   },
   adapters: {
     paths: ['src/adapters/**'],

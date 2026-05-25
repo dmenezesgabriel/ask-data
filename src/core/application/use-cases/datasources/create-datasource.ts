@@ -1,9 +1,9 @@
 import type { Clock, DatasourceRepository, IdGenerator } from '@/core/application/ports';
 import type { Datasource, DataSourceType } from '@/core/entities';
 import { CapabilityDisabledError, type CapabilityRegistry } from '@/core/platform';
-import { generateUniqueSlug, nameToSlug } from '@/shared/utils/slug';
 
 import { recordCatalogMutation } from '../catalog-mutation-logger';
+import { generateUniqueSlug, nameToSlug } from '../slug';
 
 export type CreateDatasourceInput = {
   name: string;

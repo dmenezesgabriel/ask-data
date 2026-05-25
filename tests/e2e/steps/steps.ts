@@ -100,16 +100,24 @@ Given('a sheet exists with chart widgets', async function (this: BrowserWorld) {
       updatedAt: new Date().toISOString(),
     },
   ]);
+  await this.page.evaluate(() => {
+    window.location.hash = '#/';
+  });
   await this.page.reload();
   await this.page.waitForSelector('app-dashboard', { timeout: 10000 });
-  // Pre-warm DuckDB so chart queries run immediately when the dashboard loads
-  await this.page.evaluate(async () => {
-    const mod = await import('/src/infra/db/db.ts');
-    await mod.duckDBManager.initialize();
-  });
   await this.installLogInterceptor();
   await this.page.evaluate(() => {
     window.location.hash = '#/dashboard/portable-bi-dashboard';
+  });
+  await this.page.waitForSelector('dashboard-workspace', { timeout: 10000 });
+  // Pre-warm DuckDB through the composed dashboard query port so E2E does not import infra.
+  await this.page.evaluate(async () => {
+    const workspace = document.querySelector('dashboard-workspace') as {
+      queryPort?: { initialize?: () => Promise<unknown> };
+      _refreshWidgetData?: () => Promise<void>;
+    } | null;
+    await workspace?.queryPort?.initialize?.();
+    await workspace?._refreshWidgetData?.();
   });
   await this.waitForWidgets();
   await this.waitForChartInitialization();
@@ -837,7 +845,9 @@ Then(
     const hasResult = await this.page.evaluate(() => {
       const result = document.querySelector('ask-result');
       const content = result?.shadowRoot?.textContent ?? result?.textContent ?? '';
-      return Boolean((result as unknown as { result?: unknown })?.result) || content.trim().length > 0;
+      return (
+        Boolean((result as unknown as { result?: unknown })?.result) || content.trim().length > 0
+      );
     });
     assert.ok(hasResult, 'Expected Ask Data result UI content');
   },

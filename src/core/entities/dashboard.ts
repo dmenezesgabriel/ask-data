@@ -1,6 +1,25 @@
-import type { DashboardFilterConfig, KpiConfig, Position } from '@/shared/types/dashboard';
+import type { SourceColumnRef } from './ask';
 
-export type { DashboardFilterConfig, KpiConfig, Position };
+export interface DashboardFilterConfig {
+  field: string;
+  label: string;
+  source: SourceColumnRef;
+  type: 'select' | string;
+}
+
+export interface KpiConfig {
+  id: string;
+  title: string;
+  query: string;
+  format?: 'currency';
+}
+
+export interface Position {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 export type WidgetType = 'chart' | 'table' | 'kpi' | 'text' | 'image' | 'filter';
 export type ChartType2 =

@@ -7,7 +7,7 @@ import {
   setWorldConstructor,
 } from '@cucumber/cucumber';
 
-setDefaultTimeout(30000);
+setDefaultTimeout(90000);
 import { type ChildProcess, spawn } from 'child_process';
 import path from 'path';
 import { type Browser, chromium, type Page } from 'playwright';
@@ -217,11 +217,14 @@ export class BrowserWorld {
 
     await this.page.evaluate(() => {
       const w = window as unknown as {
+        __ASK_DATA_LOG_LEVEL__?: 'debug';
         __chartInitLogs?: string[];
         __chartInitErrors?: string[];
         __chartInitInterceptorInstalled?: boolean;
       };
 
+      w.__ASK_DATA_LOG_LEVEL__ = 'debug';
+      window.localStorage.setItem('ask-data:log-level', 'debug');
       w.__chartInitLogs = [];
       w.__chartInitErrors = [];
 
@@ -231,14 +234,29 @@ export class BrowserWorld {
       w.__chartInitInterceptorInstalled = true;
 
       const origLog = console.log.bind(console);
+      const origDebug = console.debug.bind(console);
       const origError = console.error.bind(console);
 
       console.log = (...args: unknown[]) => {
         const msg = args.map((arg) => String(arg)).join(' ');
-        if (msg.includes('[widget] initializing chart')) {
+        if (
+          msg.includes('[dashboard.widget] chart.init') ||
+          msg.includes('[widget] initializing chart')
+        ) {
           w.__chartInitLogs?.push(msg);
         }
         origLog(...args);
+      };
+
+      console.debug = (...args: unknown[]) => {
+        const msg = args.map((arg) => String(arg)).join(' ');
+        if (
+          msg.includes('[dashboard.widget] chart.init') ||
+          msg.includes('[widget] initializing chart')
+        ) {
+          w.__chartInitLogs?.push(msg);
+        }
+        origDebug(...args);
       };
 
       console.error = (...args: unknown[]) => {

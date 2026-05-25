@@ -8,9 +8,11 @@ import { describe, expect, it } from 'vitest';
 
 const require = createRequire(import.meta.url);
 const {
+  architectureLayers,
   classifyArchitectureModule,
   isArchitectureDependencyAllowed,
 }: {
+  architectureLayers: Record<string, { allowedDependencies: string[] }>;
   classifyArchitectureModule: (modulePath: string) => string | undefined;
   isArchitectureDependencyAllowed: (fromModulePath: string, toModulePath: string) => boolean;
 } = require('../../../architecture-boundaries.config.cjs');
@@ -36,6 +38,8 @@ describe('architecture import boundaries', () => {
   });
 
   it('reports dependency direction for allowed and forbidden boundary fixtures', () => {
+    expect(architectureLayers.core.allowedDependencies).toEqual(['core']);
+
     expect(
       isArchitectureDependencyAllowed(
         'src/adapters/http/http-dashboard-repository.ts',
@@ -47,6 +51,20 @@ describe('architecture import boundaries', () => {
       isArchitectureDependencyAllowed(
         'src/core/entities/dashboard.ts',
         'src/features/dashboard/model/dashboard-config.ts',
+      ),
+    ).toBe(false);
+
+    expect(
+      isArchitectureDependencyAllowed(
+        'src/core/entities/dashboard.ts',
+        'src/shared/types/dashboard.ts',
+      ),
+    ).toBe(false);
+
+    expect(
+      isArchitectureDependencyAllowed(
+        'src/features/dashboard/ui/dashboard-workspace/dashboard-workspace.ts',
+        'src/infra/db/db.ts',
       ),
     ).toBe(false);
   });
@@ -76,20 +94,64 @@ describe('architecture import boundaries', () => {
       { filePath: path.join(projectRoot, 'src/adapters/architecture-boundary-fixture.ts') },
     );
 
-    expect(result?.messages.filter((message) => message.ruleId === 'boundaries/dependencies')).toEqual(
-      [],
+    expect(
+      result?.messages.filter((message) => message.ruleId === 'boundaries/dependencies'),
+    ).toEqual([]);
+  });
+
+  it('AC-002: rejects a core import from broad shared technical types through the lint fitness rule', async () => {
+    const eslint = new ESLint({ cwd: projectRoot });
+    const [result] = await eslint.lintText(
+      [
+        "import type { DashboardConfig } from '@/shared/types';",
+        'export type Fixture = DashboardConfig;',
+      ].join('\n'),
+      { filePath: path.join(projectRoot, 'src/core/architecture-boundary-fixture.ts') },
+    );
+
+    expect(result?.messages.some((message) => message.ruleId === 'boundaries/dependencies')).toBe(
+      true,
+    );
+  });
+
+  it('AC-003: rejects a feature UI import from infra through the lint fitness rule', async () => {
+    const eslint = new ESLint({ cwd: projectRoot });
+    const [result] = await eslint.lintText(
+      ["import '@/infra/db/db';", 'export const fixture = true;'].join('\n'),
+      {
+        filePath: path.join(
+          projectRoot,
+          'src/features/dashboard/ui/architecture-boundary-fixture.ts',
+        ),
+      },
+    );
+
+    expect(result?.messages.some((message) => message.ruleId === 'boundaries/dependencies')).toBe(
+      true,
+    );
+  });
+
+  it('AC-003: rejects a feature UI import from adapters through the lint fitness rule', async () => {
+    const eslint = new ESLint({ cwd: projectRoot });
+    const [result] = await eslint.lintText(
+      [
+        "import { DuckDbWasmQueryEngine } from '@/adapters/client/duckdb-wasm/duckdb-query-engine';",
+        'export const fixture = new DuckDbWasmQueryEngine();',
+      ].join('\n'),
+      {
+        filePath: path.join(
+          projectRoot,
+          'src/features/dashboard/ui/architecture-boundary-fixture.ts',
+        ),
+      },
+    );
+
+    expect(result?.messages.some((message) => message.ruleId === 'boundaries/dependencies')).toBe(
+      true,
     );
   });
 
   it('AC-004: keeps global DB service imports out of source files outside composition and adapters', () => {
-    function collectTypeScriptFiles(directory: string): string[] {
-      return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-        const fullPath = path.join(directory, entry.name);
-        if (entry.isDirectory()) return collectTypeScriptFiles(fullPath);
-        return /\.tsx?$/.test(entry.name) ? [fullPath] : [];
-      });
-    }
-
     const offenders = collectTypeScriptFiles(path.join(projectRoot, 'src'))
       .filter((filePath) => {
         const relative = path.relative(projectRoot, filePath).replaceAll(path.sep, '/');
@@ -103,4 +165,51 @@ describe('architecture import boundaries', () => {
 
     expect(offenders).toEqual([]);
   });
+
+  it('AC-001: keeps UI modules from importing feature data registries directly', () => {
+    const offenders = collectTypeScriptFiles(path.join(projectRoot, 'src'))
+      .filter((filePath) => {
+        const relative = path.relative(projectRoot, filePath).replaceAll(path.sep, '/');
+        if (!relative.includes('/ui/')) return false;
+        return importsFeatureDataRegistry(fs.readFileSync(filePath, 'utf8'));
+      })
+      .map((filePath) => path.relative(projectRoot, filePath).replaceAll(path.sep, '/'));
+
+    expect(offenders).toEqual([]);
+  });
 });
+
+function importsFeatureDataRegistry(source: string): boolean {
+  let searchFrom = 0;
+
+  while (searchFrom < source.length) {
+    const importIndex = source.indexOf('import', searchFrom);
+    if (importIndex === -1) return false;
+
+    const statementEnd = source.indexOf(';', importIndex);
+    const statement = source.slice(
+      importIndex,
+      statementEnd === -1 ? source.length : statementEnd + 1,
+    );
+
+    if (
+      statement.includes('/data/') &&
+      statement.includes('registry') &&
+      (statement.includes("'") || statement.includes('"'))
+    ) {
+      return true;
+    }
+
+    searchFrom = statementEnd === -1 ? source.length : statementEnd + 1;
+  }
+
+  return false;
+}
+
+function collectTypeScriptFiles(directory: string): string[] {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return collectTypeScriptFiles(fullPath);
+    return /\.tsx?$/.test(entry.name) ? [fullPath] : [];
+  });
+}

@@ -1,8 +1,8 @@
 import type { Clock, DashboardRepository, IdGenerator } from '@/core/application/ports';
 import type { Dashboard, DashboardWidget } from '@/core/entities';
-import { generateUniqueSlug, nameToSlug } from '@/shared/utils/slug';
 
 import { recordCatalogMutation } from '../catalog-mutation-logger';
+import { generateUniqueSlug, nameToSlug } from '../slug';
 
 export type CreateDashboardInput = {
   name: string;
