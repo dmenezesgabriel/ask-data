@@ -5,15 +5,17 @@ import type { AskDataResponse } from '@/core/entities';
 
 import { AskData } from './ask-data';
 
-function makeAskEngine(response: Partial<AskDataResponse> = {}): AskEngine {
+function makeAskEngine(response?: Partial<AskDataResponse>, exactResponse = false): AskEngine {
+  const defaultResponse = {
+    question: 'test',
+    rows: [{ count: 42 }],
+    columns: ['count'],
+    ...response,
+  } as AskDataResponse;
+
   return {
     initialize: vi.fn().mockResolvedValue(undefined),
-    ask: vi.fn().mockResolvedValue({
-      question: 'test',
-      rows: [{ count: 42 }],
-      columns: ['count'],
-      ...response,
-    } as AskDataResponse),
+    ask: vi.fn().mockResolvedValue(exactResponse ? response : defaultResponse),
   };
 }
 
@@ -56,5 +58,15 @@ describe('AskData', () => {
     const clarification = { fieldId: 'f1' };
     await uc.execute({ question: 'sales', options: { clarification } });
     expect(engine.ask).toHaveBeenCalledWith('sales', { clarification });
+  });
+
+  it('IT-001: executes through a stable AskEngine contract with a fake response', async () => {
+    const response: AskDataResponse = { error: 'Unable to answer the question.' };
+    const engine = makeAskEngine(response, true);
+    const uc = new AskData(engine);
+
+    const result = await uc.execute({ question: 'show revenue' });
+
+    expect(result).toEqual(response);
   });
 });

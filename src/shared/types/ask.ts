@@ -1,9 +1,11 @@
 import type Fuse from 'fuse.js';
 import type MiniSearch from 'minisearch';
 
-// ---------------------------------------------------------------------------
-// Shared primitive types needed by AskDataConfig and AskDataResponse
-// ---------------------------------------------------------------------------
+/**
+ * @deprecated Stable Ask Data and Semantic Model contracts now live in
+ * `@/core/entities/ask`. Import from the core contract directly when touching
+ * call sites. These compatibility types remain only for incremental migration.
+ */
 export type AskChartType =
   | 'kpi'
   | 'table'
@@ -16,6 +18,7 @@ export type AskChartType =
   | 'bubble'
   | 'histogram';
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export type AnalysisType =
   | 'list_values'
   | 'yoy'
@@ -26,14 +29,18 @@ export type AnalysisType =
   | 'ranking'
   | 'kpi';
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export type ValueFormat = 'currency' | 'percent' | string | undefined;
+/** @deprecated Import from `@/core/entities/ask`. */
 export type FieldRole = 'measure' | 'time' | 'dimension' | 'key';
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface SourceColumnRef {
   table: string;
   column: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface SemanticMatchingConfig {
   enabled?: boolean;
   model?: string;
@@ -43,8 +50,10 @@ export interface SemanticMatchingConfig {
   batchSize?: number;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export type Vocabulary = Record<string, Record<string, string[]>>;
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface FieldConfig {
   table: string;
   column: string;
@@ -61,6 +70,7 @@ export interface FieldConfig {
   parseFormat?: string | null;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface EntityConfig {
   label: string;
   labels?: Record<string, string>;
@@ -72,11 +82,13 @@ export interface EntityConfig {
   preferredDimensions?: string[];
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface RelationshipSide {
   table: string;
   column: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface Relationship {
   left: RelationshipSide;
   right: RelationshipSide;
@@ -85,9 +97,16 @@ export interface Relationship {
   overlap?: number;
 }
 
-// ---------------------------------------------------------------------------
-// AskDataConfig — configuration object used to initialize the ask use case
-// ---------------------------------------------------------------------------
+/** @deprecated Import from `@/core/entities/ask`. */
+export interface SemanticModel {
+  fields: FieldConfig[];
+  entities?: EntityConfig[];
+  relationships?: Relationship[];
+  vocabulary?: Vocabulary;
+  defaultMetric?: SourceColumnRef & { aggregation?: string };
+}
+
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface AskDataConfig {
   enabled?: boolean;
   locale?: string;
@@ -120,15 +139,18 @@ export interface AskDataConfig {
   relationships?: Relationship[];
 }
 
-// ---------------------------------------------------------------------------
-// AskDataResponse — what the ask use case returns to the UI
-// ---------------------------------------------------------------------------
+/** @deprecated Import from `@/core/entities/ask`. */
 export type Filters = Record<string, string>;
+/** @deprecated Import from `@/core/entities/ask`. */
 export type PrimitiveCell = string | number | bigint | boolean | Date | null | undefined;
+/** @deprecated Import from `@/core/entities/ask`. */
 export type CellValue = PrimitiveCell | Record<string, unknown> | unknown[];
+/** @deprecated Import from `@/core/entities/ask`. */
 export type DataRow = Record<string, CellValue>;
+/** @deprecated Import from `@/core/entities/ask`. */
 export type SortDirection = 'ASC' | 'DESC';
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface DateProfile {
   minDate: string;
   maxDate: string;
@@ -138,6 +160,7 @@ export interface DateProfile {
   latestYearEnd: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface CatalogField extends Required<
   Omit<FieldConfig, 'role' | 'aggregation' | 'format' | 'default' | 'parseFormat'>
 > {
@@ -156,11 +179,13 @@ export interface CatalogField extends Required<
   rowCount: number;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface CountStarMetric {
   kind: 'count_star';
   label: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface CountDistinctMetric {
   kind: 'count_distinct';
   entity: Entity;
@@ -168,14 +193,17 @@ export interface CountDistinctMetric {
   label: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface Entity extends EntityConfig {
   field: CatalogField;
   terms: string[];
   preferredDimensionFields?: CatalogField[];
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export type IntentMetric = CatalogField | CountStarMetric | CountDistinctMetric | null;
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface IntentFilter {
   field: CatalogField;
   operator?: '=' | 'IN';
@@ -185,6 +213,7 @@ export interface IntentFilter {
   source?: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export type DateRange =
   | { field: CatalogField; start: string; end: string; text: string; kind?: undefined }
   | {
@@ -196,11 +225,13 @@ export type DateRange =
       end?: undefined;
     };
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface ChangeSpec {
   startYear: number;
   endYear: number;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface AskIntent {
   question: string;
   analysisType: AnalysisType;
@@ -216,6 +247,7 @@ export interface AskIntent {
   timeGrain?: 'day' | 'month' | 'year';
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface ResultShape {
   columns: string[];
   rowCount: number;
@@ -231,6 +263,7 @@ export interface ResultShape {
   oneObservationPerGroup: boolean;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface ChartDecision {
   path: string[];
   recommended: AskChartType | string;
@@ -239,6 +272,7 @@ export interface ChartDecision {
   reason: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface DiagnosticJoinFanout {
   baseTable?: string;
   joinedTables?: string[];
@@ -253,6 +287,7 @@ export interface DiagnosticJoinFanout {
   error?: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface DiagnosticFilterSelectivity {
   unfilteredCountSql?: string;
   filteredCountSql?: string;
@@ -264,6 +299,7 @@ export interface DiagnosticFilterSelectivity {
   error?: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface DiagnosticDateParse {
   field?: string;
   sql?: string;
@@ -273,12 +309,14 @@ export interface DiagnosticDateParse {
   error?: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface Diagnostics {
   joinFanout?: DiagnosticJoinFanout;
   filterSelectivity?: DiagnosticFilterSelectivity;
   dateParse?: DiagnosticDateParse;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface EvidenceItem {
   kind: 'metric' | 'dimension' | 'filter' | 'date';
   field: string;
@@ -288,6 +326,7 @@ export interface EvidenceItem {
   source: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface AskMetrics {
   catalogBuildMs: number | null;
   parseMs?: number;
@@ -295,6 +334,7 @@ export interface AskMetrics {
   totalAskMs?: number;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface ClarificationChoice {
   label: string;
   fieldId: string;
@@ -305,6 +345,7 @@ export interface ClarificationChoice {
   valueNormalized?: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface ClarificationPending {
   slot: 'field' | 'filterField';
   originalQuestion: string | null;
@@ -316,12 +357,14 @@ export interface ClarificationPending {
   candidates?: ClarificationChoice[];
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface Clarification {
   message: string;
   pending: ClarificationPending;
   choices: ClarificationChoice[];
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface Narrative {
   type: 'trend' | 'outlier' | 'pattern' | 'comparison' | 'distribution' | 'summary';
   title: string;
@@ -330,12 +373,14 @@ export interface Narrative {
   details?: Record<string, unknown>;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface NarrativeResult {
   narratives: Narrative[];
   summary: string;
   keyTakeaway: string;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface AskSuccessResult {
   question: string;
   interpretation: string;
@@ -355,30 +400,28 @@ export interface AskSuccessResult {
   metrics: AskMetrics;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface AskErrorResult {
   error: string;
   suggestions?: string[];
   metrics?: AskMetrics;
 }
 
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface AskClarificationResult {
   clarification: Clarification;
   metrics?: AskMetrics;
 }
 
-/**
- * AskDataResponse — the result returned by the AskData use case to the UI.
- * Previously named AskResult in shared/types/ask.ts.
- */
+/** @deprecated Import from `@/core/entities/ask`. */
 export type AskDataResponse = AskSuccessResult | AskErrorResult | AskClarificationResult;
 
-// ---------------------------------------------------------------------------
-// Internal engine types — these stay in shared/types, NOT in core/entities
-// ---------------------------------------------------------------------------
+/** @deprecated Import from `@/core/entities/ask`. */
 export interface ParseOptions {
   clarification?: ClarificationPending;
 }
 
+// Internal engine types below remain adapter/implementation details.
 export interface PlannedSql {
   sql?: string;
   columns?: string[];

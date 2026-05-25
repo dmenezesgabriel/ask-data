@@ -1,5 +1,4 @@
-import type { AskDataResponse } from '@/core/entities';
-import type { AskDataConfig, ParseOptions, Relationship } from '@/shared/types';
+import type { AskDataConfig, AskDataResponse, ParseOptions, Relationship } from '@/core/entities';
 
 import type { DataSourceEntry } from './data-source-manager-port';
 
