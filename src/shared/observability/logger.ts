@@ -40,12 +40,18 @@ function serializeError(error: unknown): LogMetadata {
   if (error instanceof Error) {
     return {
       name: error.name,
-      message: error.message,
-      stack: error.stack,
+      message: redactSensitiveText(error.message),
+      stack: error.stack ? redactSensitiveText(error.stack) : undefined,
     };
   }
 
-  return { value: error };
+  return { value: typeof error === 'string' ? redactSensitiveText(error) : error };
+}
+
+function redactSensitiveText(value: string): string {
+  return value
+    .replace(/https?:\/\/[^\s'"),]+/gi, '[redacted-url]')
+    .replace(/\b(?:SELECT|WITH|DESCRIBE|INSERT|UPDATE|DELETE)\b[\s\S]*/gi, '[redacted-sql]');
 }
 
 function normalizeMetadata(metadata?: LogMetadata): LogMetadata | undefined {
@@ -54,7 +60,7 @@ function normalizeMetadata(metadata?: LogMetadata): LogMetadata | undefined {
   return Object.fromEntries(
     Object.entries(metadata).map(([key, value]) => [
       key,
-      key === 'error' ? serializeError(value) : value,
+      key === 'error' && value instanceof Error ? serializeError(value) : value,
     ]),
   );
 }

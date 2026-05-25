@@ -1,8 +1,9 @@
 import '../../../dashboard/ui/widget';
 import './index';
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { AskEngineFactory, DataSourceManager, QueryPort } from '@/core/application/ports';
 import type { Datasource, Question as QuestionConfig } from '@/core/entities';
 import { setCatalogService } from '@/shared/services/catalog-service';
 
@@ -23,7 +24,14 @@ function makeConfig(overrides: Partial<QuestionConfig> = {}): QuestionConfig {
   };
 }
 
-function mount(props: Partial<{ config: QuestionConfig }> = {}): QuestionEditorPanel {
+function mount(
+  props: Partial<{
+    config: QuestionConfig;
+    queryPort: QueryPort;
+    dataSourceManager: DataSourceManager;
+    createAskEngine: AskEngineFactory;
+  }> = {},
+): QuestionEditorPanel {
   const el = document.createElement('question-editor-panel') as QuestionEditorPanel;
   Object.assign(el, props);
   document.body.appendChild(el);
@@ -68,6 +76,74 @@ function installCatalogService(): void {
 describe('QuestionEditorPanel', () => {
   beforeEach(() => {
     installCatalogService();
+  });
+
+  it('UT-002: runs SQL preview through fake query and datasource ports', async () => {
+    const queryPort: QueryPort = { query: vi.fn().mockResolvedValue({ rows: [{ label: 'West', value: 9 }] }) };
+    const dataSourceManager: DataSourceManager = { createViews: vi.fn().mockResolvedValue(undefined) };
+    const el = mount({
+      config: makeConfig({ queryType: 'sql', query: 'SELECT region, sales FROM sales' }),
+      queryPort,
+      dataSourceManager,
+    });
+    await updateComplete(el);
+
+    await el.runPreview();
+    await updateComplete(el);
+
+    expect(dataSourceManager.createViews).toHaveBeenCalledOnce();
+    expect(queryPort.query).toHaveBeenCalledWith('SELECT region, sales FROM sales');
+    expect(el.querySelector('app-widget')).not.toBeNull();
+    cleanup(el);
+  });
+
+  it('UT-002: runs natural-language preview through a fake Ask Data engine', async () => {
+    const queryPort: QueryPort = { query: vi.fn() };
+    const dataSourceManager: DataSourceManager = { createViews: vi.fn().mockResolvedValue(undefined) };
+    const askEngine = {
+      initialize: vi.fn().mockResolvedValue(undefined),
+      ask: vi.fn().mockResolvedValue({
+        sql: 'SELECT region, sales FROM sales',
+        rows: [{ label: 'West', value: 9 }],
+        columns: ['label', 'value'],
+      }),
+    };
+    const createAskEngine: AskEngineFactory = vi.fn().mockReturnValue(askEngine);
+    const el = mount({
+      config: makeConfig({ queryType: 'nl', nlQuery: 'sales by region' }),
+      queryPort,
+      dataSourceManager,
+      createAskEngine,
+    });
+    await updateComplete(el);
+
+    await el.runPreview();
+    await updateComplete(el);
+
+    expect(dataSourceManager.createViews).toHaveBeenCalledOnce();
+    expect(createAskEngine).toHaveBeenCalledOnce();
+    expect(askEngine.ask).toHaveBeenCalledWith('sales by region', {});
+    expect(queryPort.query).not.toHaveBeenCalled();
+    expect(el.querySelector('app-widget')).not.toBeNull();
+    cleanup(el);
+  });
+
+  it('UX-001: shows recoverable feedback when question SQL preview fails', async () => {
+    const queryPort: QueryPort = { query: vi.fn().mockRejectedValue(new Error('Query failed')) };
+    const dataSourceManager: DataSourceManager = { createViews: vi.fn().mockResolvedValue(undefined) };
+    const el = mount({
+      config: makeConfig({ queryType: 'sql', query: 'SELECT broken FROM sales' }),
+      queryPort,
+      dataSourceManager,
+    });
+    await updateComplete(el);
+
+    await el.runPreview();
+    await updateComplete(el);
+
+    expect(el.querySelector('.qep-preview-error')?.textContent).toContain('Query failed');
+    expect(el.querySelector<HTMLButtonElement>('.qep-run-btn')?.disabled).toBe(false);
+    cleanup(el);
   });
 
   describe('_renderPreview()', () => {

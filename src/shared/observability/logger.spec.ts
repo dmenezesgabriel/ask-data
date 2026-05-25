@@ -64,4 +64,23 @@ describe('logger', () => {
     const sql = `SELECT\n  customer_id,\n  SUM(amount) AS total\nFROM sales\nGROUP BY 1\nORDER BY 2 DESC`;
     expect(summarizeSql(sql, 40)).toBe('SELECT customer_id, SUM(amount) AS tota…');
   });
+
+  it('ST-001: redacts raw SQL and datasource URLs from failed query logs by default', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const logger = createLogger('query-test');
+
+    logger.error(
+      'query.failed',
+      new Error("Failed SELECT * FROM read_csv('https://example.com/private.csv')"),
+      { operation: 'datasource-preview', adapter: 'duckdb-wasm' },
+    );
+
+    const payload = error.mock.calls[0][1] as { error: { message: string; stack?: string } };
+    expect(payload).toEqual(
+      expect.objectContaining({ operation: 'datasource-preview', adapter: 'duckdb-wasm' }),
+    );
+    expect(JSON.stringify(payload)).not.toContain('https://example.com/private.csv');
+    expect(JSON.stringify(payload)).not.toContain('read_csv');
+    expect(payload.error.message).toContain('[redacted-sql]');
+  });
 });

@@ -6,6 +6,12 @@ import '../../../../shared/ui/ui-button';
 import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
 import type {
+  AskEngine,
+  AskEngineFactory,
+  DataSourceManager,
+  QueryPort,
+} from '@/core/application/ports';
+import type {
   Dashboard,
   DashboardWidget as WidgetConfig,
   Datasource as DataSourceConfig,
@@ -13,7 +19,6 @@ import type {
 import type { Question as QuestionConfig } from '@/core/entities';
 import { createLogger } from '@/shared/observability/logger';
 import { getCatalogService } from '@/shared/services/catalog-service';
-import { getDbService } from '@/shared/services/db-service';
 
 import type {
   CellValue,
@@ -21,8 +26,7 @@ import type {
   DashboardFilterConfig,
   Filters,
 } from '../../../../shared/types/index';
-import { escapeSqlString, quoteIdent, toRows } from '../../../../shared/utils/utils';
-import { AskDataEngine } from '../../../ask/model/ask-data';
+import { toRows } from '../../../../shared/utils/utils';
 import { DASHBOARD_CONFIG } from '../../model/dashboard-config';
 import {
   configToDashboard,
@@ -74,6 +78,10 @@ export class DashboardWorkspace extends LitElement {
     _overflowMenuAlign: { state: true },
     _importError: { state: true },
     _datasources: { state: true },
+    queryPort: { attribute: false },
+    queryAdapterName: { type: String },
+    dataSourceManager: { attribute: false },
+    createAskEngine: { attribute: false },
   };
 
   config: DashboardConfig;
@@ -90,6 +98,10 @@ export class DashboardWorkspace extends LitElement {
   widgetErrors: Record<string, string>;
   filters: Filters;
   crossFilters: Record<string, CellValue[]>;
+  queryPort: QueryPort | null = null;
+  queryAdapterName = 'unconfigured';
+  dataSourceManager: DataSourceManager | null = null;
+  createAskEngine: AskEngineFactory | null = null;
   private _editingWidget: WidgetConfig | null = null;
   private _showEditor: boolean = false;
   private _showPicker: boolean = false;
@@ -98,7 +110,7 @@ export class DashboardWorkspace extends LitElement {
   private _overflowMenuAlign: 'left' | 'right' = 'left';
   private _importError = '';
   private _datasources: DataSourceConfig[] = [];
-  private _askEngine: AskDataEngine;
+  private _askEngine: AskEngine | null = null;
   private _dataReady: boolean = false;
   private _dataCache: Record<
     string,
@@ -129,14 +141,6 @@ export class DashboardWorkspace extends LitElement {
     this.widgetErrors = {};
     this.filters = {};
     this.crossFilters = {};
-    this._askEngine = new AskDataEngine(
-      {
-        dataSources: this._resolvedDataSources,
-        relationships: this.config.relationships,
-        askData: this.config.askData,
-      },
-      getDbService(),
-    );
   }
 
   override createRenderRoot(): HTMLElement | DocumentFragment {
@@ -149,14 +153,7 @@ export class DashboardWorkspace extends LitElement {
     }
 
     if (changedProps.has('config')) {
-      this._askEngine = new AskDataEngine(
-        {
-          dataSources: this._resolvedDataSources,
-          relationships: this.config.relationships,
-          askData: this.config.askData,
-        },
-        getDbService(),
-      );
+      this._askEngine = null;
       this._dataReady = false;
       this._viewsCreated = false;
       this._dataCache = {};
@@ -194,19 +191,17 @@ export class DashboardWorkspace extends LitElement {
   private async _ensureViewsCreated(): Promise<void> {
     if (this._viewsCreated) return;
     const sources = this._resolvedDataSources;
-    for (const source of sources) {
-      logger.info('view.create.start', { datasource: source.name, url: source.url });
-      try {
-        await getDbService().query(
-          `CREATE OR REPLACE VIEW ${quoteIdent(source.name)} AS SELECT * FROM read_csv_auto('${escapeSqlString(
-            source.url,
-          )}')`,
-        );
-        logger.info('view.create.ok', { datasource: source.name });
-      } catch (err) {
-        logger.error('view.create.error', err, { datasource: source.name, url: source.url });
-        throw err;
-      }
+    if (!this.dataSourceManager) throw new Error('Dashboard datasource manager is not configured.');
+    try {
+      await this.dataSourceManager.createViews(sources);
+      logger.info('views.create.ok', { datasourceCount: sources.length });
+    } catch (err) {
+      logger.error('views.create.error', err, {
+        operation: 'dashboard-create-views',
+        adapter: this.queryAdapterName,
+        datasourceCount: sources.length,
+      });
+      throw err;
     }
     this._viewsCreated = true;
   }
@@ -215,8 +210,17 @@ export class DashboardWorkspace extends LitElement {
     if (this._dataReady) return;
     try {
       await this._ensureViewsCreated();
+      if (!this._askEngine) {
+        if (!this.createAskEngine) throw new Error('Dashboard Ask Data engine is not configured.');
+        this._askEngine = this.createAskEngine({
+          dataSources: this._resolvedDataSources,
+          relationships: this.config.relationships,
+          askData: this.config.askData,
+        });
+      }
+      const askEngine = this._askEngine;
       logger.info('ask-engine.initialize.start');
-      await this._askEngine.initialize();
+      await askEngine.initialize();
       logger.info('ask-engine.initialize.ok');
       this._dataReady = true;
     } catch (err) {
@@ -239,8 +243,9 @@ export class DashboardWorkspace extends LitElement {
     rows?: Record<string, CellValue>[];
   }> {
     await this._ensureViewsCreated();
+    if (!this.queryPort) throw new Error('Dashboard query port is not configured.');
     const sql = applySqlFilters(widget.query ?? '', this._getFilterDefs(), this.filters);
-    const result = await getDbService().query(sql);
+    const result = await this.queryPort.query(sql);
     const rows = toRows(result).map((row) =>
       Object.fromEntries(
         Object.entries(row).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v]),
@@ -272,6 +277,7 @@ export class DashboardWorkspace extends LitElement {
       widgetId: widget.id,
       query: widget.query ?? '',
     });
+    if (!this._askEngine) throw new Error('Dashboard Ask Data engine is not configured.');
     const result = await this._askEngine.ask(widget.query ?? '', {});
     if ('rows' in result && 'sql' in result) {
       const labels = result.rows.map((r: Record<string, CellValue>) =>
@@ -509,6 +515,24 @@ export class DashboardWorkspace extends LitElement {
     this._loadWidgetData();
   }
 
+  private _recordWidgetLoadFailure(
+    widget: WidgetConfig,
+    err: unknown,
+    newData: Record<
+      string,
+      { labels: string[]; values: number[]; rows?: Record<string, CellValue>[] }
+    >,
+    newErrors: Record<string, string>,
+  ): void {
+    logger.error('query.execute.error', err, {
+      operation: widget.queryType === 'nl' ? 'dashboard-widget-ask' : 'dashboard-widget-sql',
+      adapter: this.queryAdapterName,
+      widgetId: widget.id,
+    });
+    newData[widget.id] = { labels: [], values: [] };
+    newErrors[widget.id] = err instanceof Error ? err.message : String(err);
+  }
+
   private async _loadWidgetData(): Promise<void> {
     if (!this._activeDashboard) return;
     const loadingSheetId = this.activeSheetId;
@@ -525,9 +549,7 @@ export class DashboardWorkspace extends LitElement {
           const result = await this._executeQuery(widget);
           newData[widget.id] = result;
         } catch (err) {
-          logger.error('widget-data.load.error', err, { widgetId: widget.id });
-          newData[widget.id] = { labels: [], values: [] };
-          newErrors[widget.id] = err instanceof Error ? err.message : String(err);
+          this._recordWidgetLoadFailure(widget, err, newData, newErrors);
         }
       }
     }
@@ -689,6 +711,10 @@ export class DashboardWorkspace extends LitElement {
         .widget=${this._editingWidget}
         .mode=${this._editingWidget ? 'edit' : 'add'}
         .dataSourceSlugs=${this.config?.dataSourceSlugs ?? []}
+        .queryPort=${this.queryPort}
+        .queryAdapterName=${this.queryAdapterName}
+        .dataSourceManager=${this.dataSourceManager}
+        .createAskEngine=${this.createAskEngine}
         @widget-save=${this._onWidgetSave}
         @editor-cancel=${this._onEditorCancel}
       ></widget-editor>

@@ -3,6 +3,7 @@ import '../question-editor-panel';
 
 import { html, LitElement, type TemplateResult } from 'lit';
 
+import type { AskEngineFactory, DataSourceManager, QueryPort } from '@/core/application/ports';
 import type { Question as QuestionConfig } from '@/core/entities';
 import { getCatalogService } from '@/shared/services/catalog-service';
 
@@ -15,10 +16,18 @@ export class QuestionEditor extends LitElement {
     _config: { state: true },
     _isDirty: { state: true },
     _error: { state: true },
+    queryPort: { attribute: false },
+    queryAdapterName: { type: String },
+    dataSourceManager: { attribute: false },
+    createAskEngine: { attribute: false },
   };
 
   slug = '';
   isNew = false;
+  queryPort: QueryPort | null = null;
+  queryAdapterName = 'unconfigured';
+  dataSourceManager: DataSourceManager | null = null;
+  createAskEngine: AskEngineFactory | null = null;
 
   private _config: QuestionConfig | null = null;
   private _isDirty = false;
@@ -119,6 +128,10 @@ export class QuestionEditor extends LitElement {
         <question-editor-panel
           .config=${this._config}
           .readonly=${this._config.source === 'yaml'}
+          .queryPort=${this.queryPort}
+          .queryAdapterName=${this.queryAdapterName}
+          .dataSourceManager=${this.dataSourceManager}
+          .createAskEngine=${this.createAskEngine}
           @panel-change=${(e: CustomEvent<QuestionConfig>) => this._onPanelChange(e)}
         ></question-editor-panel>
       </main>

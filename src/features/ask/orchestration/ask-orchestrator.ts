@@ -1,34 +1,30 @@
-import type { DataSourceEntry, DataSourceManager } from '@/core/application/ports';
-
 import type {
-  AskDataResponse,
-  Clarification,
-  DashboardConfig,
-  ParseOptions,
-} from '../../../shared/types/index';
+  AskEngine,
+  AskEngineConfig,
+  AskEngineFactory,
+  DataSourceManager,
+} from '@/core/application/ports';
 
-export interface AskEngine {
-  initialize(): Promise<void>;
-  ask(question: string, options?: ParseOptions): Promise<AskDataResponse>;
-}
+import type { AskDataResponse, Clarification, DashboardConfig } from '../../../shared/types/index';
 
-export interface AskOrchestratorConfig {
-  dataSources: DataSourceEntry[];
+export type { AskEngine } from '@/core/application/ports';
+
+export type AskOrchestratorConfig = AskEngineConfig & {
   askData: DashboardConfig['askData'];
   relationships?: DashboardConfig['relationships'];
-}
+};
 
 export class AskOrchestrator {
   private config: AskOrchestratorConfig;
   private dataSourceManager: DataSourceManager;
   private engine: AskEngine | null = null;
-  private engineFactory: (config: AskOrchestratorConfig) => AskEngine;
+  private engineFactory: AskEngineFactory;
   private initialized = false;
 
   constructor(
     config: AskOrchestratorConfig,
     dataSourceManager: DataSourceManager,
-    engineFactory: (config: AskOrchestratorConfig) => AskEngine,
+    engineFactory: AskEngineFactory,
   ) {
     this.config = config;
     this.dataSourceManager = dataSourceManager;
@@ -40,8 +36,9 @@ export class AskOrchestrator {
     if (!this.engine) {
       this.engine = this.engineFactory(this.config);
     }
-    await this.dataSourceManager.createViews(this.config.dataSources);
-    await this.engine.initialize();
+    await this.dataSourceManager.createViews(this.config.dataSources ?? []);
+    const engine = this.engine;
+    await engine.initialize();
     this.initialized = true;
   }
 

@@ -1,12 +1,14 @@
 import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
+import type { QueryPort } from '@/core/application/ports';
 import type { Datasource as DataSourceConfig, DataSourceType } from '@/core/entities';
-import { getDbService } from '@/shared/services/db-service';
+import { createLogger } from '@/shared/observability/logger';
 
 import { toRows } from '../../../../shared/utils/utils';
 import { escapeSqlString } from '../../../../shared/utils/utils';
 
 const DS_TYPES: DataSourceType[] = ['csv', 'parquet', 'json'];
+const logger = createLogger('datasource.editor-panel');
 
 const READ_FN: Record<DataSourceType, string> = {
   csv: 'read_csv_auto',
@@ -25,6 +27,8 @@ export class DatasourceEditorPanel extends LitElement {
     readonly: { type: Boolean },
     nameError: { type: String },
     urlError: { type: String },
+    queryPort: { attribute: false },
+    queryAdapterName: { type: String },
     _testStatus: { state: true },
     _testError: { state: true },
     _testColumns: { state: true },
@@ -37,6 +41,8 @@ export class DatasourceEditorPanel extends LitElement {
   readonly = false;
   nameError = '';
   urlError = '';
+  queryPort: (QueryPort & { initialize?: () => Promise<unknown> }) | null = null;
+  queryAdapterName = 'unconfigured';
 
   private _testStatus: 'idle' | 'success' | 'error' = 'idle';
   private _testError = '';
@@ -47,10 +53,7 @@ export class DatasourceEditorPanel extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
-    // Pre-warm DuckDB so the first Test Connection click is fast.
-    getDbService()
-      .initialize()
-      .catch(() => {});
+    this.queryPort?.initialize?.().catch(() => {});
   }
 
   override createRenderRoot(): HTMLElement | DocumentFragment {
@@ -87,7 +90,8 @@ export class DatasourceEditorPanel extends LitElement {
 
     try {
       // Schema via DESCRIBE
-      const descResult = await getDbService().query(
+      if (!this.queryPort) throw new Error('Datasource query port is not configured.');
+      const descResult = await this.queryPort.query(
         `DESCRIBE SELECT * FROM ${fn}('${url}') LIMIT 5`,
       );
       const descRows = toRows(descResult);
@@ -97,7 +101,7 @@ export class DatasourceEditorPanel extends LitElement {
       }));
 
       // Data preview — 5 rows
-      const dataRows = toRows(await getDbService().query(`SELECT * FROM ${fn}('${url}') LIMIT 5`));
+      const dataRows = toRows(await this.queryPort.query(`SELECT * FROM ${fn}('${url}') LIMIT 5`));
       this._testRowFields = dataRows.length > 0 ? Object.keys(dataRows[0]) : [];
       this._testRows = dataRows.map((r) =>
         Object.fromEntries(this._testRowFields.map((f) => [f, r[f]])),
@@ -105,6 +109,10 @@ export class DatasourceEditorPanel extends LitElement {
 
       this._testStatus = 'success';
     } catch (err: unknown) {
+      logger.error('query.execute.error', err, {
+        operation: 'datasource-preview',
+        adapter: this.queryAdapterName,
+      });
       this._testStatus = 'error';
       this._testError = String(err);
     } finally {

@@ -3,11 +3,11 @@ import './datasource-editor';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 
+import type { QueryPort } from '@/core/application/ports';
 import type { Datasource } from '@/core/entities';
 import { setCatalogService } from '@/shared/services/catalog-service';
-import { setDbService } from '@/shared/services/db-service';
 
-setDbService({ query: async () => ({}), initialize: async () => {}, createViews: async () => {} });
+const storyQueryPort: QueryPort = { query: async () => ({ rows: [] }) };
 
 const storyDatasources: Datasource[] = [
   {
@@ -57,7 +57,12 @@ const meta = {
   ],
   render: (args: { slug: string; isNew?: boolean }) => html`
     <div style="min-height: 600px;">
-      <datasource-editor .slug=${args.slug} .isNew=${args.isNew ?? false}></datasource-editor>
+      <datasource-editor
+        .slug=${args.slug}
+        .isNew=${args.isNew ?? false}
+        .queryPort=${storyQueryPort}
+        .queryAdapterName=${'storybook'}
+      ></datasource-editor>
     </div>
   `,
   parameters: {

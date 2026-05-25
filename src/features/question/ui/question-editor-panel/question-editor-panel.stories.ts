@@ -4,7 +4,15 @@ import './index';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 
+import type { AskEngineFactory, DataSourceManager, QueryPort } from '@/core/application/ports';
 import type { Question as QuestionConfig } from '@/core/entities';
+
+const storyQueryPort: QueryPort = { query: async () => ({ rows: [] }) };
+const storyDataSourceManager: DataSourceManager = { createViews: async () => {} };
+const storyAskEngineFactory: AskEngineFactory = () => ({
+  initialize: async () => {},
+  ask: async () => ({ error: 'Storybook Ask Data preview is not connected.' }),
+});
 
 function makeConfig(overrides: Partial<QuestionConfig> = {}): QuestionConfig {
   return {
@@ -27,7 +35,13 @@ const meta = {
   tags: ['autodocs'],
   render: ({ config }: { config: QuestionConfig }) => html`
     <div style="width: 900px; padding: 1rem;">
-      <question-editor-panel .config=${config}></question-editor-panel>
+      <question-editor-panel
+        .config=${config}
+        .queryPort=${storyQueryPort}
+        .queryAdapterName=${'storybook'}
+        .dataSourceManager=${storyDataSourceManager}
+        .createAskEngine=${storyAskEngineFactory}
+      ></question-editor-panel>
     </div>
   `,
   parameters: {

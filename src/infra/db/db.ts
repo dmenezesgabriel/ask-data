@@ -6,7 +6,7 @@ import mvpWasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url';
 import type { Table } from 'apache-arrow';
 
 import type { QueryPort } from '@/core/application/ports';
-import { createLogger, summarizeSql } from '@/shared/observability/logger';
+import { createLogger } from '@/shared/observability/logger';
 
 const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
   mvp: { mainModule: mvpWasm, mainWorker: mvpWorker },
@@ -73,13 +73,11 @@ export class DuckDBManager implements QueryPort {
   async query(sql: string): Promise<Table<Record<string, never>>> {
     const connection = await this.getConnection();
     const startedAt = performance.now();
-    const summary = summarizeSql(sql);
 
     try {
       const result = await connection.query<Record<string, never>>(sql);
       const durationMs = Math.round(performance.now() - startedAt);
       const metadata = {
-        sql: summary,
         durationMs,
         rowCount: result.numRows,
       };
@@ -93,7 +91,8 @@ export class DuckDBManager implements QueryPort {
       return result;
     } catch (error) {
       this.logger.error('query.failed', error, {
-        sql: summary,
+        operation: 'query',
+        adapter: 'duckdb-wasm',
         durationMs: Math.round(performance.now() - startedAt),
       });
       throw error;

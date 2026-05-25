@@ -4,6 +4,7 @@ import { LocalStorageDashboardRepository } from '@/adapters/client/local-storage
 import { LocalStorageDatasourceRepository } from '@/adapters/client/local-storage/local-storage-datasource-repository';
 import { LocalStorageQuestionRepository } from '@/adapters/client/local-storage/local-storage-question-repository';
 import { SystemClock } from '@/adapters/client/system-clock';
+import type { AskEngineConfig, DataSourceManager, QueryPort } from '@/core/application/ports';
 import { CreateDashboard } from '@/core/application/use-cases/dashboards/create-dashboard';
 import { DeleteDashboard } from '@/core/application/use-cases/dashboards/delete-dashboard';
 import { GetDashboard } from '@/core/application/use-cases/dashboards/get-dashboard';
@@ -19,6 +20,7 @@ import { DeleteQuestion } from '@/core/application/use-cases/questions/delete-qu
 import { GetQuestion } from '@/core/application/use-cases/questions/get-question';
 import { ListQuestions } from '@/core/application/use-cases/questions/list-questions';
 import { UpdateQuestion } from '@/core/application/use-cases/questions/update-question';
+import { AskDataEngine } from '@/features/ask/model/ask-data';
 import {
   SeededDashboardRepository,
   SeededDatasourceRepository,
@@ -26,7 +28,6 @@ import {
 } from '@/features/catalog/data/seeded-catalog-repositories';
 import { DuckDBDataSourceManager } from '@/infra/data-sources/data-source-manager';
 import { duckDBManager } from '@/infra/db/db';
-import { setDbService } from '@/shared/services/db-service';
 
 import { createPlatformRegistry } from './platform-capabilities';
 
@@ -39,17 +40,18 @@ export function createClientOnlyContainer() {
   const questionRepo = new SeededQuestionRepository(new LocalStorageQuestionRepository(clock));
   const dashboardRepo = new SeededDashboardRepository(new LocalStorageDashboardRepository());
   const queryEngine = new DuckDbWasmQueryEngine();
+  const queryPort: QueryPort = duckDBManager;
+  const dataSourceManager: DataSourceManager = new DuckDBDataSourceManager(queryPort);
+  const createAskEngine = (config: AskEngineConfig) => new AskDataEngine(config, queryPort);
   const platformRegistry = createPlatformRegistry();
-
-  setDbService({
-    query: (sql) => duckDBManager.query(sql),
-    initialize: () => duckDBManager.initialize(),
-    createViews: (sources) => new DuckDBDataSourceManager(duckDBManager).createViews(sources),
-  });
 
   return {
     platformRegistry,
     queryEngine,
+    queryPort,
+    queryAdapterName: 'duckdb-wasm',
+    dataSourceManager,
+    createAskEngine,
     createDatasource: new CreateDatasource(datasourceRepo, idGenerator, clock),
     updateDatasource: new UpdateDatasource(datasourceRepo, clock),
     deleteDatasource: new DeleteDatasource(datasourceRepo),

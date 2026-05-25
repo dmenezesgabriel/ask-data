@@ -371,7 +371,7 @@ export class AskDataEngine {
   }
 
   async ask(question: string, options: ParseOptions = {}) {
-    const askSpan = this.logger.span('ask', { question });
+    const askSpan = this.logger.span('ask');
     const totalStarted = performance.now();
 
     try {
@@ -416,7 +416,7 @@ export class AskDataEngine {
         askSpan.end({ outcome: 'planning-error', metrics: response.metrics }, 'warn');
         return response;
       }
-      this.logger.info('sql.generated', { traceId: askSpan.traceId, sql: planned.sql });
+      this.logger.info('sql.generated', { traceId: askSpan.traceId });
       const sqlStarted = performance.now();
       if (!planned.sql) {
         const response = {

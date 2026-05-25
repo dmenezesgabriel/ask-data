@@ -7,6 +7,9 @@ import '../dashboard-workspace';
 
 import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
+import type { AskEngineFactory, DataSourceManager, QueryPort } from '@/core/application/ports';
+import { createLogger } from '@/shared/observability/logger';
+
 import type {
   AskDataResponse,
   AskSuccessResult,
@@ -17,6 +20,8 @@ import type {
 import { AskOrchestrator } from '../../../ask/orchestration/ask-orchestrator';
 import { createDashboardOrchestrator } from '../../../ask/orchestration/create-dashboard-orchestrator';
 import type { DashboardMode } from '../dashboard-editor-header/dashboard-editor-header';
+
+const logger = createLogger('dashboard.editor');
 
 function isAskSuccess(result: AskDataResponse): result is AskSuccessResult {
   return 'rows' in result && 'sql' in result && 'chartType' in result;
@@ -34,11 +39,19 @@ export class DashboardEditor extends LitElement {
     _askLoading: { state: true },
     _askError: { state: true },
     _askClarification: { state: true },
+    queryPort: { attribute: false },
+    queryAdapterName: { type: String },
+    dataSourceManager: { attribute: false },
+    createAskEngine: { attribute: false },
   };
 
   config: DashboardConfig | null = null;
   slug = '';
   isNew = false;
+  queryPort: QueryPort | null = null;
+  queryAdapterName = 'unconfigured';
+  dataSourceManager: DataSourceManager | null = null;
+  createAskEngine: AskEngineFactory | null = null;
 
   private _activeTab: DashboardMode = 'dashboard';
   private _editMode = false;
@@ -55,8 +68,14 @@ export class DashboardEditor extends LitElement {
 
   private _getOrchestrator(): AskOrchestrator | null {
     if (!this.config) return null;
+    if (!this.dataSourceManager) throw new Error('Dashboard datasource manager is not configured.');
+    if (!this.createAskEngine) throw new Error('Dashboard Ask Data engine is not configured.');
     if (!this._orchestrator) {
-      this._orchestrator = createDashboardOrchestrator(this.config);
+      this._orchestrator = createDashboardOrchestrator(
+        this.config,
+        this.dataSourceManager,
+        this.createAskEngine,
+      );
     }
     return this._orchestrator;
   }
@@ -86,7 +105,10 @@ export class DashboardEditor extends LitElement {
       else if ('error' in result) this._askError = result.error;
       else if (isAskSuccess(result)) this._askResult = result;
     } catch (err: unknown) {
-      console.error(err);
+      logger.error('ask.execute.error', err, {
+        operation: 'dashboard-ask-data',
+        adapter: this.queryAdapterName,
+      });
       this._askError = String(err);
     } finally {
       this._askLoading = false;
@@ -163,6 +185,10 @@ export class DashboardEditor extends LitElement {
           .isNew=${this.isNew}
           .slug=${this.slug}
           .editMode=${this._editMode}
+          .queryPort=${this.queryPort}
+          .queryAdapterName=${this.queryAdapterName}
+          .dataSourceManager=${this.dataSourceManager}
+          .createAskEngine=${this.createAskEngine}
         ></dashboard-workspace>
       </div>
       <div

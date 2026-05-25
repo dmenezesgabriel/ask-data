@@ -149,3 +149,65 @@ describe('IT-001: client-only container datasource round-trip', () => {
     expect(list.some((d) => d.name === 'Test DS')).toBe(true);
   });
 });
+
+describe('Task 004 query adapter composition', () => {
+  it('IT-001: client-only dashboard widget query executes through the DuckDB-WASM-backed query port', async () => {
+    const store = new Map<string, string>();
+    const duckDbQuery = vi.fn().mockResolvedValue({ rows: [{ label: 'West', value: 12 }] });
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      },
+      clear: () => {
+        store.clear();
+      },
+    });
+    vi.doMock('@/infra/db/db', () => ({
+      duckDBManager: { query: duckDbQuery, initialize: vi.fn() },
+      DuckDBManager: class {},
+    }));
+    vi.resetModules();
+
+    const { createClientOnlyContainer } = await import('./client-only-container');
+    const container = createClientOnlyContainer();
+    const widget = {
+      id: 'sales-widget',
+      type: 'chart',
+      title: 'Sales by Region',
+      queryType: 'sql',
+      query: 'SELECT region AS label, sales AS value FROM sales',
+    };
+    const result = await container.queryPort.query(widget.query);
+
+    expect(container.queryAdapterName).toBe('duckdb-wasm');
+    expect(duckDbQuery).toHaveBeenCalledWith('SELECT region AS label, sales AS value FROM sales');
+    expect(result).toEqual({ rows: [{ label: 'West', value: 12 }] });
+    expect(container.dataSourceManager).toBeDefined();
+    expect(container.createAskEngine).toBeDefined();
+  });
+
+  it('IT-002: client-server query port delegates through the HTTP query adapter', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ columns: ['total'], rows: [{ total: 42 }] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.resetModules();
+
+    const { createClientServerContainer } = await import('./client-server-container');
+    const container = createClientServerContainer();
+    const result = await container.queryPort.query('SELECT 42 AS total');
+
+    expect(container.queryAdapterName).toBe('http');
+    expect(fetchMock).toHaveBeenCalledWith('/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ datasourceId: 'default', sql: 'SELECT 42 AS total' }),
+    });
+    expect(result).toEqual({ columns: ['total'], rows: [{ total: 42 }] });
+  });
+});

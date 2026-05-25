@@ -1,16 +1,16 @@
+import type { AskEngineFactory, DataSourceManager } from '@/core/application/ports';
 import type { Datasource as DataSourceConfig } from '@/core/entities';
-import { getDbService } from '@/shared/services/db-service';
 
 import type { DashboardConfig } from '../../../shared/types/index';
 import { getDatasourceBySlug } from '../../datasource/data/datasource-registry';
-import { AskDataEngine } from '../model/ask-data';
 import { AskOrchestrator, type AskOrchestratorConfig } from './ask-orchestrator';
 
 export function createDashboardOrchestrator(
   config: DashboardConfig,
+  dataSourceManager: DataSourceManager,
+  createAskEngine: AskEngineFactory,
   resolvedSources?: DataSourceConfig[],
 ): AskOrchestrator {
-  const db = getDbService();
   const dataSources =
     resolvedSources ??
     ((config.dataSourceSlugs ?? [])
@@ -21,5 +21,5 @@ export function createDashboardOrchestrator(
     askData: config.askData,
     relationships: config.relationships,
   };
-  return new AskOrchestrator(orchestratorConfig, db, (cfg) => new AskDataEngine(cfg, db));
+  return new AskOrchestrator(orchestratorConfig, dataSourceManager, createAskEngine);
 }

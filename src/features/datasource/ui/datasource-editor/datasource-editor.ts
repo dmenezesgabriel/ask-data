@@ -3,6 +3,7 @@ import '../datasource-editor-panel/datasource-editor-panel';
 
 import { html, LitElement, type TemplateResult } from 'lit';
 
+import type { QueryPort } from '@/core/application/ports';
 import type { Datasource as DataSourceConfig } from '@/core/entities';
 import { getCatalogService } from '@/shared/services/catalog-service';
 
@@ -18,10 +19,14 @@ export class DatasourceEditor extends LitElement {
     _nameError: { state: true },
     _urlError: { state: true },
     _loadError: { state: true },
+    queryPort: { attribute: false },
+    queryAdapterName: { type: String },
   };
 
   slug = '';
   isNew = false;
+  queryPort: QueryPort | null = null;
+  queryAdapterName = 'unconfigured';
 
   private _config: DataSourceConfig | null = null;
   private _isDirty = false;
@@ -152,6 +157,8 @@ export class DatasourceEditor extends LitElement {
           .readonly=${this._config.source === 'yaml'}
           .nameError=${this._nameError}
           .urlError=${this._urlError}
+          .queryPort=${this.queryPort}
+          .queryAdapterName=${this.queryAdapterName}
           @panel-change=${(e: CustomEvent<DataSourceConfig>) => this._onPanelChange(e)}
         ></datasource-editor-panel>
       </main>

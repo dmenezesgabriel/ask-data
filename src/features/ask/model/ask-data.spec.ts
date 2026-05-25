@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CatalogField } from '../../../shared/types/index';
 import { AskDataEngine } from './ask-data';
@@ -28,6 +28,17 @@ function makeEngine() {
 }
 
 describe('AskDataEngine.measurePriority()', () => {
+  const originalLevel = globalThis.__ASK_DATA_LOG_LEVEL__;
+
+  beforeEach(() => {
+    globalThis.__ASK_DATA_LOG_LEVEL__ = 'info';
+  });
+
+  afterEach(() => {
+    globalThis.__ASK_DATA_LOG_LEVEL__ = originalLevel;
+    vi.restoreAllMocks();
+  });
+
   it('UT-003: field with priority > 0 always ranks above name-heuristic "sales" field', () => {
     const engine = makeEngine();
     const salesField = makeField({
@@ -66,5 +77,53 @@ describe('AskDataEngine.measurePriority()', () => {
     const engine = makeEngine();
     const field = makeField({ id: 'sales::Xyz', column: 'Xyz', label: 'Xyz', priority: 0 });
     expect(engine.measurePriority(field)).toBe(0);
+  });
+
+  it('OT-001: records Ask Data success telemetry with elapsed time without question text', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const engine = makeEngine();
+    const intent = { metric: makeField({ id: 'sales::Sales', column: 'Sales' }) };
+
+    vi.spyOn(engine, 'initialize').mockResolvedValue(undefined);
+    vi.spyOn(engine, 'parseQuestion').mockReturnValue({ intent } as never);
+    vi.spyOn(engine, 'planSql').mockReturnValue({
+      sql: 'SELECT region AS label, 10 AS value FROM sales',
+      columns: ['label', 'value'],
+      diagnostics: {},
+    } as never);
+    vi.spyOn(engine, 'evaluateDiagnostics').mockResolvedValue({} as never);
+    vi.spyOn(engine, 'describeIntent').mockReturnValue('Sales by region');
+    vi.spyOn(engine, 'describeEvidence').mockReturnValue([] as never);
+    engine.duckDBManager = { query: vi.fn().mockResolvedValue({ rows: [{ label: 'West', value: 10 }] }) };
+
+    await engine.ask('confidential sales by region');
+
+    const askOkCall = info.mock.calls.find(([event]) => event === '[AskData] ask.ok');
+    expect(askOkCall).toBeDefined();
+    expect(askOkCall?.[1]).toEqual(
+      expect.objectContaining({
+        durationMs: expect.any(Number),
+        outcome: 'success',
+        metrics: expect.objectContaining({ totalAskMs: expect.any(Number) }),
+      }),
+    );
+    expect(JSON.stringify(askOkCall)).not.toContain('confidential sales by region');
+  });
+
+  it('OT-001: records Ask Data failure telemetry with elapsed time without question text', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const engine = makeEngine();
+    vi.spyOn(engine, 'initialize').mockRejectedValue(new Error('Catalog failed'));
+
+    await expect(engine.ask('confidential margin question')).rejects.toThrow('Catalog failed');
+
+    expect(error).toHaveBeenCalledWith(
+      '[AskData] ask.error',
+      expect.objectContaining({
+        durationMs: expect.any(Number),
+        error: expect.objectContaining({ message: 'Catalog failed' }),
+      }),
+    );
+    expect(JSON.stringify(error.mock.calls)).not.toContain('confidential margin question');
   });
 });

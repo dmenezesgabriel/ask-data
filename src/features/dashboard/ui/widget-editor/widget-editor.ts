@@ -4,6 +4,7 @@ import '../../../../shared/ui/ui-button';
 import { html, LitElement, type TemplateResult } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
 
+import type { AskEngineFactory, DataSourceManager, QueryPort } from '@/core/application/ports';
 import type {
   ChartType2,
   DashboardWidget as WidgetConfig,
@@ -48,6 +49,10 @@ export class WidgetEditor extends LitElement {
     widget: { type: Object },
     mode: { type: String },
     dataSourceSlugs: { type: Array },
+    queryPort: { attribute: false },
+    queryAdapterName: { type: String },
+    dataSourceManager: { attribute: false },
+    createAskEngine: { attribute: false },
     _panelConfig: { state: true },
     _titleError: { state: true },
   };
@@ -55,6 +60,10 @@ export class WidgetEditor extends LitElement {
   widget: WidgetConfig | null;
   mode: 'add' | 'edit';
   dataSourceSlugs: string[];
+  queryPort: QueryPort | null = null;
+  queryAdapterName = 'unconfigured';
+  dataSourceManager: DataSourceManager | null = null;
+  createAskEngine: AskEngineFactory | null = null;
   private _panelConfig: QuestionConfig | null = null;
   private _titleError = '';
   private _dialogRef = createRef<HTMLDialogElement>();
@@ -171,6 +180,10 @@ export class WidgetEditor extends LitElement {
           <question-editor-panel
             .config=${this._panelConfig}
             .titleError=${this._titleError}
+            .queryPort=${this.queryPort}
+            .queryAdapterName=${this.queryAdapterName}
+            .dataSourceManager=${this.dataSourceManager}
+            .createAskEngine=${this.createAskEngine}
             @panel-change=${(e: CustomEvent<QuestionConfig>) => {
               this._panelConfig = e.detail;
               if (e.detail.title.trim()) this._titleError = '';

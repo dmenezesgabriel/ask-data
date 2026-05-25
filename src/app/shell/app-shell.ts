@@ -139,7 +139,14 @@ export class AppShell extends LitElement {
     if (r.view === 'question-editor') {
       return html`
         <top-nav .activeSection=${'questions'}></top-nav>
-        <question-editor .slug=${r.slug} .isNew=${r.isNew ?? false}></question-editor>
+        <question-editor
+          .slug=${r.slug}
+          .isNew=${r.isNew ?? false}
+          .queryPort=${container.queryPort}
+          .queryAdapterName=${container.queryAdapterName}
+          .dataSourceManager=${container.dataSourceManager}
+          .createAskEngine=${container.createAskEngine}
+        ></question-editor>
       `;
     }
 
@@ -157,7 +164,12 @@ export class AppShell extends LitElement {
     if (r.view === 'datasource-editor') {
       return html`
         <top-nav .activeSection=${'datasources'}></top-nav>
-        <datasource-editor .slug=${r.slug} .isNew=${r.isNew ?? false}></datasource-editor>
+        <datasource-editor
+          .slug=${r.slug}
+          .isNew=${r.isNew ?? false}
+          .queryPort=${container.queryPort}
+          .queryAdapterName=${container.queryAdapterName}
+        ></datasource-editor>
       `;
     }
 
@@ -192,6 +204,10 @@ export class AppShell extends LitElement {
           .config=${config}
           .slug=${slug}
           .isNew=${isNew ?? false}
+          .queryPort=${container.queryPort}
+          .queryAdapterName=${container.queryAdapterName}
+          .dataSourceManager=${container.dataSourceManager}
+          .createAskEngine=${container.createAskEngine}
           @navigate=${(e: CustomEvent<Route>) => this._navigate(e.detail)}
         ></dashboard-editor>
       `;

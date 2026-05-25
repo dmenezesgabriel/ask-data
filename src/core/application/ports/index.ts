@@ -1,4 +1,4 @@
-export type { AskEngine } from './ask-engine';
+export type { AskEngine, AskEngineConfig, AskEngineFactory } from './ask-engine';
 export type { Clock } from './clock';
 export type { DashboardRepository } from './dashboard-repository';
 export type { DataSourceEntry, DataSourceManager } from './data-source-manager-port';

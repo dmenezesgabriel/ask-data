@@ -3,11 +3,16 @@ import './index';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 
-import { setDbService } from '@/shared/services/db-service';
+import type { AskEngineFactory, DataSourceManager, QueryPort } from '@/core/application/ports';
 
 import type { DashboardConfig } from '../../../../shared/types/index';
 
-setDbService({ query: async () => ({}), initialize: async () => {}, createViews: async () => {} });
+const storyQueryPort: QueryPort = { query: async () => ({ rows: [] }) };
+const storyDataSourceManager: DataSourceManager = { createViews: async () => {} };
+const storyAskEngineFactory: AskEngineFactory = () => ({
+  initialize: async () => {},
+  ask: async () => ({ error: 'Storybook Ask Data preview is not connected.' }),
+});
 
 type DashboardWorkspaceArgs = {
   config: DashboardConfig;
@@ -63,6 +68,10 @@ const meta = {
       .config=${config}
       .slug=${slug}
       .isNew=${isNew}
+      .queryPort=${storyQueryPort}
+      .queryAdapterName=${'storybook'}
+      .dataSourceManager=${storyDataSourceManager}
+      .createAskEngine=${storyAskEngineFactory}
     ></dashboard-workspace>`,
   argTypes: {
     config: {

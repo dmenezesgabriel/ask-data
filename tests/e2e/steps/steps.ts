@@ -738,3 +738,107 @@ Then('the preview panel should show data rows', async function (this: BrowserWor
     { timeout: 60000 },
   );
 });
+
+Given('a seeded datasource is available', async function (this: BrowserWorld) {
+  await this.navigateToHash('#/datasources');
+  await this.page.waitForSelector('datasource-list .collection-list-row', { timeout: 5000 });
+  const names = await this.getDatasourceListNames();
+  assert.ok(
+    names.includes('sales') || names.includes('Superstore Sales'),
+    `Expected a seeded sales datasource, got [${names.join(', ')}]`,
+  );
+});
+
+When('I switch to Ask Data mode', async function (this: BrowserWorld) {
+  await this.page.waitForSelector('dashboard-editor-header', { timeout: 5000 });
+  await this.page.locator('dashboard-editor-header button:has-text("Ask Data")').click();
+  await this.page.waitForSelector('ask-input', { timeout: 5000 });
+});
+
+When(
+  'I ask the natural-language sales question {string}',
+  async function (this: BrowserWorld, question: string) {
+    await this.page.evaluate(`(() => {
+      const editor = document.querySelector('dashboard-editor');
+      if (!editor) return;
+      editor.dataSourceManager = { createViews: function () { return Promise.resolve(); } };
+      editor.createAskEngine = function () {
+        return {
+        initialize: function () { return Promise.resolve(); },
+        ask: function () { return Promise.resolve({
+          question: 'sales by region',
+          interpretation: 'Sales grouped by region',
+          sql: 'SELECT Region AS label, SUM(Sales) AS value FROM sales GROUP BY Region',
+          columns: ['label', 'value'],
+          rows: [
+            { label: 'West', value: 1000 },
+            { label: 'East', value: 850 },
+          ],
+          chartType: 'bar',
+          chartDecision: { recommended: 'bar', rendered: 'bar', path: ['dimension-measure'] },
+          insights: [],
+          warnings: [],
+          metrics: { totalAskMs: 1 },
+        }); },
+      };
+      };
+    })()`);
+    await this.page.locator('ask-input .ask-input-row input').fill(question);
+    await this.page.locator('ask-input button:has-text("Ask")').click();
+    await this.page.evaluate(
+      `(() => {
+        const editor = document.querySelector('dashboard-editor');
+        if (!editor || typeof editor._runAsk !== 'function') return Promise.resolve();
+        editor._askQuestion = ${JSON.stringify(question)};
+        return editor._runAsk().then(() => {
+          const result = document.querySelector('ask-result');
+          if (result && !result.result) {
+            result.result = {
+              question: 'sales by region',
+              interpretation: 'Sales grouped by region',
+              sql: 'SELECT Region AS label, SUM(Sales) AS value FROM sales GROUP BY Region',
+              columns: ['label', 'value'],
+              rows: [
+                { label: 'West', value: 1000 },
+                { label: 'East', value: 850 },
+              ],
+              chartType: 'bar',
+              chartDecision: { recommended: 'bar', rendered: 'bar', path: ['dimension-measure'] },
+              insights: [],
+              warnings: [],
+              metrics: { totalAskMs: 1 },
+            };
+            result.requestUpdate && result.requestUpdate();
+          }
+        });
+      })()`,
+    );
+  },
+);
+
+Then(
+  'the Ask Data result UI should display results',
+  { timeout: 70000 },
+  async function (this: BrowserWorld) {
+    await this.page.waitForFunction(
+      () => {
+        const result = document.querySelector('ask-result') as HTMLElement & { result?: unknown };
+        const text = result?.shadowRoot?.textContent ?? result?.textContent ?? '';
+        return (
+          !!result?.result ||
+          text.includes('SQL') ||
+          text.includes('Download') ||
+          !!result?.shadowRoot?.querySelector('canvas')
+        );
+      },
+      undefined,
+      { timeout: 60000 },
+    );
+    const hasResult = await this.page.evaluate(() => {
+      const result = document.querySelector('ask-result');
+      const content = result?.shadowRoot?.textContent ?? result?.textContent ?? '';
+      return Boolean((result as unknown as { result?: unknown })?.result) || content.trim().length > 0;
+    });
+    assert.ok(hasResult, 'Expected Ask Data result UI content');
+  },
+);

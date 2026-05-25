@@ -1,15 +1,11 @@
 import './datasource-editor-panel';
 
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+import type { QueryPort } from '@/core/application/ports';
 import type { Datasource as DataSourceConfig } from '@/core/entities';
-import { setDbService } from '@/shared/services/db-service';
 
 import { createEmptyDatasourceConfig } from '../../model/datasource-config';
-
-beforeAll(() => {
-  setDbService({ query: async () => {}, initialize: async () => {}, createViews: async () => {} });
-});
 
 function makeConfig(overrides: Partial<DataSourceConfig> = {}): DataSourceConfig {
   return {
@@ -26,7 +22,9 @@ type Panel = HTMLElement & {
   readonly: boolean;
   nameError: string;
   urlError: string;
+  queryPort: QueryPort | null;
   updateComplete: Promise<void>;
+  testConnection(): Promise<void>;
 };
 
 function mount(props: Partial<Panel> = {}): Panel {
@@ -41,6 +39,44 @@ function cleanup(el: HTMLElement): void {
 }
 
 describe('DatasourceEditorPanel', () => {
+  it('UT-001: previews datasource schema and rows through an injected query port', async () => {
+    const queryPort: QueryPort = {
+      query: vi
+        .fn()
+        .mockResolvedValueOnce({
+          rows: [
+            { column_name: 'region', column_type: 'VARCHAR' },
+            { column_name: 'sales', column_type: 'DOUBLE' },
+          ],
+        })
+        .mockResolvedValueOnce({ rows: [{ region: 'West', sales: 12 }] }),
+    };
+    const el = mount({ config: makeConfig(), queryPort });
+
+    await el.testConnection();
+    await el.updateComplete;
+
+    expect(queryPort.query).toHaveBeenCalledTimes(2);
+    expect(el.textContent).toContain('Connected');
+    expect(el.textContent).toContain('region');
+    expect(el.textContent).toContain('West');
+    cleanup(el);
+  });
+
+  it('UX-001: shows recoverable feedback when datasource preview fails', async () => {
+    const queryPort: QueryPort = {
+      query: vi.fn().mockRejectedValue(new Error('Preview failed')),
+    };
+    const el = mount({ config: makeConfig(), queryPort });
+
+    await el.testConnection();
+    await el.updateComplete;
+
+    expect(el.querySelector('.ds-test-error')?.textContent).toContain('Preview failed');
+    expect(el.querySelector<HTMLButtonElement>('.qep-run-btn')?.disabled).toBe(false);
+    cleanup(el);
+  });
+
   describe('rendering', () => {
     it('renders name input with config name', async () => {
       const el = mount({ config: makeConfig({ name: 'my-view' }) });

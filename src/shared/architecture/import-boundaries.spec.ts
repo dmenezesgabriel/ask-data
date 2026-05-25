@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -78,5 +79,28 @@ describe('architecture import boundaries', () => {
     expect(result?.messages.filter((message) => message.ruleId === 'boundaries/dependencies')).toEqual(
       [],
     );
+  });
+
+  it('AC-004: keeps global DB service imports out of source files outside composition and adapters', () => {
+    function collectTypeScriptFiles(directory: string): string[] {
+      return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+        const fullPath = path.join(directory, entry.name);
+        if (entry.isDirectory()) return collectTypeScriptFiles(fullPath);
+        return /\.tsx?$/.test(entry.name) ? [fullPath] : [];
+      });
+    }
+
+    const offenders = collectTypeScriptFiles(path.join(projectRoot, 'src'))
+      .filter((filePath) => {
+        const relative = path.relative(projectRoot, filePath).replaceAll(path.sep, '/');
+        const layer = classifyArchitectureModule(relative);
+        if (layer === 'composition' || layer === 'adapters') return false;
+        return fs
+          .readFileSync(filePath, 'utf8')
+          .includes(['@/shared/services', 'db-service'].join('/'));
+      })
+      .map((filePath) => path.relative(projectRoot, filePath).replaceAll(path.sep, '/'));
+
+    expect(offenders).toEqual([]);
   });
 });

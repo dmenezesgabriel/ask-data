@@ -6,19 +6,24 @@ import '../../../../shared/ui/ui-button';
 import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
 import type {
+  AskEngineFactory,
+  DataSourceManager,
+  QueryPort,
+} from '@/core/application/ports';
+import type {
   DashboardWidget as WidgetConfig,
   Datasource as DataSourceConfig,
   Question as QuestionConfig,
 } from '@/core/entities';
+import { createLogger } from '@/shared/observability/logger';
 import { getCatalogService } from '@/shared/services/catalog-service';
-import { getDbService } from '@/shared/services/db-service';
 
 import type { CellValue } from '../../../../shared/types/index';
 import { SQL } from '../../../../shared/ui/code-editor';
 import { toRows } from '../../../../shared/utils/utils';
-import { AskDataEngine } from '../../../ask/model/ask-data';
 
 const WIDGET_TYPES = ['chart', 'table', 'kpi', 'text'] as const;
+const logger = createLogger('question.editor-panel');
 const CHART_TYPES = [
   'bar',
   'line',
@@ -40,11 +45,19 @@ export class QuestionEditorPanel extends LitElement {
     _previewLoading: { state: true },
     _pickerOpen: { state: true },
     _datasources: { state: true },
+    queryPort: { attribute: false },
+    queryAdapterName: { type: String },
+    dataSourceManager: { attribute: false },
+    createAskEngine: { attribute: false },
   };
 
   config: QuestionConfig | null = null;
   readonly = false;
   titleError = '';
+  queryPort: QueryPort | null = null;
+  queryAdapterName = 'unconfigured';
+  dataSourceManager: DataSourceManager | null = null;
+  createAskEngine: AskEngineFactory | null = null;
 
   private _previewData: {
     labels: string[];
@@ -104,6 +117,37 @@ export class QuestionEditorPanel extends LitElement {
     }
   }
 
+  private async _runNaturalLanguagePreview(
+    query: string,
+    sources: DataSourceConfig[],
+  ): Promise<void> {
+    if (!this.createAskEngine) throw new Error('Question Ask Data engine is not configured.');
+    const engine = this.createAskEngine({ dataSources: sources });
+    await engine.initialize();
+    const result = await engine.ask(query, {});
+    if (!('rows' in result) || !('sql' in result) || !result.rows.length) {
+      this._previewError = 'Natural language query returned no results.';
+      return;
+    }
+
+    this._emit({ query: result.sql });
+    const labels = result.rows.map((r: Record<string, CellValue>) =>
+      String(r['label'] ?? r['name'] ?? Object.values(r)[0] ?? ''),
+    );
+    const values = result.rows.map((r: Record<string, CellValue>) =>
+      Number(r['value'] ?? Object.values(r).find((v) => typeof v === 'number') ?? 0),
+    );
+    this._previewData = { labels, values, rows: result.rows };
+  }
+
+  private async _runSqlPreview(query: string): Promise<void> {
+    if (!this.queryPort) throw new Error('Question query port is not configured.');
+    const rows = toRows(await this.queryPort.query(query));
+    const labels = rows.map((r) => String(r['label'] ?? r[Object.keys(r)[0]] ?? ''));
+    const values = rows.map((r) => Number(r['value'] ?? r[Object.keys(r)[1]] ?? 0));
+    this._previewData = { labels, values, rows };
+  }
+
   async runPreview(): Promise<void> {
     const isNl = this.config?.queryType === 'nl';
     const query = isNl ? (this.config?.nlQuery ?? this.config?.query) : this.config?.query;
@@ -114,35 +158,14 @@ export class QuestionEditorPanel extends LitElement {
     this._previewError = '';
     this._previewData = null;
     try {
-      const db = getDbService();
-      await db.createViews(sources);
-      if (isNl) {
-        const engine = new AskDataEngine({ dataSources: sources }, db);
-        await engine.initialize();
-        const result = await engine.ask(query, {});
-        if ('rows' in result && 'sql' in result) {
-          this._emit({ query: result.sql });
-          if (!result.rows.length) {
-            this._previewError = 'Natural language query returned no results.';
-          } else {
-            const labels = result.rows.map((r: Record<string, CellValue>) =>
-              String(r['label'] ?? r['name'] ?? Object.values(r)[0] ?? ''),
-            );
-            const values = result.rows.map((r: Record<string, CellValue>) =>
-              Number(r['value'] ?? Object.values(r).find((v) => typeof v === 'number') ?? 0),
-            );
-            this._previewData = { labels, values, rows: result.rows };
-          }
-        } else {
-          this._previewError = 'Natural language query returned no results.';
-        }
-      } else {
-        const rows = toRows(await db.query(query));
-        const labels = rows.map((r) => String(r['label'] ?? r[Object.keys(r)[0]] ?? ''));
-        const values = rows.map((r) => Number(r['value'] ?? r[Object.keys(r)[1]] ?? 0));
-        this._previewData = { labels, values, rows };
-      }
+      if (!this.dataSourceManager) throw new Error('Question datasource manager is not configured.');
+      await this.dataSourceManager.createViews(sources);
+      await (isNl ? this._runNaturalLanguagePreview(query, sources) : this._runSqlPreview(query));
     } catch (err: unknown) {
+      logger.error('query.execute.error', err, {
+        operation: isNl ? 'question-preview-ask' : 'question-preview-sql',
+        adapter: this.queryAdapterName,
+      });
       this._previewError = String(err);
     } finally {
       this._previewLoading = false;

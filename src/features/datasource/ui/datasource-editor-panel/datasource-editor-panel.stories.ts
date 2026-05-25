@@ -3,12 +3,12 @@ import './datasource-editor-panel';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 
+import type { QueryPort } from '@/core/application/ports';
 import type { Datasource as DataSourceConfig } from '@/core/entities';
-import { setDbService } from '@/shared/services/db-service';
 
 import { createEmptyDatasourceConfig } from '../../model/datasource-config';
 
-setDbService({ query: async () => ({}), initialize: async () => {}, createViews: async () => {} });
+const storyQueryPort: QueryPort = { query: async () => ({ rows: [] }) };
 
 function makeConfig(overrides: Partial<DataSourceConfig> = {}): DataSourceConfig {
   return {
@@ -37,6 +37,8 @@ const meta = {
         .readonly=${args.readonly ?? false}
         .nameError=${args.nameError ?? ''}
         .urlError=${args.urlError ?? ''}
+        .queryPort=${storyQueryPort}
+        .queryAdapterName=${'storybook'}
       ></datasource-editor-panel>
     </div>
   `,
