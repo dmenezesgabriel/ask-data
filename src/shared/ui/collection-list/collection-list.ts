@@ -54,6 +54,10 @@ export abstract class CollectionList extends LitElement {
   /** Accessible label for the hero CTA button, e.g. "New Dashboard". */
   protected abstract get createButtonLabel(): string;
 
+  protected get createDisabledReason(): string | null {
+    return null;
+  }
+
   /** Total item count for the toolbar count string. */
   protected abstract get itemCount(): number;
 
@@ -92,12 +96,12 @@ export abstract class CollectionList extends LitElement {
   // ── Concrete shared methods ───────────────────────────────────────────────
 
   /**
-   * Renders View, Edit, and (optionally) Delete icon buttons for a list row.
-   * Pass `null` for `onDelete` to suppress the delete button (read-only items).
+   * Renders View, Edit, and Delete icon buttons for a list row.
+   * Pass `null` for mutation handlers to suppress unavailable write actions.
    */
   protected _renderRowActions(
     onView: () => void,
-    onEdit: () => void,
+    onEdit: (() => void) | null,
     onDelete: (() => void) | null,
   ): TemplateResult {
     return html`
@@ -105,9 +109,16 @@ export abstract class CollectionList extends LitElement {
         <button class="collection-action-btn view" aria-label="View" title="View" @click=${onView}>
           ${icon(Eye, { size: 16 })}
         </button>
-        <button class="collection-action-btn edit" aria-label="Edit" title="Edit" @click=${onEdit}>
-          ${icon(Pencil, { size: 16 })}
-        </button>
+        ${onEdit !== null
+          ? html`<button
+              class="collection-action-btn edit"
+              aria-label="Edit"
+              title="Edit"
+              @click=${onEdit}
+            >
+              ${icon(Pencil, { size: 16 })}
+            </button>`
+          : nothing}
         ${onDelete !== null
           ? html`<button
               class="collection-action-btn delete"
@@ -167,12 +178,14 @@ export abstract class CollectionList extends LitElement {
             </h1>
             <p class="collection-hero-subtitle">${this.subtitle}</p>
             <div class="collection-hero-actions">
-              <ui-button
-                .variant=${'primary'}
-                .size=${'lg'}
-                .content=${html`${icon(Plus, { size: 18 })} ${this.createButtonLabel}`}
-                @click=${this._openCreateModal}
-              ></ui-button>
+              ${this.createDisabledReason
+                ? html`<p class="collection-action-disabled">${this.createDisabledReason}</p>`
+                : html`<ui-button
+                    .variant=${'primary'}
+                    .size=${'lg'}
+                    .content=${html`${icon(Plus, { size: 18 })} ${this.createButtonLabel}`}
+                    @click=${this._openCreateModal}
+                  ></ui-button>`}
             </div>
           </div>
         </div>

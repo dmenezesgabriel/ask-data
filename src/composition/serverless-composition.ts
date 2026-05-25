@@ -1,10 +1,8 @@
-import { CryptoIdGenerator } from '@/adapters/client/crypto-id-generator';
-import { DuckDbWasmQueryEngine } from '@/adapters/client/duckdb-wasm/duckdb-query-engine';
-import { LocalStorageDashboardRepository } from '@/adapters/client/local-storage/local-storage-dashboard-repository';
-import { LocalStorageDatasourceRepository } from '@/adapters/client/local-storage/local-storage-datasource-repository';
-import { LocalStorageQuestionRepository } from '@/adapters/client/local-storage/local-storage-question-repository';
-import { SystemClock } from '@/adapters/client/system-clock';
-import type { AskEngineConfig, DataSourceManager, QueryPort } from '@/core/application/ports';
+import { MemoryDashboardRepository } from '@/adapters/memory/memory-dashboard-repository';
+import { MemoryDatasourceRepository } from '@/adapters/memory/memory-datasource-repository';
+import { MemoryQueryEngine } from '@/adapters/memory/memory-query-engine';
+import { MemoryQuestionRepository } from '@/adapters/memory/memory-question-repository';
+import type { AskEngineConfig, Clock, IdGenerator, QueryPort } from '@/core/application/ports';
 import { CreateDashboard } from '@/core/application/use-cases/dashboards/create-dashboard';
 import { DeleteDashboard } from '@/core/application/use-cases/dashboards/delete-dashboard';
 import { GetDashboard } from '@/core/application/use-cases/dashboards/get-dashboard';
@@ -21,13 +19,6 @@ import { GetQuestion } from '@/core/application/use-cases/questions/get-question
 import { ListQuestions } from '@/core/application/use-cases/questions/list-questions';
 import { UpdateQuestion } from '@/core/application/use-cases/questions/update-question';
 import { AskDataEngine } from '@/features/ask/model/ask-data';
-import {
-  SeededDashboardRepository,
-  SeededDatasourceRepository,
-  SeededQuestionRepository,
-} from '@/features/catalog/data/seeded-catalog-repositories';
-import { DuckDBDataSourceManager } from '@/infra/data-sources/data-source-manager';
-import { duckDBManager } from '@/infra/db/db';
 import { createLogger } from '@/shared/observability/logger';
 
 import {
@@ -39,24 +30,42 @@ import {
 } from './application-composition';
 import { createPlatformRegistry } from './platform-capabilities';
 
-export function createClientOnlyContainer() {
-  const clock = new SystemClock();
-  const idGenerator = new CryptoIdGenerator();
-  const datasourceRepo = new SeededDatasourceRepository(
-    new LocalStorageDatasourceRepository(clock),
-  );
-  const questionRepo = new SeededQuestionRepository(new LocalStorageQuestionRepository(clock));
-  const dashboardRepo = new SeededDashboardRepository(new LocalStorageDashboardRepository());
-  const queryEngine = new DuckDbWasmQueryEngine();
-  const queryPort: QueryPort = duckDBManager;
-  const dataSourceManager: DataSourceManager = new DuckDBDataSourceManager(queryPort);
+class SequenceIdGenerator implements IdGenerator {
+  private nextId = 1;
+
+  create(): string {
+    const id = `memory-${this.nextId}`;
+    this.nextId += 1;
+    return id;
+  }
+}
+
+class FixedClock implements Clock {
+  now(): string {
+    return '2026-05-25T00:00:00.000Z';
+  }
+}
+
+export function createServerlessComposition(): ApplicationComposition {
+  const clock = new FixedClock();
+  const idGenerator = new SequenceIdGenerator();
+  const datasourceRepo = new MemoryDatasourceRepository();
+  const questionRepo = new MemoryQuestionRepository();
+  const dashboardRepo = new MemoryDashboardRepository();
+  const queryEngine = new MemoryQueryEngine();
+  const queryPort: QueryPort = {
+    query: (sql) => queryEngine.execute({ datasourceId: 'default', sql }),
+  };
+  const dataSourceManager = {
+    async createViews(): Promise<void> {},
+  };
   const createAskEngine = (config: AskEngineConfig) => new AskDataEngine(config, queryPort);
   const platformRegistry = createPlatformRegistry();
   const capabilitySnapshot = createApplicationCapabilitySnapshot(
     platformRegistry.getSnapshot(),
     createOperationCapabilities(true),
   );
-  const logger = createLogger('composition.client-only');
+  const logger = createLogger('composition.serverless');
   const createDatasource = new CreateDatasource(
     datasourceRepo,
     idGenerator,
@@ -79,12 +88,12 @@ export function createClientOnlyContainer() {
   const listDashboards = new ListDashboards(dashboardRepo);
 
   const composition = {
-    deploymentMode: 'client-only',
+    deploymentMode: 'serverless',
     platformRegistry,
     capabilitySnapshot,
     queryEngine,
     queryPort,
-    queryAdapterName: 'duckdb-wasm',
+    queryAdapterName: 'memory',
     dataSourceManager,
     createAskEngine,
     catalog: {
@@ -122,45 +131,8 @@ export function createClientOnlyContainer() {
         logCompositionStartup(composition);
       },
     },
-    createDatasource,
-    updateDatasource,
-    deleteDatasource,
-    getDatasource,
-    listDatasources,
-
-    createQuestion,
-    updateQuestion,
-    deleteQuestion,
-    getQuestion,
-    listQuestions,
-
-    createDashboard,
-    updateDashboard,
-    deleteDashboard,
-    getDashboard,
-    listDashboards,
-  } satisfies ApplicationComposition & Record<string, unknown>;
+  } satisfies ApplicationComposition;
 
   composition.observability.logStartup();
   return composition;
 }
-
-// Legacy top-level write methods remain optional for UI components while the deployment
-// contract reports write support through explicit operation capabilities.
-type _Full = ReturnType<typeof createClientOnlyContainer>;
-type _WriteKeys =
-  | 'createDatasource'
-  | 'updateDatasource'
-  | 'deleteDatasource'
-  | 'createQuestion'
-  | 'updateQuestion'
-  | 'deleteQuestion'
-  | 'createDashboard'
-  | 'updateDashboard'
-  | 'deleteDashboard';
-
-type _ApplicationCompositionKeys = keyof ApplicationComposition;
-
-export type AppContainer = ApplicationComposition &
-  Omit<_Full, _ApplicationCompositionKeys | _WriteKeys> &
-  Partial<Pick<_Full, _WriteKeys>>;

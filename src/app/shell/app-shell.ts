@@ -85,9 +85,10 @@ export class AppShell extends LitElement {
   }
 
   private async _onDashboardCreate(e: CustomEvent<{ name: string }>): Promise<void> {
+    if (!container.createDashboard) return;
     try {
       const name = e.detail.name;
-      const dashboard = await container.createDashboard!.execute({ name });
+      const dashboard = await container.createDashboard.execute({ name });
       this._navigate({ view: 'editor', slug: dashboard.id, isNew: true });
     } catch (err) {
       console.error('[app-shell] Failed to create dashboard:', err);
@@ -95,8 +96,9 @@ export class AppShell extends LitElement {
   }
 
   private async _onQuestionCreate(e: CustomEvent<{ name: string }>): Promise<void> {
+    if (!container.createQuestion) return;
     try {
-      const q = await container.createQuestion!.execute({
+      const q = await container.createQuestion.execute({
         title: e.detail.name,
         type: 'chart',
         chartType: 'bar',
@@ -110,8 +112,9 @@ export class AppShell extends LitElement {
   }
 
   private async _onDatasourceCreate(e: CustomEvent<{ name: string }>): Promise<void> {
+    if (!container.createDatasource) return;
     try {
-      const ds = await container.createDatasource!.execute({
+      const ds = await container.createDatasource.execute({
         name: e.detail.name,
         type: 'csv',
         url: '',

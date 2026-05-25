@@ -30,6 +30,17 @@ function installStoryCatalog(extra: Question[] = []): void {
     getQuestion: {
       execute: async (id: string) => questions.find((item) => item.id === id) ?? null,
     },
+    createQuestion: {
+      execute: async (input: unknown) => ({
+        id: 'created-question',
+        slug: 'created-question',
+        ...(input as Record<string, unknown>),
+        source: 'user',
+        createdAt: '',
+        updatedAt: '',
+      }),
+    },
+    updateQuestion: { execute: async (_id: string, input: unknown) => input },
     deleteQuestion: {
       execute: async (id: string) => {
         questions = questions.filter((item) => item.id !== id);

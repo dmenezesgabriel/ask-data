@@ -258,5 +258,27 @@ describe('DatasourceList', () => {
       expect(dialog).not.toBeNull();
       cleanup(el);
     });
+
+    it('UX-001: hides create, edit, and delete actions when write capabilities are unsupported', async () => {
+      setCatalogService({
+        listDatasources: { execute: async () => [createSeedDatasource('sales', 'sales')] },
+        getDatasource: { execute: async () => createSeedDatasource('sales', 'sales') },
+        listQuestions: { execute: async () => [] },
+        getQuestion: { execute: async () => null },
+        listDashboards: { execute: async () => [] },
+        getDashboard: { execute: async () => null },
+      });
+
+      const el = mount();
+      await updateComplete(el);
+
+      expect(el.textContent).toContain(
+        'Datasource creation is unavailable in this read-only deployment mode.',
+      );
+      expect(el.querySelector('button[aria-label="New Datasource"]')).toBeNull();
+      expect(el.querySelector('button[aria-label="Edit"]')).toBeNull();
+      expect(el.querySelector('button[aria-label="Delete"]')).toBeNull();
+      cleanup(el);
+    });
   });
 });

@@ -50,6 +50,12 @@ export class DashboardList extends CollectionList {
     return 'New Dashboard';
   }
 
+  protected override get createDisabledReason(): string | null {
+    return getCatalogService().createDashboard
+      ? null
+      : 'Dashboard creation is unavailable in this read-only deployment mode.';
+  }
+
   protected override get itemCount(): number {
     return this._items.length;
   }
@@ -170,8 +176,10 @@ export class DashboardList extends CollectionList {
               >
                 ${this._renderRowActions(
                   () => this._onSelect(entry.slug),
-                  () => this._onSelect(entry.slug),
-                  entry.source !== 'yaml' ? () => this._onDelete(entry) : null,
+                  getCatalogService().updateDashboard ? () => this._onSelect(entry.slug) : null,
+                  entry.source !== 'yaml' && getCatalogService().deleteDashboard
+                    ? () => this._onDelete(entry)
+                    : null,
                 )}
               </span>
             </div>

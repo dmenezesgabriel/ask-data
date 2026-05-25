@@ -48,6 +48,12 @@ export class QuestionList extends CollectionList {
     return 'New Question';
   }
 
+  protected override get createDisabledReason(): string | null {
+    return getCatalogService().createQuestion
+      ? null
+      : 'Question creation is unavailable in this read-only deployment mode.';
+  }
+
   protected override get itemCount(): number {
     return this._items.length;
   }
@@ -174,8 +180,10 @@ export class QuestionList extends CollectionList {
               >
                 ${this._renderRowActions(
                   () => this._handleSelect(q.slug),
-                  () => this._handleSelect(q.slug),
-                  q.source !== 'yaml' ? () => this._handleDelete(q) : null,
+                  getCatalogService().updateQuestion ? () => this._handleSelect(q.slug) : null,
+                  q.source !== 'yaml' && getCatalogService().deleteQuestion
+                    ? () => this._handleDelete(q)
+                    : null,
                 )}
               </span>
             </div>

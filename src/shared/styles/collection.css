@@ -69,6 +69,13 @@
   margin-top: var(--space-lg);
 }
 
+.collection-action-disabled {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
 /* ── Toolbar ──────────────────────────────────────────────────────────────── */
 
 .collection-toolbar {

@@ -24,6 +24,17 @@ function installStoryCatalog(): void {
     getDashboard: {
       execute: async (id: string) => seedDashboards.find((item) => item.id === id) ?? null,
     },
+    createDashboard: {
+      execute: async (input: unknown) => ({
+        id: 'created-dashboard',
+        name: (input as { name: string }).name,
+        type: 'dashboard',
+        widgets: [],
+        layout: [],
+        source: 'user',
+      }),
+    },
+    updateDashboard: { execute: async (_id: string, input: unknown) => input },
     listDatasources: { execute: async () => [] },
     getDatasource: { execute: async () => null },
     listQuestions: { execute: async () => [] },

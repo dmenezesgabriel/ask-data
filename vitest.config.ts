@@ -43,6 +43,7 @@ export default defineConfig({
           environment: 'node',
           include: ['src/**/*.spec.ts', 'tests/integration/**/*.test.ts'],
           exclude: [
+            'src/app/**/*.spec.ts',
             'src/components/**/*.spec.ts',
             'src/features/dashboard/ui/**/*.spec.ts',
             'src/features/question/ui/**/*.spec.ts',
@@ -58,6 +59,7 @@ export default defineConfig({
         test: {
           name: 'components',
           include: [
+            'src/app/**/*.spec.ts',
             'src/components/**/*.spec.ts',
             'src/features/dashboard/ui/**/*.spec.ts',
             'src/features/question/ui/**/*.spec.ts',

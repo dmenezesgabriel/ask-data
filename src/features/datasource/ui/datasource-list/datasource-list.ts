@@ -48,6 +48,12 @@ export class DatasourceList extends CollectionList {
     return 'New Datasource';
   }
 
+  protected override get createDisabledReason(): string | null {
+    return getCatalogService().createDatasource
+      ? null
+      : 'Datasource creation is unavailable in this read-only deployment mode.';
+  }
+
   protected override get itemCount(): number {
     return this._items.length;
   }
@@ -169,8 +175,10 @@ export class DatasourceList extends CollectionList {
               >
                 ${this._renderRowActions(
                   () => this._handleSelect(ds.slug),
-                  () => this._handleSelect(ds.slug),
-                  ds.source !== 'yaml' ? () => this._handleDelete(ds) : null,
+                  getCatalogService().updateDatasource ? () => this._handleSelect(ds.slug) : null,
+                  ds.source !== 'yaml' && getCatalogService().deleteDatasource
+                    ? () => this._handleDelete(ds)
+                    : null,
                 )}
               </span>
             </div>
