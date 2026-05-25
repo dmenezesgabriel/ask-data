@@ -5,16 +5,13 @@ import '../../../../shared/ui/ui-button';
 
 import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
-import type {
-  AskEngineFactory,
-  DataSourceManager,
-  QueryPort,
-} from '@/core/application/ports';
+import type { AskEngineFactory, DataSourceManager, QueryPort } from '@/core/application/ports';
 import type {
   DashboardWidget as WidgetConfig,
   Datasource as DataSourceConfig,
   Question as QuestionConfig,
 } from '@/core/entities';
+import type { CapabilitySnapshot } from '@/core/platform';
 import { createLogger } from '@/shared/observability/logger';
 import { getCatalogService } from '@/shared/services/catalog-service';
 
@@ -49,6 +46,7 @@ export class QuestionEditorPanel extends LitElement {
     queryAdapterName: { type: String },
     dataSourceManager: { attribute: false },
     createAskEngine: { attribute: false },
+    capabilitySnapshot: { attribute: false },
   };
 
   config: QuestionConfig | null = null;
@@ -58,6 +56,7 @@ export class QuestionEditorPanel extends LitElement {
   queryAdapterName = 'unconfigured';
   dataSourceManager: DataSourceManager | null = null;
   createAskEngine: AskEngineFactory | null = null;
+  capabilitySnapshot: CapabilitySnapshot | null = null;
 
   private _previewData: {
     labels: string[];
@@ -117,6 +116,15 @@ export class QuestionEditorPanel extends LitElement {
     }
   }
 
+  private _availableChartTypes(): readonly (typeof CHART_TYPES)[number][] {
+    if (!this.capabilitySnapshot) return CHART_TYPES;
+    const available = this.capabilitySnapshot.capabilities
+      .filter((capability) => capability.contributionType === 'widget-renderer')
+      .map((capability) => capability.id.replace('visualization.chart.', ''));
+
+    return CHART_TYPES.filter((chartType) => available.includes(chartType));
+  }
+
   private async _runNaturalLanguagePreview(
     query: string,
     sources: DataSourceConfig[],
@@ -158,7 +166,8 @@ export class QuestionEditorPanel extends LitElement {
     this._previewError = '';
     this._previewData = null;
     try {
-      if (!this.dataSourceManager) throw new Error('Question datasource manager is not configured.');
+      if (!this.dataSourceManager)
+        throw new Error('Question datasource manager is not configured.');
       await this.dataSourceManager.createViews(sources);
       await (isNl ? this._runNaturalLanguagePreview(query, sources) : this._runSqlPreview(query));
     } catch (err: unknown) {
@@ -202,7 +211,7 @@ export class QuestionEditorPanel extends LitElement {
                     chartType: (e.target as HTMLSelectElement).value as QuestionConfig['chartType'],
                   })}
               >
-                ${CHART_TYPES.map(
+                ${this._availableChartTypes().map(
                   (ct) => html`<option value=${ct} ?selected=${q.chartType === ct}>${ct}</option>`,
                 )}
               </select>

@@ -17,6 +17,7 @@ import type {
   Datasource as DataSourceConfig,
 } from '@/core/entities';
 import type { Question as QuestionConfig } from '@/core/entities';
+import type { CapabilitySnapshot } from '@/core/platform';
 import { createLogger } from '@/shared/observability/logger';
 import { getCatalogService } from '@/shared/services/catalog-service';
 
@@ -82,6 +83,7 @@ export class DashboardWorkspace extends LitElement {
     queryAdapterName: { type: String },
     dataSourceManager: { attribute: false },
     createAskEngine: { attribute: false },
+    capabilitySnapshot: { attribute: false },
   };
 
   config: DashboardConfig;
@@ -102,6 +104,7 @@ export class DashboardWorkspace extends LitElement {
   queryAdapterName = 'unconfigured';
   dataSourceManager: DataSourceManager | null = null;
   createAskEngine: AskEngineFactory | null = null;
+  capabilitySnapshot: CapabilitySnapshot | null = null;
   private _editingWidget: WidgetConfig | null = null;
   private _showEditor: boolean = false;
   private _showPicker: boolean = false;
@@ -715,6 +718,7 @@ export class DashboardWorkspace extends LitElement {
         .queryAdapterName=${this.queryAdapterName}
         .dataSourceManager=${this.dataSourceManager}
         .createAskEngine=${this.createAskEngine}
+        .capabilitySnapshot=${this.capabilitySnapshot}
         @widget-save=${this._onWidgetSave}
         @editor-cancel=${this._onEditorCancel}
       ></widget-editor>

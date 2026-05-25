@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AskEngineFactory, DataSourceManager, QueryPort } from '@/core/application/ports';
 import type { Datasource, Question as QuestionConfig } from '@/core/entities';
+import type { CapabilitySnapshot } from '@/core/platform';
 import { setCatalogService } from '@/shared/services/catalog-service';
 
 import { QuestionEditorPanel } from './question-editor-panel';
@@ -30,6 +31,7 @@ function mount(
     queryPort: QueryPort;
     dataSourceManager: DataSourceManager;
     createAskEngine: AskEngineFactory;
+    capabilitySnapshot: CapabilitySnapshot;
   }> = {},
 ): QuestionEditorPanel {
   const el = document.createElement('question-editor-panel') as QuestionEditorPanel;
@@ -79,8 +81,12 @@ describe('QuestionEditorPanel', () => {
   });
 
   it('UT-002: runs SQL preview through fake query and datasource ports', async () => {
-    const queryPort: QueryPort = { query: vi.fn().mockResolvedValue({ rows: [{ label: 'West', value: 9 }] }) };
-    const dataSourceManager: DataSourceManager = { createViews: vi.fn().mockResolvedValue(undefined) };
+    const queryPort: QueryPort = {
+      query: vi.fn().mockResolvedValue({ rows: [{ label: 'West', value: 9 }] }),
+    };
+    const dataSourceManager: DataSourceManager = {
+      createViews: vi.fn().mockResolvedValue(undefined),
+    };
     const el = mount({
       config: makeConfig({ queryType: 'sql', query: 'SELECT region, sales FROM sales' }),
       queryPort,
@@ -99,7 +105,9 @@ describe('QuestionEditorPanel', () => {
 
   it('UT-002: runs natural-language preview through a fake Ask Data engine', async () => {
     const queryPort: QueryPort = { query: vi.fn() };
-    const dataSourceManager: DataSourceManager = { createViews: vi.fn().mockResolvedValue(undefined) };
+    const dataSourceManager: DataSourceManager = {
+      createViews: vi.fn().mockResolvedValue(undefined),
+    };
     const askEngine = {
       initialize: vi.fn().mockResolvedValue(undefined),
       ask: vi.fn().mockResolvedValue({
@@ -130,7 +138,9 @@ describe('QuestionEditorPanel', () => {
 
   it('UX-001: shows recoverable feedback when question SQL preview fails', async () => {
     const queryPort: QueryPort = { query: vi.fn().mockRejectedValue(new Error('Query failed')) };
-    const dataSourceManager: DataSourceManager = { createViews: vi.fn().mockResolvedValue(undefined) };
+    const dataSourceManager: DataSourceManager = {
+      createViews: vi.fn().mockResolvedValue(undefined),
+    };
     const el = mount({
       config: makeConfig({ queryType: 'sql', query: 'SELECT broken FROM sales' }),
       queryPort,
@@ -200,6 +210,28 @@ describe('QuestionEditorPanel', () => {
 
       const input = el.querySelector<HTMLInputElement>('#qep-title')!;
       expect(input.value).toBe('My Chart');
+      cleanup(el);
+    });
+
+    it('AC-001: hides flag-disabled visualization choices', async () => {
+      const capabilitySnapshot: CapabilitySnapshot = {
+        capabilities: [
+          {
+            id: 'visualization.chart.bar',
+            displayName: 'bar chart',
+            contributionType: 'widget-renderer',
+            enabled: true,
+          },
+        ],
+      };
+      const el = mount({ config: makeConfig(), capabilitySnapshot });
+      await el.updateComplete;
+
+      const options = [...el.querySelectorAll('.qep-select option')].map((option) =>
+        option.getAttribute('value'),
+      );
+      expect(options).toContain('bar');
+      expect(options).not.toContain('pie');
       cleanup(el);
     });
 

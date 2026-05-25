@@ -2,6 +2,7 @@ import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
 import type { QueryPort } from '@/core/application/ports';
 import type { Datasource as DataSourceConfig, DataSourceType } from '@/core/entities';
+import type { CapabilitySnapshot } from '@/core/platform';
 import { createLogger } from '@/shared/observability/logger';
 
 import { toRows } from '../../../../shared/utils/utils';
@@ -29,6 +30,7 @@ export class DatasourceEditorPanel extends LitElement {
     urlError: { type: String },
     queryPort: { attribute: false },
     queryAdapterName: { type: String },
+    capabilitySnapshot: { attribute: false },
     _testStatus: { state: true },
     _testError: { state: true },
     _testColumns: { state: true },
@@ -43,6 +45,7 @@ export class DatasourceEditorPanel extends LitElement {
   urlError = '';
   queryPort: (QueryPort & { initialize?: () => Promise<unknown> }) | null = null;
   queryAdapterName = 'unconfigured';
+  capabilitySnapshot: CapabilitySnapshot | null = null;
 
   private _testStatus: 'idle' | 'success' | 'error' = 'idle';
   private _testError = '';
@@ -141,6 +144,16 @@ export class DatasourceEditorPanel extends LitElement {
     }
     if (typeof value === 'bigint') return String(value);
     return String(value);
+  }
+
+  private _availableDatasourceTypes(): DataSourceType[] {
+    if (!this.capabilitySnapshot) return DS_TYPES;
+    const available = this.capabilitySnapshot.capabilities
+      .filter((capability) => capability.contributionType === 'datasource-connector')
+      .map((capability) => capability.id.replace('datasource.connector.', ''))
+      .filter((type): type is DataSourceType => DS_TYPES.includes(type as DataSourceType));
+
+    return DS_TYPES.filter((type) => available.includes(type));
   }
 
   private _renderDataPreview(): TemplateResult {
@@ -271,7 +284,7 @@ export class DatasourceEditorPanel extends LitElement {
             @change=${(e: Event) =>
               this._emit({ type: (e.target as HTMLSelectElement).value as DataSourceType })}
           >
-            ${DS_TYPES.map(
+            ${this._availableDatasourceTypes().map(
               (t) =>
                 html`<option value=${t} ?selected=${this.config!.type === t}>
                   ${t.toUpperCase()}

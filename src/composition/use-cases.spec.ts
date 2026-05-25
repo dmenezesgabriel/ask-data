@@ -17,6 +17,9 @@ import { CreateQuestion } from '@/core/application/use-cases/questions/create-qu
 import { DeleteQuestion } from '@/core/application/use-cases/questions/delete-question';
 import { GetQuestion } from '@/core/application/use-cases/questions/get-question';
 import { UpdateQuestion } from '@/core/application/use-cases/questions/update-question';
+import { CapabilityDisabledError, StaticFeatureFlagProvider } from '@/core/platform';
+
+import { createPlatformRegistry } from './platform-capabilities';
 
 const fakeId = { create: () => 'test-id' };
 const fakeClock = { now: () => '2026-01-01T00:00:00.000Z' };
@@ -37,6 +40,18 @@ describe('CreateDatasource', () => {
     expect(result.updatedAt).toBe('2026-01-01T00:00:00.000Z');
     expect(result.name).toBe('Sales');
     expect(result.slug).toBe('sales');
+  });
+
+  it('AC-002: returns a stable capability-disabled error when connector is disabled', async () => {
+    const repo = new MemoryDatasourceRepository();
+    const registry = createPlatformRegistry({
+      featureFlags: new StaticFeatureFlagProvider({ 'datasource.csv': false }),
+    });
+    const uc = new CreateDatasource(repo, fakeId, fakeClock, registry);
+
+    await expect(
+      uc.execute({ name: 'Sales', type: 'csv', url: 'https://example.com/s.csv' }),
+    ).rejects.toThrow(new CapabilityDisabledError('datasource.connector.csv', 'CreateDatasource'));
   });
 });
 

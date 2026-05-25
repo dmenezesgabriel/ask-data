@@ -5,11 +5,14 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import {
+  type Capability,
+  CapabilityDisabledError,
   CapabilityRegistry,
   type DatasourceConnector,
   DuplicateCapabilityError,
   PLATFORM_OBSERVABILITY_EVENTS,
   type QueryExecutor,
+  StaticFeatureFlagProvider,
 } from './index';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -99,6 +102,71 @@ describe('CapabilityRegistry', () => {
     ]);
   });
 
+  it('UT-001: feature flag provider returns defaults when no explicit value exists', () => {
+    const flags = new StaticFeatureFlagProvider({ 'visualization.chart.pie': false });
+
+    expect(flags.isEnabled('datasource.csv')).toBe(true);
+    expect(flags.isEnabled('visualization.chart.pie')).toBe(false);
+  });
+
+  it('UT-002: excludes flag-disabled capabilities from contributions and snapshots', () => {
+    const registry = new CapabilityRegistry({
+      featureFlags: new StaticFeatureFlagProvider({ 'query.test': false }),
+    });
+    const executor = queryExecutor('query.memory');
+
+    registry.register(executor);
+
+    expect(registry.getCapability('query.memory')).toEqual({
+      ...executor.capability,
+      enabled: false,
+    });
+    expect(registry.getContributions('query-executor')).toEqual([]);
+    expect(registry.getSnapshot().capabilities).toEqual([]);
+  });
+
+  it('IT-001: exposes a deeply read-only capability snapshot', () => {
+    const registry = new CapabilityRegistry();
+
+    registry.register(datasourceConnector('datasource.csv'));
+
+    const snapshot = registry.getSnapshot();
+    const [capability] = snapshot.capabilities;
+
+    expect(Object.isFrozen(snapshot)).toBe(true);
+    expect(Object.isFrozen(snapshot.capabilities)).toBe(true);
+    expect(Object.isFrozen(capability)).toBe(true);
+    expect(() => {
+      (snapshot.capabilities as Capability[]).push(
+        datasourceConnector('datasource.json').capability,
+      );
+    }).toThrow(TypeError);
+    expect(() => {
+      (capability as { displayName: string }).displayName = 'mutated';
+    }).toThrow(TypeError);
+    expect(registry.getSnapshot().capabilities[0]?.displayName).toBe('Datasource datasource.csv');
+  });
+
+  it('UT-003: disabled capability access returns a stable domain error and emits redacted context', () => {
+    const events: unknown[] = [];
+    const registry = new CapabilityRegistry({
+      featureFlags: new StaticFeatureFlagProvider({ 'query.test': false }),
+      onEvent: (event) => events.push(event),
+    });
+
+    registry.register(queryExecutor('query.memory'));
+
+    expect(() => registry.requireCapability('query.memory', 'WidgetEditor')).toThrow(
+      new CapabilityDisabledError('query.memory', 'WidgetEditor'),
+    );
+    expect(events).toContainEqual({
+      event: PLATFORM_OBSERVABILITY_EVENTS.capabilityAccessDisabled,
+      capabilityId: 'query.memory',
+      contributionType: 'query-executor',
+      caller: 'WidgetEditor',
+    });
+  });
+
   it('ST-001: serializes capability metadata without configured secret fields', () => {
     const registry = new CapabilityRegistry();
     const connector = {
@@ -135,6 +203,25 @@ describe('CapabilityRegistry', () => {
     expect(PLATFORM_OBSERVABILITY_EVENTS.capabilityRegistrationFailed).toBe(
       'platform.capability.registration.failed',
     );
+    expect(PLATFORM_OBSERVABILITY_EVENTS.capabilityAccessDisabled).toBe(
+      'platform.capability.access.disabled',
+    );
+  });
+
+  it('OT-001: emits redacted registration failure context with capability ID and contribution type', () => {
+    const events: unknown[] = [];
+    const registry = new CapabilityRegistry({ onEvent: (event) => events.push(event) });
+
+    registry.register(datasourceConnector('datasource.csv'));
+
+    expect(() => registry.register(queryExecutor('datasource.csv'))).toThrow(
+      new DuplicateCapabilityError('datasource.csv'),
+    );
+    expect(events).toContainEqual({
+      event: PLATFORM_OBSERVABILITY_EVENTS.capabilityRegistrationFailed,
+      capabilityId: 'datasource.csv',
+      contributionType: 'query-executor',
+    });
   });
 
   it('UT-003: keeps platform contracts free of UI, adapter, infra, and external library imports', () => {

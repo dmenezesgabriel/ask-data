@@ -1,6 +1,13 @@
-export { CapabilityRegistry, DuplicateCapabilityError } from './capability-registry';
+export {
+  CapabilityDisabledError,
+  CapabilityRegistry,
+  DuplicateCapabilityError,
+  StaticFeatureFlagProvider,
+} from './capability-registry';
 export type {
   Capability,
+  CapabilityEvent,
+  CapabilitySnapshot,
   ContributionByType,
   ContributionType,
   DatasourceConnector,
@@ -9,6 +16,7 @@ export type {
   Exporter,
   ExportInput,
   ExportResult,
+  FeatureFlagProvider,
   PlatformContribution,
   QueryExecutionInput,
   QueryExecutor,

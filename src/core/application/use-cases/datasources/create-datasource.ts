@@ -1,5 +1,6 @@
 import type { Clock, DatasourceRepository, IdGenerator } from '@/core/application/ports';
 import type { Datasource, DataSourceType } from '@/core/entities';
+import { CapabilityDisabledError, type CapabilityRegistry } from '@/core/platform';
 import { generateUniqueSlug, nameToSlug } from '@/shared/utils/slug';
 
 import { recordCatalogMutation } from '../catalog-mutation-logger';
@@ -17,9 +18,24 @@ export class CreateDatasource {
     private readonly datasources: DatasourceRepository,
     private readonly idGenerator: IdGenerator,
     private readonly clock: Clock,
+    private readonly capabilities?: CapabilityRegistry,
   ) {}
 
   async execute(input: CreateDatasourceInput): Promise<Datasource> {
+    if (this.capabilities) {
+      const connector = this.capabilities
+        .getContributions('datasource-connector')
+        .find((candidate) => candidate.accepts({ type: input.type, url: input.url }));
+
+      if (!connector) {
+        this.capabilities.requireCapability(
+          `datasource.connector.${input.type}`,
+          'CreateDatasource',
+        );
+        throw new CapabilityDisabledError(`datasource.connector.${input.type}`, 'CreateDatasource');
+      }
+    }
+
     const now = this.clock.now();
     const existing = await this.datasources.list();
     const slug = generateUniqueSlug(nameToSlug(input.name, 'datasource'), (candidate) =>

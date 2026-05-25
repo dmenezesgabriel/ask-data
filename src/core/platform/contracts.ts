@@ -9,11 +9,26 @@ export type ContributionType =
   | 'storage-provider';
 
 export type Capability = {
-  id: string;
-  displayName: string;
+  readonly id: string;
+  readonly displayName: string;
+  readonly contributionType: ContributionType;
+  readonly enabled: boolean;
+  readonly featureFlagKey?: string;
+};
+
+export type CapabilitySnapshot = Readonly<{
+  capabilities: readonly Capability[];
+}>;
+
+export interface FeatureFlagProvider {
+  isEnabled(flagKey: string, defaultValue?: boolean): boolean;
+}
+
+export type CapabilityEvent = {
+  event: string;
+  capabilityId: string;
   contributionType: ContributionType;
-  enabled: boolean;
-  featureFlagKey?: string;
+  caller?: string;
 };
 
 export type DatasourceReference = Pick<Datasource, 'type' | 'url'> & {

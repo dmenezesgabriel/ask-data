@@ -11,6 +11,7 @@ import type {
   Question as QuestionConfig,
   WidgetType,
 } from '@/core/entities';
+import { CapabilityDisabledError, type CapabilitySnapshot } from '@/core/platform';
 
 function widgetToQuestionConfig(w: WidgetConfig): QuestionConfig {
   return {
@@ -53,8 +54,10 @@ export class WidgetEditor extends LitElement {
     queryAdapterName: { type: String },
     dataSourceManager: { attribute: false },
     createAskEngine: { attribute: false },
+    capabilitySnapshot: { attribute: false },
     _panelConfig: { state: true },
     _titleError: { state: true },
+    _capabilityError: { state: true },
   };
 
   widget: WidgetConfig | null;
@@ -64,8 +67,10 @@ export class WidgetEditor extends LitElement {
   queryAdapterName = 'unconfigured';
   dataSourceManager: DataSourceManager | null = null;
   createAskEngine: AskEngineFactory | null = null;
+  capabilitySnapshot: CapabilitySnapshot | null = null;
   private _panelConfig: QuestionConfig | null = null;
   private _titleError = '';
+  private _capabilityError = '';
   private _dialogRef = createRef<HTMLDialogElement>();
 
   constructor() {
@@ -126,6 +131,16 @@ export class WidgetEditor extends LitElement {
     }
     this._titleError = '';
 
+    const chartType = this._panelConfig.chartType ?? 'bar';
+    if (this._panelConfig.type === 'chart' && !this._isChartAvailable(chartType)) {
+      this._capabilityError = new CapabilityDisabledError(
+        `visualization.chart.${chartType}`,
+        'WidgetEditor',
+      ).message;
+      return;
+    }
+    this._capabilityError = '';
+
     const widget: WidgetConfig = this.widget
       ? questionConfigToWidget(this._panelConfig, this.widget)
       : {
@@ -164,6 +179,13 @@ export class WidgetEditor extends LitElement {
     }
   }
 
+  private _isChartAvailable(chartType: string): boolean {
+    if (!this.capabilitySnapshot) return true;
+    return this.capabilitySnapshot.capabilities.some(
+      (capability) => capability.id === `visualization.chart.${chartType}`,
+    );
+  }
+
   override render(): TemplateResult {
     return html`
       <dialog
@@ -184,11 +206,15 @@ export class WidgetEditor extends LitElement {
             .queryAdapterName=${this.queryAdapterName}
             .dataSourceManager=${this.dataSourceManager}
             .createAskEngine=${this.createAskEngine}
+            .capabilitySnapshot=${this.capabilitySnapshot}
             @panel-change=${(e: CustomEvent<QuestionConfig>) => {
               this._panelConfig = e.detail;
               if (e.detail.title.trim()) this._titleError = '';
             }}
           ></question-editor-panel>
+          ${this._capabilityError
+            ? html`<div class="warning" role="alert">${this._capabilityError}</div>`
+            : ''}
         </div>
 
         <div class="editor-actions">

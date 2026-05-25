@@ -47,12 +47,13 @@ export function createClientOnlyContainer() {
 
   return {
     platformRegistry,
+    capabilitySnapshot: platformRegistry.getSnapshot(),
     queryEngine,
     queryPort,
     queryAdapterName: 'duckdb-wasm',
     dataSourceManager,
     createAskEngine,
-    createDatasource: new CreateDatasource(datasourceRepo, idGenerator, clock),
+    createDatasource: new CreateDatasource(datasourceRepo, idGenerator, clock, platformRegistry),
     updateDatasource: new UpdateDatasource(datasourceRepo, clock),
     deleteDatasource: new DeleteDatasource(datasourceRepo),
     getDatasource: new GetDatasource(datasourceRepo),

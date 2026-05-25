@@ -32,6 +32,7 @@ export function createClientServerContainer() {
 
   return {
     platformRegistry,
+    capabilitySnapshot: platformRegistry.getSnapshot(),
     queryEngine,
     queryPort,
     queryAdapterName: 'http',

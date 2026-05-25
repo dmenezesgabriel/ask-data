@@ -5,6 +5,7 @@ import { html, LitElement, type TemplateResult } from 'lit';
 
 import type { QueryPort } from '@/core/application/ports';
 import type { Datasource as DataSourceConfig } from '@/core/entities';
+import type { CapabilitySnapshot } from '@/core/platform';
 import { getCatalogService } from '@/shared/services/catalog-service';
 
 import { createEmptyDatasourceConfig } from '../../model/datasource-config';
@@ -21,12 +22,14 @@ export class DatasourceEditor extends LitElement {
     _loadError: { state: true },
     queryPort: { attribute: false },
     queryAdapterName: { type: String },
+    capabilitySnapshot: { attribute: false },
   };
 
   slug = '';
   isNew = false;
   queryPort: QueryPort | null = null;
   queryAdapterName = 'unconfigured';
+  capabilitySnapshot: CapabilitySnapshot | null = null;
 
   private _config: DataSourceConfig | null = null;
   private _isDirty = false;
@@ -159,6 +162,7 @@ export class DatasourceEditor extends LitElement {
           .urlError=${this._urlError}
           .queryPort=${this.queryPort}
           .queryAdapterName=${this.queryAdapterName}
+          .capabilitySnapshot=${this.capabilitySnapshot}
           @panel-change=${(e: CustomEvent<DataSourceConfig>) => this._onPanelChange(e)}
         ></datasource-editor-panel>
       </main>

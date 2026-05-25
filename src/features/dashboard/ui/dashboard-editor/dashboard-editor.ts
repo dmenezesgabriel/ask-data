@@ -8,6 +8,7 @@ import '../dashboard-workspace';
 import { html, LitElement, nothing, type TemplateResult } from 'lit';
 
 import type { AskEngineFactory, DataSourceManager, QueryPort } from '@/core/application/ports';
+import type { CapabilitySnapshot } from '@/core/platform';
 import { createLogger } from '@/shared/observability/logger';
 
 import type {
@@ -43,6 +44,7 @@ export class DashboardEditor extends LitElement {
     queryAdapterName: { type: String },
     dataSourceManager: { attribute: false },
     createAskEngine: { attribute: false },
+    capabilitySnapshot: { attribute: false },
   };
 
   config: DashboardConfig | null = null;
@@ -52,6 +54,7 @@ export class DashboardEditor extends LitElement {
   queryAdapterName = 'unconfigured';
   dataSourceManager: DataSourceManager | null = null;
   createAskEngine: AskEngineFactory | null = null;
+  capabilitySnapshot: CapabilitySnapshot | null = null;
 
   private _activeTab: DashboardMode = 'dashboard';
   private _editMode = false;
@@ -189,6 +192,7 @@ export class DashboardEditor extends LitElement {
           .queryAdapterName=${this.queryAdapterName}
           .dataSourceManager=${this.dataSourceManager}
           .createAskEngine=${this.createAskEngine}
+          .capabilitySnapshot=${this.capabilitySnapshot}
         ></dashboard-workspace>
       </div>
       <div

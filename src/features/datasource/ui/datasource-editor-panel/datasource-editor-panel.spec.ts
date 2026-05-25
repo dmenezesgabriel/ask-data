@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { QueryPort } from '@/core/application/ports';
 import type { Datasource as DataSourceConfig } from '@/core/entities';
+import type { CapabilitySnapshot } from '@/core/platform';
 
 import { createEmptyDatasourceConfig } from '../../model/datasource-config';
 
@@ -115,6 +116,27 @@ describe('DatasourceEditorPanel', () => {
       expect(options).toContain('csv');
       expect(options).toContain('parquet');
       expect(options).toContain('json');
+      cleanup(el);
+    });
+
+    it('UX-001: hides datasource types that are unavailable in capability snapshot', async () => {
+      const capabilitySnapshot: CapabilitySnapshot = {
+        capabilities: [
+          {
+            id: 'datasource.connector.csv',
+            displayName: 'CSV datasource',
+            contributionType: 'datasource-connector',
+            enabled: true,
+          },
+        ],
+      };
+      const el = mount({ config: makeConfig(), capabilitySnapshot } as Partial<Panel>);
+      await el.updateComplete;
+
+      const options = [...el.querySelectorAll('#dse-type option')].map((o) =>
+        o.getAttribute('value'),
+      );
+      expect(options).toEqual(['csv']);
       cleanup(el);
     });
 

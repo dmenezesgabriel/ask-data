@@ -146,6 +146,7 @@ export class AppShell extends LitElement {
           .queryAdapterName=${container.queryAdapterName}
           .dataSourceManager=${container.dataSourceManager}
           .createAskEngine=${container.createAskEngine}
+          .capabilitySnapshot=${container.capabilitySnapshot}
         ></question-editor>
       `;
     }
@@ -169,6 +170,7 @@ export class AppShell extends LitElement {
           .isNew=${r.isNew ?? false}
           .queryPort=${container.queryPort}
           .queryAdapterName=${container.queryAdapterName}
+          .capabilitySnapshot=${container.capabilitySnapshot}
         ></datasource-editor>
       `;
     }
@@ -208,6 +210,7 @@ export class AppShell extends LitElement {
           .queryAdapterName=${container.queryAdapterName}
           .dataSourceManager=${container.dataSourceManager}
           .createAskEngine=${container.createAskEngine}
+          .capabilitySnapshot=${container.capabilitySnapshot}
           @navigate=${(e: CustomEvent<Route>) => this._navigate(e.detail)}
         ></dashboard-editor>
       `;

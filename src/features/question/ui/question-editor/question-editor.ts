@@ -5,6 +5,7 @@ import { html, LitElement, type TemplateResult } from 'lit';
 
 import type { AskEngineFactory, DataSourceManager, QueryPort } from '@/core/application/ports';
 import type { Question as QuestionConfig } from '@/core/entities';
+import type { CapabilitySnapshot } from '@/core/platform';
 import { getCatalogService } from '@/shared/services/catalog-service';
 
 import { createEmptyQuestionConfig } from '../../model/question-config';
@@ -20,6 +21,7 @@ export class QuestionEditor extends LitElement {
     queryAdapterName: { type: String },
     dataSourceManager: { attribute: false },
     createAskEngine: { attribute: false },
+    capabilitySnapshot: { attribute: false },
   };
 
   slug = '';
@@ -28,6 +30,7 @@ export class QuestionEditor extends LitElement {
   queryAdapterName = 'unconfigured';
   dataSourceManager: DataSourceManager | null = null;
   createAskEngine: AskEngineFactory | null = null;
+  capabilitySnapshot: CapabilitySnapshot | null = null;
 
   private _config: QuestionConfig | null = null;
   private _isDirty = false;
@@ -132,6 +135,7 @@ export class QuestionEditor extends LitElement {
           .queryAdapterName=${this.queryAdapterName}
           .dataSourceManager=${this.dataSourceManager}
           .createAskEngine=${this.createAskEngine}
+          .capabilitySnapshot=${this.capabilitySnapshot}
           @panel-change=${(e: CustomEvent<QuestionConfig>) => this._onPanelChange(e)}
         ></question-editor-panel>
       </main>
