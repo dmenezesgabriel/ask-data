@@ -96,6 +96,35 @@ describe('LocalStorageDatasourceRepository', () => {
     expect(found?.id).toBe(datasource.id);
   });
 
+  // UT-001: get() matches by id and slug
+  it('UT-001: get() returns a record when queried by slug and when queried by id', async () => {
+    const { LocalStorageDatasourceRepository } = await importFreshRepository(lsMock.localStorage);
+    const repo = new LocalStorageDatasourceRepository(mockClock);
+    const datasource = makeUserDatasource('uuid-550e8400');
+
+    await repo.save(datasource);
+
+    const byId = await repo.get('uuid-550e8400');
+    expect(byId).not.toBeNull();
+    expect(byId?.id).toBe('uuid-550e8400');
+
+    const bySlug = await repo.get('slug-uuid-550e8400');
+    expect(bySlug).not.toBeNull();
+    expect(bySlug?.id).toBe('uuid-550e8400');
+  });
+
+  // UT-002: get() returns null for non-existent id/slug
+  it('UT-002: get() returns null for a non-existent id or slug', async () => {
+    const { LocalStorageDatasourceRepository } = await importFreshRepository(lsMock.localStorage);
+    const repo = new LocalStorageDatasourceRepository(mockClock);
+    const datasource = makeUserDatasource();
+
+    await repo.save(datasource);
+
+    await expect(repo.get('non-existent-id')).resolves.toBeNull();
+    await expect(repo.get('non-existent-slug')).resolves.toBeNull();
+  });
+
   it('delete(id) removes a datasource', async () => {
     const { LocalStorageDatasourceRepository } = await importFreshRepository(lsMock.localStorage);
     const repo = new LocalStorageDatasourceRepository(mockClock);

@@ -27,11 +27,18 @@ export class QuestionPicker extends LitElement {
   private _error = '';
   private _dialogRef = createRef<HTMLDialogElement>();
 
+  override willUpdate(changed: Map<string, unknown>): void {
+    if (changed.has('open') && this.open) {
+      this._filter = '';
+      this._loading = true;
+      this._error = '';
+    }
+  }
+
   override updated(changed: Map<string, unknown>): void {
     if (changed.has('open')) {
       if (this.open) {
-        this._filter = '';
-        this._loadItems();
+        void this._loadItems();
         try {
           this._dialogRef.value?.showModal();
         } catch (err) {
@@ -59,8 +66,6 @@ export class QuestionPicker extends LitElement {
   }
 
   private async _loadItems(): Promise<void> {
-    this._loading = true;
-    this._error = '';
     try {
       this._items = (await getCatalogService().listQuestions.execute()) as QuestionConfig[];
     } catch (error) {

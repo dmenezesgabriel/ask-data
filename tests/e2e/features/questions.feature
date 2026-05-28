@@ -27,3 +27,9 @@ Feature: Questions — CRUD
     Then the question "Sales by Region" should not have a delete button
     When I navigate to "#/question/sales-by-region"
     Then the question editor header should not show a Delete button
+
+  Scenario: Preview the "Sales by Region" seed question renders a bar chart
+    When I navigate to "#/question/sales-by-region"
+    Then I should be on a question editor page
+    When I click "Run preview"
+    Then the preview area should contain a canvas element

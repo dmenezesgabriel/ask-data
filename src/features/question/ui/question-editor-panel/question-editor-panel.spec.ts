@@ -80,7 +80,102 @@ describe('QuestionEditorPanel', () => {
     installCatalogService();
   });
 
-  it('UT-002: runs SQL preview through fake query and datasource ports', async () => {
+  describe('_runSqlPreview()', () => {
+    it('converts BigInt values to Number in row data', async () => {
+      const queryPort: QueryPort = {
+        query: vi.fn().mockResolvedValue({
+          rows: [
+            { label: 'West', value: 9n },
+            { label: 'East', value: 15n },
+          ],
+        }),
+      };
+      const dataSourceManager: DataSourceManager = {
+        createViews: vi.fn().mockResolvedValue(undefined),
+      };
+      const el = mount({
+        config: makeConfig({ queryType: 'sql', query: 'SELECT region, sales FROM sales' }),
+        queryPort,
+        dataSourceManager,
+      });
+      await updateComplete(el);
+
+      await el.runPreview();
+      await updateComplete(el);
+
+      const widget = el.querySelector('app-widget')!;
+      const data = (widget as unknown as Record<string, unknown>).data as {
+        labels: string[];
+        values: number[];
+        rows: Record<string, unknown>[];
+      };
+      expect(data.values).toEqual([9, 15]);
+      expect(typeof data.values[0]).toBe('number');
+      expect(typeof data.rows[0].value).toBe('number');
+      cleanup(el);
+    });
+
+    it('uses first key as label when no label key, second key as value when no value key', async () => {
+      const queryPort: QueryPort = {
+        query: vi.fn().mockResolvedValue({
+          rows: [
+            { region: 'West', sales: 100 },
+            { region: 'East', sales: 200 },
+          ],
+        }),
+      };
+      const dataSourceManager: DataSourceManager = {
+        createViews: vi.fn().mockResolvedValue(undefined),
+      };
+      const el = mount({
+        config: makeConfig({ queryType: 'sql', query: 'SELECT region, sales FROM sales' }),
+        queryPort,
+        dataSourceManager,
+      });
+      await updateComplete(el);
+
+      await el.runPreview();
+      await updateComplete(el);
+
+      const widget = el.querySelector('app-widget')!;
+      const data = (widget as unknown as Record<string, unknown>).data as {
+        labels: string[];
+        values: number[];
+        rows: Record<string, unknown>[];
+      };
+      expect(data.labels).toEqual(['West', 'East']);
+      expect(data.values).toEqual([100, 200]);
+      cleanup(el);
+    });
+
+    it('logs warning when query returns zero rows', async () => {
+      const queryPort: QueryPort = {
+        query: vi.fn().mockResolvedValue({ rows: [] }),
+      };
+      const dataSourceManager: DataSourceManager = {
+        createViews: vi.fn().mockResolvedValue(undefined),
+      };
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const el = mount({
+        config: makeConfig({ queryType: 'sql', query: 'SELECT region, sales FROM sales' }),
+        queryPort,
+        dataSourceManager,
+      });
+      await updateComplete(el);
+
+      await el.runPreview();
+      await updateComplete(el);
+
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('query.zeroRows'),
+        expect.objectContaining({ query: 'SELECT region, sales FROM sales' }),
+      );
+      warn.mockRestore();
+      cleanup(el);
+    });
+  });
+
+  it('runs SQL preview through fake query and datasource ports', async () => {
     const queryPort: QueryPort = {
       query: vi.fn().mockResolvedValue({ rows: [{ label: 'West', value: 9 }] }),
     };
@@ -100,10 +195,11 @@ describe('QuestionEditorPanel', () => {
     expect(dataSourceManager.createViews).toHaveBeenCalledOnce();
     expect(queryPort.query).toHaveBeenCalledWith('SELECT region, sales FROM sales');
     expect(el.querySelector('app-widget')).not.toBeNull();
+    expect(el.querySelector('app-widget canvas')).not.toBeNull();
     cleanup(el);
   });
 
-  it('UT-002: runs natural-language preview through a fake Ask Data engine', async () => {
+  it('runs natural-language preview through a fake Ask Data engine', async () => {
     const queryPort: QueryPort = { query: vi.fn() };
     const dataSourceManager: DataSourceManager = {
       createViews: vi.fn().mockResolvedValue(undefined),
@@ -136,7 +232,47 @@ describe('QuestionEditorPanel', () => {
     cleanup(el);
   });
 
-  it('UX-001: shows recoverable feedback when question SQL preview fails', async () => {
+  it('converts BigInt values to Number in natural-language preview row data', async () => {
+    const queryPort: QueryPort = { query: vi.fn() };
+    const dataSourceManager: DataSourceManager = {
+      createViews: vi.fn().mockResolvedValue(undefined),
+    };
+    const askEngine = {
+      initialize: vi.fn().mockResolvedValue(undefined),
+      ask: vi.fn().mockResolvedValue({
+        sql: 'SELECT region, sales FROM sales',
+        rows: [
+          { label: 'West', value: 9n },
+          { label: 'East', value: 15n },
+        ],
+        columns: ['label', 'value'],
+      }),
+    };
+    const createAskEngine: AskEngineFactory = vi.fn().mockReturnValue(askEngine);
+    const el = mount({
+      config: makeConfig({ queryType: 'nl', nlQuery: 'sales by region' }),
+      queryPort,
+      dataSourceManager,
+      createAskEngine,
+    });
+    await updateComplete(el);
+
+    await el.runPreview();
+    await updateComplete(el);
+
+    const widget = el.querySelector('app-widget')!;
+    const data = (widget as unknown as Record<string, unknown>).data as {
+      labels: string[];
+      values: number[];
+      rows: Record<string, unknown>[];
+    };
+    expect(data.values).toEqual([9, 15]);
+    expect(typeof data.values[0]).toBe('number');
+    expect(typeof data.rows[0].value).toBe('number');
+    cleanup(el);
+  });
+
+  it('shows recoverable feedback when question SQL preview fails', async () => {
     const queryPort: QueryPort = { query: vi.fn().mockRejectedValue(new Error('Query failed')) };
     const dataSourceManager: DataSourceManager = {
       createViews: vi.fn().mockResolvedValue(undefined),
@@ -153,6 +289,21 @@ describe('QuestionEditorPanel', () => {
 
     expect(el.querySelector('.qep-preview-error')?.textContent).toContain('Query failed');
     expect(el.querySelector<HTMLButtonElement>('.qep-run-btn')?.disabled).toBe(false);
+    cleanup(el);
+  });
+
+  it('shows error when runPreview is clicked with no linked datasources', async () => {
+    const el = mount({
+      config: makeConfig({ queryType: 'sql', query: 'SELECT 1', dataSourceSlugs: [] }),
+    });
+    await updateComplete(el);
+
+    await el.runPreview();
+    await updateComplete(el);
+
+    expect(el.querySelector('.qep-preview-error')?.textContent).toContain(
+      'Link at least one datasource',
+    );
     cleanup(el);
   });
 

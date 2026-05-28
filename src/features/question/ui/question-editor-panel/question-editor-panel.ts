@@ -139,18 +139,33 @@ export class QuestionEditorPanel extends LitElement {
     }
 
     this._emit({ query: result.sql });
-    const labels = result.rows.map((r: Record<string, CellValue>) =>
+    const rows = result.rows.map((r: Record<string, CellValue>) =>
+      Object.fromEntries(
+        Object.entries(r).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v]),
+      ),
+    );
+    const labels = rows.map((r) =>
       String(r['label'] ?? r['name'] ?? Object.values(r)[0] ?? ''),
     );
-    const values = result.rows.map((r: Record<string, CellValue>) =>
+    const values = rows.map((r) =>
       Number(r['value'] ?? Object.values(r).find((v) => typeof v === 'number') ?? 0),
     );
-    this._previewData = { labels, values, rows: result.rows };
+    this._previewData = { labels, values, rows };
   }
 
   private async _runSqlPreview(query: string): Promise<void> {
     if (!this.queryPort) throw new Error('Question query port is not configured.');
-    const rows = toRows(await this.queryPort.query(query));
+    const rawRows = toRows(await this.queryPort.query(query));
+    const rows = rawRows.map((row) =>
+      Object.fromEntries(
+        Object.entries(row).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v]),
+      ),
+    );
+    if (!rows.length) {
+      logger.warn('query.zeroRows', { query });
+      this._previewData = { labels: [], values: [], rows: [] };
+      return;
+    }
     const labels = rows.map((r) => String(r['label'] ?? r[Object.keys(r)[0]] ?? ''));
     const values = rows.map((r) => Number(r['value'] ?? r[Object.keys(r)[1]] ?? 0));
     this._previewData = { labels, values, rows };
@@ -160,7 +175,12 @@ export class QuestionEditorPanel extends LitElement {
     const isNl = this.config?.queryType === 'nl';
     const query = isNl ? (this.config?.nlQuery ?? this.config?.query) : this.config?.query;
     const sources = this._resolvedDataSources;
-    if (!query || !sources.length) return;
+    if (!query) return;
+    if (!sources.length) {
+      this._previewData = null;
+      this._previewError = 'Link at least one datasource to run a preview.';
+      return;
+    }
 
     this._previewLoading = true;
     this._previewError = '';
@@ -337,7 +357,7 @@ export class QuestionEditorPanel extends LitElement {
     if (!this.config) return html``;
 
     const sources = this._resolvedDataSources;
-    if (!sources.length) {
+    if (!sources.length && !this._previewError) {
       return html`
         <div class="qep-preview-placeholder">Link a datasource to enable live preview</div>
       `;

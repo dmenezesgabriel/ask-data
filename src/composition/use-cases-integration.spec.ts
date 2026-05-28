@@ -95,6 +95,37 @@ describe('IT-001: CreateDatasource + LocalStorageDatasourceRepository', () => {
 });
 
 describe('Task 003: seeded catalog repositories', () => {
+  // IT-001: User-created Datasource retrievable by slug through repository chain
+  it('IT-001: user-created datasource is retrievable by slug through SeededDatasourceRepository', async () => {
+    const { localStorage: lsMock } = createLocalStorageMock();
+    vi.stubGlobal('localStorage', lsMock);
+
+    const { LocalStorageDatasourceRepository } =
+      await import('@/adapters/client/local-storage/local-storage-datasource-repository');
+    const { SeededDatasourceRepository } =
+      await import('@/features/catalog/data/seeded-catalog-repositories');
+    const { CreateDatasource } =
+      await import('@/core/application/use-cases/datasources/create-datasource');
+
+    const fakeClock = { now: () => '2026-01-01T00:00:00.000Z' };
+    const userRepo = new LocalStorageDatasourceRepository(fakeClock);
+    const seededRepo = new SeededDatasourceRepository(userRepo);
+
+    await new CreateDatasource(
+      seededRepo,
+      { create: () => 'test-uuid' },
+      fakeClock,
+    ).execute({ name: 'test-ds', type: 'csv', url: 'https://example.com/data.csv' });
+
+    const found = await seededRepo.get('test-ds');
+    expect(found).not.toBeNull();
+    expect(found?.id).toBe('test-uuid');
+    expect(found?.name).toBe('test-ds');
+    expect(found?.type).toBe('csv');
+
+    vi.unstubAllGlobals();
+  });
+
   it('UT-001: combines read-only seed datasources with persisted user datasources', async () => {
     const { MemoryDatasourceRepository } =
       await import('@/adapters/memory/memory-datasource-repository');

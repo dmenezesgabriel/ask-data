@@ -729,6 +729,18 @@ Then(
   },
 );
 
+Then(
+  'the preview area should contain a canvas element',
+  { timeout: 70000 },
+  async function (this: BrowserWorld) {
+    await this.page.waitForFunction(
+      () => !!document.querySelector('.qep-preview canvas'),
+      undefined,
+      { timeout: 60000 },
+    );
+  },
+);
+
 Then('the preview panel should show data rows', async function (this: BrowserWorld) {
   // DuckDB-WASM may need up to 60 s to initialize and fetch the CSV on first run
   await this.page.waitForFunction(

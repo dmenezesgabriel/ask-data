@@ -60,7 +60,7 @@ export class LocalStorageDatasourceRepository implements DatasourceRepository {
   }
 
   async get(id: string): Promise<Datasource | null> {
-    return loadAll().find((d) => d.id === id) ?? null;
+    return loadAll().find((d) => d.id === id || d.slug === id) ?? null;
   }
 
   async save(datasource: Datasource): Promise<void> {

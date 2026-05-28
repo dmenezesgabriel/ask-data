@@ -258,12 +258,17 @@ export class Widget extends LitElement {
     logger.debug('chart.init', { widgetId: this.config.id, title: this.config.title });
 
     const canvas = this.querySelector('canvas') as HTMLCanvasElement | null;
-    if (!canvas) return;
+    if (!canvas) {
+      logger.warn('chart.init.missingCanvas', { widgetId: this.config.id });
+      return;
+    }
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      logger.warn('chart.init.nullContext', { widgetId: this.config.id });
+      return;
+    }
 
-    this._destroyChart();
     const chartConfig = buildWidgetChartConfig(this.config, {
       labels: this.data.labels,
       values: this.data.values,
