@@ -148,7 +148,7 @@ export class LocalStorageQuestionRepository implements QuestionRepository {
   }
 
   async get(id: string): Promise<Question | null> {
-    return loadAll().find((q) => q.id === id) ?? null;
+    return loadAll().find((q) => q.id === id || q.slug === id) ?? null;
   }
 
   async save(question: Question): Promise<void> {

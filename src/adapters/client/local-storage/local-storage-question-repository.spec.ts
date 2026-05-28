@@ -86,7 +86,7 @@ describe('LocalStorageQuestionRepository', () => {
     expect(lsMock.store.has('persisted_questions_v1')).toBe(false);
   });
 
-  it('get(id) returns the question after save()', async () => {
+  it('UT-001: get(id) returns the question when looked up by q.id', async () => {
     const { LocalStorageQuestionRepository } = await importFreshRepository(lsMock.localStorage);
     const repo = new LocalStorageQuestionRepository(mockClock);
     const question = makeUserQuestion();
@@ -96,6 +96,19 @@ describe('LocalStorageQuestionRepository', () => {
 
     expect(found).not.toBeNull();
     expect(found?.id).toBe(question.id);
+  });
+
+  it('UT-002: get(slug) returns the question when looked up by q.slug', async () => {
+    const { LocalStorageQuestionRepository } = await importFreshRepository(lsMock.localStorage);
+    const repo = new LocalStorageQuestionRepository(mockClock);
+    const question = makeUserQuestion('uuid-123');
+
+    await repo.save(question);
+    const found = await repo.get(question.slug);
+
+    expect(found).not.toBeNull();
+    expect(found?.id).toBe('uuid-123');
+    expect(found?.slug).toBe(question.slug);
   });
 
   it('delete(id) removes a question', async () => {
@@ -110,8 +123,18 @@ describe('LocalStorageQuestionRepository', () => {
     expect(list.some((q) => q.id === question.id)).toBe(false);
   });
 
-  // UT-002: Clock port is used for updatedAt on update
-  it('UT-002: save() uses the injected Clock for updatedAt when updating an existing record', async () => {
+  it('UT-003: get(unknown) returns null when no question matches id or slug', async () => {
+    const { LocalStorageQuestionRepository } = await importFreshRepository(lsMock.localStorage);
+    const repo = new LocalStorageQuestionRepository(mockClock);
+    const question = makeUserQuestion();
+
+    await repo.save(question);
+    const found = await repo.get('does-not-exist');
+
+    expect(found).toBeNull();
+  });
+
+  it('UT-004: save() uses the injected Clock for updatedAt when updating an existing record', async () => {
     const { LocalStorageQuestionRepository } = await importFreshRepository(lsMock.localStorage);
     const stubClock = { now: () => '2025-01-01T00:00:00.000Z' };
     const repo = new LocalStorageQuestionRepository(stubClock);
