@@ -89,7 +89,7 @@ export class AppShell extends LitElement {
     try {
       const name = e.detail.name;
       const dashboard = await container.createDashboard.execute({ name });
-      this._navigate({ view: 'editor', slug: dashboard.id, isNew: true });
+      this._navigate({ view: 'editor', slug: dashboard.id });
     } catch (err) {
       console.error('[app-shell] Failed to create dashboard:', err);
     }
