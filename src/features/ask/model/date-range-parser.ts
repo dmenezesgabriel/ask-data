@@ -23,7 +23,7 @@ import {
 } from '../../../shared/utils/utils';
 import { DateQuestionText } from './date-question-text';
 import { MonthCatalog } from './month-catalog';
-import { TermMatcher } from './term-matcher';
+import type { TermMatcher } from './term-matcher';
 
 export class RelativePeriodDateParser {
   termMatcher: TermMatcher;

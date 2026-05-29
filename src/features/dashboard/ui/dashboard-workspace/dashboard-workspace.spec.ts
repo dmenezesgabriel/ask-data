@@ -7,7 +7,7 @@ import type { DashboardWidget as WidgetConfig } from '@/core/entities';
 import type { CatalogService } from '@/shared/services/catalog-service';
 import { setCatalogService } from '@/shared/services/catalog-service';
 
-import { DashboardWorkspace } from './dashboard-workspace';
+import type { DashboardWorkspace } from './dashboard-workspace';
 
 function mount(): DashboardWorkspace {
   const el = document.createElement('dashboard-workspace') as DashboardWorkspace;

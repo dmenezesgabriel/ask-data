@@ -2,7 +2,7 @@ import './index';
 
 import { describe, expect, it } from 'vitest';
 
-import { AppBreadcrumb } from './app-breadcrumb';
+import type { AppBreadcrumb } from './app-breadcrumb';
 
 function mount(props: Partial<{ items: AppBreadcrumb['items'] }>): AppBreadcrumb {
   const el = document.createElement('app-breadcrumb') as AppBreadcrumb;

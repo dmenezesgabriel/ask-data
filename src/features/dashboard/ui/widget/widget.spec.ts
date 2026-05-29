@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { DashboardWidget as WidgetConfig } from '@/core/entities';
 
-import { Widget } from './widget';
+import type { Widget } from './widget';
 
 function mount(config: WidgetConfig, data: Widget['data'] = null): Widget {
   const el = document.createElement('app-widget') as Widget;

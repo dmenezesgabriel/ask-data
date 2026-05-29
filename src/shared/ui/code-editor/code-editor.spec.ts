@@ -2,7 +2,7 @@ import './index';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { UiCodeEditor } from './code-editor';
+import type { UiCodeEditor } from './code-editor';
 import { SQL } from './languages';
 
 function mount(

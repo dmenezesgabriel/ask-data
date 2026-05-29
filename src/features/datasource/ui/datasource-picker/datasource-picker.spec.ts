@@ -4,7 +4,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { setCatalogService } from '@/shared/services/catalog-service';
 
-import { DatasourcePicker } from './datasource-picker';
+import type { DatasourcePicker } from './datasource-picker';
 
 function installCatalogService(): void {
   setCatalogService({

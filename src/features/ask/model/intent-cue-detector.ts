@@ -1,5 +1,5 @@
 import { norm, singularize } from '../../../shared/utils/utils';
-import { TermMatcher } from './term-matcher';
+import type { TermMatcher } from './term-matcher';
 
 export class IntentCueDetector {
   termMatcher: TermMatcher;

@@ -18,7 +18,7 @@ import type {
   ClarificationChoice,
   DashboardConfig,
 } from '../../../../shared/types/index';
-import { AskOrchestrator } from '../../../ask/orchestration/ask-orchestrator';
+import type { AskOrchestrator } from '../../../ask/orchestration/ask-orchestrator';
 import { createDashboardOrchestrator } from '../../../ask/orchestration/create-dashboard-orchestrator';
 import type { DashboardMode } from '../dashboard-editor-header/dashboard-editor-header';
 

@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Question as QuestionConfig } from '@/core/entities';
 import { setCatalogService } from '@/shared/services/catalog-service';
 
-import { QuestionPicker } from './question-picker';
+import type { QuestionPicker } from './question-picker';
 
 const STUB_QUESTION: QuestionConfig = {
   id: 'q1',

@@ -8,8 +8,8 @@ import type {
   FieldSearchIndexType,
 } from '../../../shared/types/index';
 import { norm, singularize } from '../../../shared/utils/utils';
-import { SemanticFieldMatcher } from './semantic-field-matcher';
-import { TermMatcher } from './term-matcher';
+import type { SemanticFieldMatcher } from './semantic-field-matcher';
+import type { TermMatcher } from './term-matcher';
 
 export class FieldSearchIndex {
   catalog: () => CatalogField[];

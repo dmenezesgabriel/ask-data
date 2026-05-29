@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setCatalogService } from '@/shared/services/catalog-service';
 
-import { DatasourceEditor } from './datasource-editor';
+import type { DatasourceEditor } from './datasource-editor';
 
 function mount(props: Partial<DatasourceEditor> = {}): DatasourceEditor {
   const el = document.createElement('datasource-editor') as DatasourceEditor;

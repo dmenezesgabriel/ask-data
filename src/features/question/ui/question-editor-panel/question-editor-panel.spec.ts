@@ -8,7 +8,7 @@ import type { Datasource, Question as QuestionConfig } from '@/core/entities';
 import type { CapabilitySnapshot } from '@/core/platform';
 import { setCatalogService } from '@/shared/services/catalog-service';
 
-import { QuestionEditorPanel } from './question-editor-panel';
+import type { QuestionEditorPanel } from './question-editor-panel';
 
 function makeConfig(overrides: Partial<QuestionConfig> = {}): QuestionConfig {
   return {

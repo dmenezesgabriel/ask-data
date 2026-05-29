@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { CatalogField, ClarificationPending, FieldRole } from '../../../shared/types/index';
 import { ExactFieldMatchStrategy, FieldResolver, FieldSearchIndex } from './field-search';
-import { TermMatcher } from './term-matcher';
+import type { TermMatcher } from './term-matcher';
 
 const makeField = (overrides: Partial<CatalogField> & { id: string }): CatalogField => ({
   table: 'sales',

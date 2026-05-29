@@ -2,8 +2,8 @@ import './index';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { AppBreadcrumb } from '../../../../shared/ui/app-breadcrumb/app-breadcrumb';
-import { DashboardEditorHeader } from './dashboard-editor-header';
+import type { AppBreadcrumb } from '../../../../shared/ui/app-breadcrumb/app-breadcrumb';
+import type { DashboardEditorHeader } from './dashboard-editor-header';
 
 function mount(
   props: Partial<{

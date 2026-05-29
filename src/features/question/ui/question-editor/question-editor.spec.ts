@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setCatalogService } from '@/shared/services/catalog-service';
 
-import { QuestionEditor } from './question-editor';
+import type { QuestionEditor } from './question-editor';
 
 function mount(props: Partial<QuestionEditor> = {}): QuestionEditor {
   const el = document.createElement('question-editor') as QuestionEditor;

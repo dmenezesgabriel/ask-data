@@ -35,10 +35,10 @@ type ResolvedParse = {
 };
 
 import { norm, singularize } from '../../../shared/utils/utils';
-import { DateRangeParser } from './date-range-parser';
-import { IntentCueDetector } from './intent-cue-detector';
-import { TermMatcher } from './term-matcher';
-import { ValueFilterResolver } from './value-filter-resolver';
+import type { DateRangeParser } from './date-range-parser';
+import type { IntentCueDetector } from './intent-cue-detector';
+import type { TermMatcher } from './term-matcher';
+import type { ValueFilterResolver } from './value-filter-resolver';
 
 export class QuestionParser {
   askConfig: { maxRows?: number; maxDimensions?: number };
