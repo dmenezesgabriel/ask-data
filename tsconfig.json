@@ -17,7 +17,11 @@
     "noImplicitOverride": true,
     "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": false,
+    // Task 017 (2026-05-29): noUncheckedIndexedAccess enabled. 238 violations resolved (6 low-risk
+    // utility fixes + 232 non-null assertions). 0 violations remain. forceConsistentCasingInFileNames
+    // added; no casing violations found.
+    "noUncheckedIndexedAccess": true,
+    "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": false,

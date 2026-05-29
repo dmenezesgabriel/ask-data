@@ -109,8 +109,8 @@ describe('resolveCollisions()', () => {
 
     for (let i = 0; i < result.length; i++) {
       for (let j = i + 1; j < result.length; j++) {
-        const ri = result[i];
-        const rj = result[j];
+        const ri = result[i]!;
+        const rj = result[j]!;
         const overlaps =
           ri.x < rj.x + rj.w && ri.x + ri.w > rj.x && ri.y < rj.y + rj.h && ri.y + ri.h > rj.y;
         expect(overlaps).toBe(false);
@@ -206,8 +206,8 @@ describe('normalizeLayout()', () => {
     const result = normalizeLayout(layout);
     for (let i = 0; i < result.length; i++) {
       for (let j = i + 1; j < result.length; j++) {
-        const ri = result[i];
-        const rj = result[j];
+        const ri = result[i]!;
+        const rj = result[j]!;
         expect(ri.x + ri.w).toBeLessThanOrEqual(GRID_COLS);
         expect(rj.x + rj.w).toBeLessThanOrEqual(GRID_COLS);
       }

@@ -173,7 +173,7 @@ export const ViewItem: Story = {
   name: 'Interaction — View Button Fires Select Event',
   tags: ['!autodocs'],
   play: async ({ canvas, args }) => {
-    const viewBtn = canvas.getAllByTitle('View')[0];
+    const viewBtn = canvas.getAllByTitle('View')[0]!;
     await userEvent.click(viewBtn);
     await expect(args.onDashboardSelect).toHaveBeenCalledOnce();
   },
@@ -183,7 +183,7 @@ export const EditItem: Story = {
   name: 'Interaction — Edit Button Fires Select Event',
   tags: ['!autodocs'],
   play: async ({ canvas, args }) => {
-    const editBtn = canvas.getAllByTitle('Edit')[0];
+    const editBtn = canvas.getAllByTitle('Edit')[0]!;
     await userEvent.click(editBtn);
     await expect(args.onDashboardSelect).toHaveBeenCalledOnce();
   },

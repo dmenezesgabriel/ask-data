@@ -437,7 +437,7 @@ export class AskDataEngine {
           Object.entries(row).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v]),
         ),
       );
-      const columns = rows.length ? Object.keys(rows[0]) : planned.columns;
+      const columns = rows.length ? Object.keys(rows[0]!) : planned.columns;
       const diagnostics = await this.evaluateDiagnostics(planned);
       const shape = this.shapeAnalyzer.analyze(rows, columns, parsed.intent);
       const chartDecision = this.chartDecisionTree.decide(shape, parsed.intent);
@@ -549,7 +549,7 @@ export class AskDataEngine {
     return (
       measures.find((f) => f.default) ||
       measures.sort((a, b) => this.measurePriority(b) - this.measurePriority(a))[0] || {
-        kind: 'count_star',
+        kind: 'count_star' as const,
         label: 'Records',
       }
     );

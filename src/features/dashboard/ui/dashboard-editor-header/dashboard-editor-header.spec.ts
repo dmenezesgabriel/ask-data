@@ -50,8 +50,8 @@ describe('DashboardEditorHeader', () => {
       const el = mount({ mode: 'dashboard' });
       await el.updateComplete;
       const btns = el.querySelectorAll<HTMLButtonElement>('.editor-mode-btn');
-      expect(btns[0].classList.contains('editor-mode-btn-active')).toBe(true);
-      expect(btns[1].classList.contains('editor-mode-btn-active')).toBe(false);
+      expect(btns[0]!.classList.contains('editor-mode-btn-active')).toBe(true);
+      expect(btns[1]!.classList.contains('editor-mode-btn-active')).toBe(false);
       cleanup(el);
     });
 
@@ -59,8 +59,8 @@ describe('DashboardEditorHeader', () => {
       const el = mount({ mode: 'askData' });
       await el.updateComplete;
       const btns = el.querySelectorAll<HTMLButtonElement>('.editor-mode-btn');
-      expect(btns[0].classList.contains('editor-mode-btn-active')).toBe(false);
-      expect(btns[1].classList.contains('editor-mode-btn-active')).toBe(true);
+      expect(btns[0]!.classList.contains('editor-mode-btn-active')).toBe(false);
+      expect(btns[1]!.classList.contains('editor-mode-btn-active')).toBe(true);
       cleanup(el);
     });
 
@@ -93,8 +93,8 @@ describe('DashboardEditorHeader', () => {
       const el = mount({ title: 'Sales Overview' });
       await el.updateComplete;
       const bc = el.querySelector('app-breadcrumb') as AppBreadcrumb;
-      expect(bc.items[0].label).toBe('Dashboards');
-      expect(bc.items[0].href).toBe('#/');
+      expect(bc.items[0]!.label).toBe('Dashboards');
+      expect(bc.items[0]!.href).toBe('#/');
       cleanup(el);
     });
 
@@ -102,7 +102,7 @@ describe('DashboardEditorHeader', () => {
       const el = mount({ title: 'Sales Overview' });
       await el.updateComplete;
       const bc = el.querySelector('app-breadcrumb') as AppBreadcrumb;
-      expect(bc.items[bc.items.length - 1].label).toBe('Sales Overview');
+      expect(bc.items[bc.items.length - 1]!.label).toBe('Sales Overview');
       cleanup(el);
     });
 
@@ -110,7 +110,7 @@ describe('DashboardEditorHeader', () => {
       const el = mount({ title: '' });
       await el.updateComplete;
       const bc = el.querySelector('app-breadcrumb') as AppBreadcrumb;
-      expect(bc.items[bc.items.length - 1].label).toBe('Untitled Dashboard');
+      expect(bc.items[bc.items.length - 1]!.label).toBe('Untitled Dashboard');
       cleanup(el);
     });
   });
@@ -122,9 +122,9 @@ describe('DashboardEditorHeader', () => {
       const handler = vi.fn();
       el.addEventListener('mode-change', handler);
       const btns = el.querySelectorAll<HTMLButtonElement>('.editor-mode-btn');
-      btns[1].click();
+      btns[1]!.click();
       expect(handler).toHaveBeenCalledOnce();
-      expect((handler.mock.calls[0][0] as CustomEvent).detail).toBe('askData');
+      expect((handler.mock.calls[0]![0] as CustomEvent).detail).toBe('askData');
       cleanup(el);
     });
 
@@ -134,9 +134,9 @@ describe('DashboardEditorHeader', () => {
       const handler = vi.fn();
       el.addEventListener('mode-change', handler);
       const btns = el.querySelectorAll<HTMLButtonElement>('.editor-mode-btn');
-      btns[0].click();
+      btns[0]!.click();
       expect(handler).toHaveBeenCalledOnce();
-      expect((handler.mock.calls[0][0] as CustomEvent).detail).toBe('dashboard');
+      expect((handler.mock.calls[0]![0] as CustomEvent).detail).toBe('dashboard');
       cleanup(el);
     });
 
@@ -147,7 +147,7 @@ describe('DashboardEditorHeader', () => {
       el.addEventListener('edit-mode-toggle', handler);
       el.querySelector<HTMLButtonElement>('.editor-edit-btn')!.click();
       expect(handler).toHaveBeenCalledOnce();
-      expect((handler.mock.calls[0][0] as CustomEvent).detail).toEqual({ editMode: true });
+      expect((handler.mock.calls[0]![0] as CustomEvent).detail).toEqual({ editMode: true });
       cleanup(el);
     });
 
@@ -158,7 +158,7 @@ describe('DashboardEditorHeader', () => {
       el.addEventListener('edit-mode-toggle', handler);
       el.querySelector<HTMLButtonElement>('.editor-edit-btn')!.click();
       expect(handler).toHaveBeenCalledOnce();
-      expect((handler.mock.calls[0][0] as CustomEvent).detail).toEqual({ editMode: false });
+      expect((handler.mock.calls[0]![0] as CustomEvent).detail).toEqual({ editMode: false });
       cleanup(el);
     });
   });

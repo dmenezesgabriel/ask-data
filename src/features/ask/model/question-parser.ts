@@ -293,7 +293,7 @@ export class QuestionParser {
       Number(match[1]),
     );
     if (explicitYears.length >= 2)
-      return { startYear: explicitYears[0], endYear: explicitYears[1] };
+      return { startYear: explicitYears[0]!, endYear: explicitYears[1]! };
     if (this.hasTerm(q, 'latestYear')) {
       const maxDate = this.getDefaultTimeField()?.dateProfile?.maxDate;
       const maxYear = maxDate ? new Date(`${maxDate}T00:00:00Z`).getUTCFullYear() : null;
@@ -492,7 +492,7 @@ export class QuestionParser {
     const m = q.match(new RegExp(`\\b(?:${topOrBottom})\\s+\\d+\\s+(.+?)\\s+(?:${by})\\s+`));
     return m
       ? singularize(
-          m[1]
+          m[1]!
             .replace(new RegExp(`\\b(?:${by}|${this.termAlternation('filters')})\\b.*$`), '')
             .trim(),
         )

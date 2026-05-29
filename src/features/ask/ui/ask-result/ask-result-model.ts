@@ -109,7 +109,7 @@ function buildScatterConfig(
           data: rows.map((row) => ({
             x: numberValue(row[xKey]),
             y: numberValue(row[yKey]),
-            r: Math.max(3, Math.sqrt(Math.abs(numberValue(row[rKey])) || 9)),
+            r: Math.max(3, Math.sqrt(Math.abs(rKey !== undefined ? numberValue(row[rKey]) : 0) || 9)),
           })),
           backgroundColor: '#c9613f88',
           borderColor: '#c9613f',
@@ -139,7 +139,7 @@ function buildHistogramConfig(
   const step = (max - min || 1) / binCount;
   const bins = Array.from({ length: binCount }, (_, i) => ({ start: min + i * step, count: 0 }));
   for (const value of values) {
-    bins[Math.min(binCount - 1, Math.floor((value - min) / step))].count++;
+    bins[Math.min(binCount - 1, Math.floor((value - min) / step))]!.count++;
   }
   return {
     type: 'bar',

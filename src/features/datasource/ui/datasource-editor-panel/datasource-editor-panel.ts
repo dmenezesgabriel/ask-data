@@ -105,7 +105,7 @@ export class DatasourceEditorPanel extends LitElement {
 
       // Data preview — 5 rows
       const dataRows = toRows(await this.queryPort.query(`SELECT * FROM ${fn}('${url}') LIMIT 5`));
-      this._testRowFields = dataRows.length > 0 ? Object.keys(dataRows[0]) : [];
+      this._testRowFields = dataRows.length > 0 ? Object.keys(dataRows[0]!) : [];
       this._testRows = dataRows.map((r) =>
         Object.fromEntries(this._testRowFields.map((f) => [f, r[f]])),
       );

@@ -166,8 +166,8 @@ export class QuestionEditorPanel extends LitElement {
       this._previewData = { labels: [], values: [], rows: [] };
       return;
     }
-    const labels = rows.map((r) => String(r['label'] ?? r[Object.keys(r)[0]] ?? ''));
-    const values = rows.map((r) => Number(r['value'] ?? r[Object.keys(r)[1]] ?? 0));
+    const labels = rows.map((r) => String(r['label'] ?? r[Object.keys(r)[0] ?? ''] ?? ''));
+    const values = rows.map((r) => Number(r['value'] ?? r[Object.keys(r)[1] ?? ''] ?? 0));
     this._previewData = { labels, values, rows };
   }
 

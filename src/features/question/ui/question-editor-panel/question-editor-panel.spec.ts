@@ -110,8 +110,8 @@ describe('QuestionEditorPanel', () => {
         rows: Record<string, unknown>[];
       };
       expect(data.values).toEqual([9, 15]);
-      expect(typeof data.values[0]).toBe('number');
-      expect(typeof data.rows[0].value).toBe('number');
+      expect(typeof data.values[0]!).toBe('number');
+      expect(typeof data.rows[0]!.value).toBe('number');
       cleanup(el);
     });
 
@@ -267,8 +267,8 @@ describe('QuestionEditorPanel', () => {
       rows: Record<string, unknown>[];
     };
     expect(data.values).toEqual([9, 15]);
-    expect(typeof data.values[0]).toBe('number');
-    expect(typeof data.rows[0].value).toBe('number');
+    expect(typeof data.values[0]!).toBe('number');
+    expect(typeof data.rows[0]!.value).toBe('number');
     cleanup(el);
   });
 
@@ -433,7 +433,7 @@ describe('QuestionEditorPanel', () => {
       );
 
       expect(received).toHaveLength(1);
-      expect(received[0].query).toBe('SELECT 2');
+      expect(received[0]!.query).toBe('SELECT 2');
       cleanup(el);
     });
 
@@ -451,7 +451,7 @@ describe('QuestionEditorPanel', () => {
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
       expect(received).toHaveLength(1);
-      expect(received[0].nlQuery).toBe('revenue by month');
+      expect(received[0]!.nlQuery).toBe('revenue by month');
       cleanup(el);
     });
 
@@ -473,7 +473,7 @@ describe('QuestionEditorPanel', () => {
         }),
       );
 
-      expect(received[0].nlQuery).toBe('kept');
+      expect(received[0]!.nlQuery).toBe('kept');
       cleanup(el);
     });
 
@@ -492,7 +492,7 @@ describe('QuestionEditorPanel', () => {
       textarea.value = 'new nl';
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
-      expect(received[0].query).toBe('SELECT kept');
+      expect(received[0]!.query).toBe('SELECT kept');
       cleanup(el);
     });
 

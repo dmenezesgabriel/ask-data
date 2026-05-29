@@ -50,8 +50,8 @@ describe('AppBreadcrumb', () => {
       await el.updateComplete;
       const links = el.querySelectorAll<HTMLAnchorElement>('a.breadcrumb-link');
       expect(links.length).toBe(2);
-      expect(links[0].getAttribute('href')).toBe('#/');
-      expect(links[1].getAttribute('href')).toBe('#/dashboard');
+      expect(links[0]!.getAttribute('href')).toBe('#/');
+      expect(links[1]!.getAttribute('href')).toBe('#/dashboard');
       cleanup(el);
     });
 
@@ -61,7 +61,7 @@ describe('AppBreadcrumb', () => {
       });
       await el.updateComplete;
       const items = el.querySelectorAll('li.breadcrumb-item');
-      const lastItem = items[items.length - 1];
+      const lastItem = items[items.length - 1]!;
       const current = lastItem.querySelector('span.breadcrumb-current');
       expect(current).not.toBeNull();
       expect(current?.getAttribute('aria-current')).toBe('page');
@@ -103,7 +103,7 @@ describe('AppBreadcrumb', () => {
       });
       await el.updateComplete;
       const items = el.querySelectorAll('li.breadcrumb-item');
-      const firstItem = items[0];
+      const firstItem = items[0]!;
       const text = firstItem.querySelector('span.breadcrumb-item-text');
       expect(text).not.toBeNull();
       expect(text?.textContent?.trim()).toBe('Section');

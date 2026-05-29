@@ -422,7 +422,7 @@ export class DashboardWorkspace extends LitElement {
   private _onCrossFilterClear(field: string): void {
     const rest: Record<string, CellValue[]> = {};
     for (const key of Object.keys(this.crossFilters)) {
-      if (key !== field) rest[key] = this.crossFilters[key];
+      if (key !== field) rest[key] = this.crossFilters[key]!;
     }
     this.crossFilters = rest;
   }

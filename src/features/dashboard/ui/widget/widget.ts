@@ -280,7 +280,7 @@ export class Widget extends LitElement {
         ...chartConfig.options,
         onClick: (_event: unknown, elements: { index: number }[]) => {
           if (elements.length > 0) {
-            this._onChartClick({ index: elements[0].index });
+            this._onChartClick({ index: elements[0]!.index });
           }
         },
       },

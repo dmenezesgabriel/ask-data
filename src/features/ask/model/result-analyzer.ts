@@ -44,8 +44,8 @@ export class ResultAnalyzer {
     let trendChange: number | null = null;
     let trendPct: number | null = null;
     if (isTimeSeries && valid.length >= 2) {
-      const first = Number(valid[0].value);
-      const last = Number(valid[valid.length - 1].value);
+      const first = Number(valid[0]!.value);
+      const last = Number(valid[valid.length - 1]!.value);
       trendChange = last - first;
       trendPct = first !== 0 ? trendChange / Math.abs(first) : null;
     }

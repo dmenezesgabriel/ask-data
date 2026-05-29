@@ -89,7 +89,7 @@ describe('MemoryDatasourceRepository', () => {
     await repo.save(updated);
     const list = await repo.list();
     expect(list).toHaveLength(1);
-    expect(list[0].name).toBe('Updated');
+    expect(list[0]!.name).toBe('Updated');
   });
 
   it('delete(id) is a no-op for unknown id', async () => {

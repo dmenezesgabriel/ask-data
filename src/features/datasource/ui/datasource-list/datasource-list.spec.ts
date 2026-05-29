@@ -165,7 +165,7 @@ describe('DatasourceList', () => {
 
       expect(received).toHaveLength(1);
       expect(typeof received[0]).toBe('string');
-      expect(received[0].length).toBeGreaterThan(0);
+      expect(received[0]!.length).toBeGreaterThan(0);
       cleanup(el);
     });
 

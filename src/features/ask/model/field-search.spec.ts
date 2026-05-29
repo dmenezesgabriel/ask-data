@@ -83,7 +83,7 @@ describe('FieldSearchIndex', () => {
       index.rebuild();
       const results = index.search('Region', ['dimension' as FieldRole]);
       expect(results.length).toBe(1);
-      expect(results[0].field.id).toBe('customer::Region');
+      expect(results[0]!.field.id).toBe('customer::Region');
     });
 
     it('returns empty array for empty query', () => {
@@ -117,7 +117,7 @@ describe('FieldSearchIndex', () => {
       index.rebuild();
       const results = index.search('revenue', ['measure' as FieldRole]);
       expect(results.length).toBeGreaterThanOrEqual(1);
-      expect(results[0].field.id).toBe('sales::Sales');
+      expect(results[0]!.field.id).toBe('sales::Sales');
     });
   });
 
@@ -142,7 +142,7 @@ describe('FieldSearchIndex', () => {
       newIndex.rebuild();
       results = newIndex.search('Category', ['dimension' as FieldRole]);
       expect(results.length).toBe(1);
-      expect(results[0].field.id).toBe('product::Category');
+      expect(results[0]!.field.id).toBe('product::Category');
     });
 
     it('clears previous entries on rebuild', () => {

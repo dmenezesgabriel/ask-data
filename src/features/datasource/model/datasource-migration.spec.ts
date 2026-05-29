@@ -64,8 +64,8 @@ describe('migrateQuestions', () => {
       { slug: 'q1', dataSources: [{ name: 'sales', url: 'https://example.com/sales.csv' }] },
     ];
     const result = migration.migrateQuestions(questions);
-    expect(result[0].dataSourceSlugs).toHaveLength(1);
-    expect(result[0].dataSources).toBeUndefined();
+    expect(result[0]!.dataSourceSlugs).toHaveLength(1);
+    expect(result[0]!.dataSources).toBeUndefined();
   });
 
   it('de-duplicates datasources with the same URL across multiple questions', () => {
@@ -80,7 +80,7 @@ describe('migrateQuestions', () => {
       { slug: 'q2', dataSources: [{ name: 'shared-copy', url }] },
     ];
     const result = migration.migrateQuestions(questions);
-    expect(result[0].dataSourceSlugs![0]).toBe(result[1].dataSourceSlugs![0]);
+    expect(result[0]!.dataSourceSlugs![0]).toBe(result[1]!.dataSourceSlugs![0]);
     expect(migration.datasourceList().filter((d) => d.source === 'user')).toHaveLength(1);
   });
 
@@ -100,8 +100,8 @@ describe('migrateQuestions', () => {
       },
     ];
     const result = migration.migrateQuestions(questions);
-    expect(result[0].dataSourceSlugs).toHaveLength(2);
-    expect(result[0].dataSourceSlugs![0]).not.toBe(result[0].dataSourceSlugs![1]);
+    expect(result[0]!.dataSourceSlugs).toHaveLength(2);
+    expect(result[0]!.dataSourceSlugs![0]).not.toBe(result[0]!.dataSourceSlugs![1]);
   });
 
   it('leaves questions without dataSources unchanged', () => {
@@ -109,7 +109,7 @@ describe('migrateQuestions', () => {
     const questions: Q[] = [{ slug: 'q1', title: 'No DS' }];
     const result = migration.migrateQuestions(questions);
     expect(result[0]).toEqual(questions[0]);
-    expect(result[0].dataSourceSlugs).toBeUndefined();
+    expect(result[0]!.dataSourceSlugs).toBeUndefined();
   });
 
   it('is idempotent — running twice yields the same slugs without duplicating registry entries', () => {
@@ -123,7 +123,7 @@ describe('migrateQuestions', () => {
     ];
     const first = migration.migrateQuestions(questions);
     const second = migration.migrateQuestions(first);
-    expect(second[0].dataSourceSlugs).toEqual(first[0].dataSourceSlugs);
+    expect(second[0]!.dataSourceSlugs).toEqual(first[0]!.dataSourceSlugs);
     const userEntries = migration.datasourceList().filter((d) => d.source === 'user');
     expect(userEntries).toHaveLength(1);
   });
@@ -148,8 +148,8 @@ describe('migrateDashboards', () => {
       { title: 'D1', dataSources: [{ name: 'sales', url: 'https://example.com/sales.csv' }] },
     ];
     const result = migration.migrateDashboards(dashboards);
-    expect(result[0].dataSourceSlugs).toHaveLength(1);
-    expect(result[0].dataSources).toBeUndefined();
+    expect(result[0]!.dataSourceSlugs).toHaveLength(1);
+    expect(result[0]!.dataSources).toBeUndefined();
   });
 
   it('leaves dashboards without dataSources unchanged', () => {
@@ -184,8 +184,8 @@ describe('runMigration', () => {
     const questions: Q[] = [{ slug: 'q1', dataSources: [{ name: 'x', url }] }];
     const dashboards: D[] = [{ title: 'D1', dataSources: [{ name: 'x', url }] }];
     const { questions: qs, dashboards: ds } = migration.runMigration(questions, dashboards);
-    expect(qs[0].dataSourceSlugs).toHaveLength(1);
-    expect(ds[0].dataSourceSlugs).toHaveLength(1);
-    expect(qs[0].dataSourceSlugs![0]).toBe(ds[0].dataSourceSlugs![0]);
+    expect(qs[0]!.dataSourceSlugs).toHaveLength(1);
+    expect(ds[0]!.dataSourceSlugs).toHaveLength(1);
+    expect(qs[0]!.dataSourceSlugs![0]).toBe(ds[0]!.dataSourceSlugs![0]);
   });
 });

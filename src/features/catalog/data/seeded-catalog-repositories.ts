@@ -99,7 +99,7 @@ function readLegacyDashboards(): Dashboard[] {
     const parsed = JSON.parse(raw) as Array<{ slug: string; config: DashboardConfig }>;
     const migrated = migrateDashboards(parsed.map((entry) => entry.config));
     return parsed.map((entry, index) =>
-      dashboardConfigToEntity(migrated[index], entry.slug, 'user'),
+      dashboardConfigToEntity(migrated[index]!, entry.slug, 'user'),
     );
   } catch {
     return [];

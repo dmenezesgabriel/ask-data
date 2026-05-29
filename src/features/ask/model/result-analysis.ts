@@ -432,8 +432,8 @@ export class InsightGenerator {
   ): void {
     if (intent.dimensions?.[0]?.role !== 'time' || facts.trendChange === null) return;
     const { valid, trendChange, trendPct } = facts;
-    const first = valid[0];
-    const last = valid[valid.length - 1];
+    const first = valid[0]!;
+    const last = valid[valid.length - 1]!;
     const direction = trendChange >= 0 ? 'up' : 'down';
     const pctStr = trendPct !== null ? ` (${formatValue(Math.abs(trendPct), 'percent')})` : '';
     insights.push(

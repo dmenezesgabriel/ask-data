@@ -604,10 +604,10 @@ describe('SqlPlanner', () => {
       const result = planner.buildJoinPlan('sales', ['sales', 'customer']);
       expect(result.tables).toEqual(['sales', 'customer']);
       expect(result.joins!).toHaveLength(1);
-      expect(result.joins![0].left.table).toBe('sales');
-      expect(result.joins![0].left.column).toBe('Customer ID');
-      expect(result.joins![0].right.table).toBe('customer');
-      expect(result.joins![0].right.table).toBe('customer');
+      expect(result.joins![0]!.left.table).toBe('sales');
+      expect(result.joins![0]!.left.column).toBe('Customer ID');
+      expect(result.joins![0]!.right.table).toBe('customer');
+      expect(result.joins![0]!.right.table).toBe('customer');
     });
 
     it('builds multi-hop joins for indirectly related tables', () => {
@@ -627,10 +627,10 @@ describe('SqlPlanner', () => {
       });
       const result = planner.buildJoinPlan('customer', ['customer', 'sales']);
       expect(result.joins!).toHaveLength(1);
-      expect(result.joins![0].left.table).toBe('customer');
-      expect(result.joins![0].left.column).toBe('ID');
-      expect(result.joins![0].right.table).toBe('sales');
-      expect(result.joins![0].right.column).toBe('Customer ID');
+      expect(result.joins![0]!.left.table).toBe('customer');
+      expect(result.joins![0]!.left.column).toBe('ID');
+      expect(result.joins![0]!.right.table).toBe('sales');
+      expect(result.joins![0]!.right.column).toBe('Customer ID');
     });
 
     it('handles already-tables in the needed list gracefully', () => {

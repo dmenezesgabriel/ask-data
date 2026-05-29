@@ -38,7 +38,7 @@ describe('widget-model', () => {
         fill: true,
         borderColor: '#c9613f',
       });
-      expect(config.data.datasets[0].backgroundColor).toBe('rgba(201, 97, 63, 0.1)');
+      expect(config.data.datasets[0]!.backgroundColor).toBe('rgba(201, 97, 63, 0.1)');
     });
 
     it('keeps legend hidden for dashboard widget charts', () => {

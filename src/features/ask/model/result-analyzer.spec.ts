@@ -71,7 +71,7 @@ describe('ResultAnalyzer', () => {
         noShape(),
       );
       expect(facts.valid).toHaveLength(1);
-      expect(facts.valid[0].label).toBe('A');
+      expect(facts.valid[0]!.label).toBe('A');
     });
 
     it('returns empty valid for empty rows', () => {

@@ -75,7 +75,7 @@ describe('logger', () => {
       { operation: 'datasource-preview', adapter: 'duckdb-wasm' },
     );
 
-    const payload = error.mock.calls[0][1] as { error: { message: string; stack?: string } };
+    const payload = error.mock.calls[0]![1] as { error: { message: string; stack?: string } };
     expect(payload).toEqual(
       expect.objectContaining({ operation: 'datasource-preview', adapter: 'duckdb-wasm' }),
     );

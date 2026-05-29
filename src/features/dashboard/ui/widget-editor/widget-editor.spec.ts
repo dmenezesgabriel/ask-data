@@ -2,6 +2,7 @@ import './widget-editor';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { DashboardWidget } from '@/core/entities/dashboard';
 import type { CapabilitySnapshot } from '@/core/platform';
 import { createSeedDashboards } from '@/features/catalog/data/seeded-catalog-repositories';
 
@@ -35,8 +36,8 @@ describe('WidgetEditor willUpdate() — UT-001', () => {
   });
 
   it('UT-001: updates _panelConfig from new widget prop before next render', async () => {
-    const seedDashboard = createSeedDashboards()[0];
-    const [widgetA, widgetB] = seedDashboard.widgets;
+    const seedDashboard = createSeedDashboards()[0]!;
+    const [widgetA, widgetB] = seedDashboard.widgets as [DashboardWidget, DashboardWidget];
 
     const el = mount({ widget: widgetA, mode: 'edit' });
     await updateComplete(el);
@@ -73,7 +74,7 @@ describe('WidgetEditor capability regression', () => {
   });
 
   it('REG-001: keeps seed dashboard chart types available when the widget editor opens', async () => {
-    const seedDashboard = createSeedDashboards()[0];
+    const seedDashboard = createSeedDashboards()[0]!;
     const chartWidgets = seedDashboard.widgets.filter((widget) => widget.type === 'chart');
     const capabilitySnapshot: CapabilitySnapshot = {
       capabilities: chartWidgets.map((widget) => ({

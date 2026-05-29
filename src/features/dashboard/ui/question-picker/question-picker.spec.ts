@@ -268,7 +268,7 @@ describe('QuestionPicker', () => {
       itemBtn.click();
 
       expect(handler).toHaveBeenCalledOnce();
-      expect((handler.mock.calls[0][0] as CustomEvent<typeof STUB_QUESTION>).detail).toEqual(
+      expect((handler.mock.calls[0]![0] as CustomEvent<typeof STUB_QUESTION>).detail).toEqual(
         STUB_QUESTION,
       );
 

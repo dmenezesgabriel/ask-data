@@ -122,7 +122,7 @@ export class ValueFilterResolver {
   ) {
     const clarified =
       clarification?.slot === 'filterField' &&
-      clarification.valueNormalized === items[0].normalizedValue
+      clarification.valueNormalized === items[0]!.normalizedValue
         ? uniqueFields.find((i) => i.field.id === clarification.fieldId)
         : null;
     const cueHasFieldName =
@@ -170,12 +170,12 @@ export class ValueFilterResolver {
           }));
           return {
             clarification: {
-              message: `Which field should "${items[0].value}" filter?`,
+              message: `Which field should "${items[0]!.value}" filter?`,
               pending: {
                 slot: 'filterField',
                 originalQuestion: null,
-                value: items[0].value,
-                valueNormalized: items[0].normalizedValue,
+                value: items[0]!.value,
+                valueNormalized: items[0]!.normalizedValue,
                 candidates,
               },
               choices: candidates,
@@ -183,7 +183,7 @@ export class ValueFilterResolver {
           };
         }
       } else {
-        const item = uniqueFields[0];
+        const item = uniqueFields[0]!;
         filters.push({
           field: item.field,
           operator: '=',

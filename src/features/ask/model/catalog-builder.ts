@@ -221,7 +221,7 @@ export class CatalogBuilder {
     for (const matches of byColumn.values()) {
       for (let i = 0; i < matches.length; i++) {
         for (let j = i + 1; j < matches.length; j++) {
-          const rel = this.scoreRelationship(matches[i], matches[j]);
+          const rel = this.scoreRelationship(matches[i]!, matches[j]!);
           if (!rel) continue;
           if (
             (rel.confidence ?? 0) >=

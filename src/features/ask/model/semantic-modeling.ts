@@ -403,8 +403,8 @@ export class AutoRelationshipInferrer {
 
     for (let i = 0; i < keyFields.length; i++) {
       for (let j = i + 1; j < keyFields.length; j++) {
-        const a = keyFields[i];
-        const b = keyFields[j];
+        const a = keyFields[i]!;
+        const b = keyFields[j]!;
 
         if (a.table === b.table) continue;
 

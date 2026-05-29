@@ -45,7 +45,7 @@ function loadPersistedDashboards(): DashboardEntry[] {
         // localStorage may be unavailable in some environments; proceed without persisting
       }
     }
-    return parsed.map((p, i) => ({ slug: p.slug, config: migrated[i], source: 'user' as const }));
+    return parsed.map((p, i) => ({ slug: p.slug, config: migrated[i]!, source: 'user' as const }));
   } catch {
     return [];
   }

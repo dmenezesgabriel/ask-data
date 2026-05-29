@@ -8,8 +8,8 @@ describe('buildVocabulary', () => {
     const vocab = buildVocabulary({});
     expect(vocab.en).toBeDefined();
     expect(vocab.pt).toBeDefined();
-    expect(vocab.en.by).toEqual(expect.arrayContaining(['by']));
-    expect(vocab.pt.by).toEqual(expect.arrayContaining(['por']));
+    expect(vocab.en!.by).toEqual(expect.arrayContaining(['by']));
+    expect(vocab.pt!.by).toEqual(expect.arrayContaining(['por']));
   });
 
   it('includes all expected en groups', () => {
@@ -51,7 +51,7 @@ describe('buildVocabulary', () => {
       'unsupportedMetric',
     ];
     for (const group of expectedGroups) {
-      expect(vocab.en[group]).toBeDefined();
+      expect(vocab.en![group]).toBeDefined();
     }
   });
 
@@ -94,7 +94,7 @@ describe('buildVocabulary', () => {
       'unsupportedMetric',
     ];
     for (const group of expectedGroups) {
-      expect(vocab.pt[group]).toBeDefined();
+      expect(vocab.pt![group]).toBeDefined();
     }
   });
 
@@ -103,8 +103,8 @@ describe('buildVocabulary', () => {
       en: { by: ['per'], filters: ['within'] },
     };
     const vocab = buildVocabulary(configured);
-    expect(vocab.en.by).toEqual(expect.arrayContaining(['by', 'per']));
-    expect(vocab.en.filters).toEqual(
+    expect(vocab.en!.by).toEqual(expect.arrayContaining(['by', 'per']));
+    expect(vocab.en!.filters).toEqual(
       expect.arrayContaining(['in', 'for', 'where', 'with', 'within']),
     );
   });
@@ -115,8 +115,8 @@ describe('buildVocabulary', () => {
     };
     const vocab = buildVocabulary(configured);
     expect(vocab.es).toBeDefined();
-    expect(vocab.es.by).toEqual(expect.arrayContaining(['por']));
-    expect(vocab.es.top).toEqual(expect.arrayContaining(['top', 'mejor']));
+    expect(vocab.es!.by).toEqual(expect.arrayContaining(['por']));
+    expect(vocab.es!.top).toEqual(expect.arrayContaining(['top', 'mejor']));
   });
 
   it('deduplicates merged terms', () => {
@@ -124,41 +124,41 @@ describe('buildVocabulary', () => {
       en: { by: ['by'] },
     };
     const vocab = buildVocabulary(configured);
-    const byTerms = vocab.en.by.filter((t) => t === 'by');
+    const byTerms = vocab.en!.by!.filter((t) => t === 'by');
     expect(byTerms.length).toBe(1);
   });
 
   it('does not mutate the default vocabulary across calls', () => {
     buildVocabulary({ en: { by: ['per'] } });
     const vocab2 = buildVocabulary({});
-    expect(vocab2.en.by).not.toContain('per');
+    expect(vocab2.en!.by).not.toContain('per');
   });
 
   it('returns defaults when called with undefined (engine path when askConfig.vocabulary is absent)', () => {
     const vocab = buildVocabulary(undefined as unknown as Vocabulary);
     expect(vocab.en).toBeDefined();
     expect(vocab.pt).toBeDefined();
-    expect(vocab.en.by).toContain('by');
-    expect(vocab.pt.by).toContain('por');
+    expect(vocab.en!.by).toContain('by');
+    expect(vocab.pt!.by).toContain('por');
   });
 
   it('adds a new group to an existing locale without affecting other groups', () => {
     const vocab = buildVocabulary({ en: { customGroup: ['alpha', 'beta'] } });
-    expect(vocab.en.customGroup).toEqual(expect.arrayContaining(['alpha', 'beta']));
-    expect(vocab.en.by).toContain('by');
+    expect(vocab.en!.customGroup).toEqual(expect.arrayContaining(['alpha', 'beta']));
+    expect(vocab.en!.by).toContain('by');
   });
 
   it('user config only extends default groups, never removes existing default terms', () => {
     const vocab = buildVocabulary({ en: { by: ['custom_by'] } });
-    expect(vocab.en.by).toContain('by');
-    expect(vocab.en.by).toContain('custom_by');
+    expect(vocab.en!.by).toContain('by');
+    expect(vocab.en!.by).toContain('custom_by');
   });
 });
 
 describe('defaultVocabulary', () => {
   it('has matching en and pt group keys', () => {
-    const enKeys = Object.keys(defaultVocabulary.en).sort();
-    const ptKeys = Object.keys(defaultVocabulary.pt).sort();
+    const enKeys = Object.keys(defaultVocabulary.en!).sort();
+    const ptKeys = Object.keys(defaultVocabulary.pt!).sort();
     expect(enKeys).toEqual(ptKeys);
   });
 

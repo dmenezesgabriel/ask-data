@@ -45,8 +45,8 @@ describe('QuestionEditorHeader', () => {
       const el = mount({ title: 'My Question' });
       await el.updateComplete;
       const bc = el.querySelector('app-breadcrumb') as AppBreadcrumb;
-      expect(bc.items[0].label).toBe('Questions');
-      expect(bc.items[0].href).toBe('#/questions');
+      expect(bc.items[0]!.label).toBe('Questions');
+      expect(bc.items[0]!.href).toBe('#/questions');
       cleanup(el);
     });
 
@@ -54,7 +54,7 @@ describe('QuestionEditorHeader', () => {
       const el = mount({ title: 'My Question' });
       await el.updateComplete;
       const bc = el.querySelector('app-breadcrumb') as AppBreadcrumb;
-      expect(bc.items[bc.items.length - 1].label).toBe('My Question');
+      expect(bc.items[bc.items.length - 1]!.label).toBe('My Question');
       cleanup(el);
     });
 
@@ -62,7 +62,7 @@ describe('QuestionEditorHeader', () => {
       const el = mount({ title: '' });
       await el.updateComplete;
       const bc = el.querySelector('app-breadcrumb') as AppBreadcrumb;
-      expect(bc.items[bc.items.length - 1].label).toBe('Untitled Question');
+      expect(bc.items[bc.items.length - 1]!.label).toBe('Untitled Question');
       cleanup(el);
     });
   });

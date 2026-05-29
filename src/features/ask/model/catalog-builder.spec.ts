@@ -65,8 +65,8 @@ describe('CatalogBuilder', () => {
 
       const { catalog } = await builder.build();
 
-      expect(catalog[0]).toMatchObject({ column: 'category', role: 'dimension' });
-      expect(catalog[0].sampleValues).toEqual(expect.arrayContaining(['books', 'games', 'music']));
+      expect(catalog[0]!).toMatchObject({ column: 'category', role: 'dimension' });
+      expect(catalog[0]!.sampleValues).toEqual(expect.arrayContaining(['books', 'games', 'music']));
     });
 
     it('queries the QueryPort for each column in each data source', async () => {
@@ -135,8 +135,8 @@ describe('CatalogBuilder', () => {
 
       const { catalog } = await builder.build();
 
-      expect(catalog[0]).toMatchObject({ column: 'order_date', role: 'time' });
-      expect(catalog[0].dateProfile).not.toBeNull();
+      expect(catalog[0]!).toMatchObject({ column: 'order_date', role: 'time' });
+      expect(catalog[0]!.dateProfile).not.toBeNull();
     });
 
     it('infers dimension for a low-cardinality numeric field', async () => {

@@ -22,7 +22,7 @@ export class DuckDbWasmQueryEngine implements QueryEngine {
           ]),
         ),
       );
-    const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
+    const columns = rows.length > 0 ? Object.keys(rows[0]!) : [];
     return { columns, rows };
   }
 }

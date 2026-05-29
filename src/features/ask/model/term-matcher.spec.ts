@@ -28,7 +28,7 @@ describe('TermMatcher', () => {
       expect(alt).toContain('por');
       const parts = alt.split('|');
       for (let i = 1; i < parts.length; i++) {
-        expect(parts[i - 1].length).toBeGreaterThanOrEqual(parts[i].length);
+        expect(parts[i - 1]!.length).toBeGreaterThanOrEqual(parts[i]!.length);
       }
     });
 

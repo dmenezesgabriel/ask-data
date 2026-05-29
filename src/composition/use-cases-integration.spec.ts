@@ -278,8 +278,8 @@ describe('Task 003: seeded catalog repositories', () => {
       await import('@/core/application/use-cases/dashboards/list-dashboards');
     const { ListQuestions } = await import('@/core/application/use-cases/questions/list-questions');
 
-    const seedQuestionId = createSeedQuestions()[0].id;
-    const seedDashboardId = createSeedDashboards()[0].id;
+    const seedQuestionId = createSeedQuestions()[0]!.id;
+    const seedDashboardId = createSeedDashboards()[0]!.id;
     const questionRepo = new SeededQuestionRepository(new MemoryQuestionRepository());
     const dashboardRepo = new SeededDashboardRepository(new MemoryDashboardRepository());
 

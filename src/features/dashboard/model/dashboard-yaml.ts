@@ -119,7 +119,7 @@ export function dashboardToYaml(sheet: Dashboard): string {
   };
 
   for (let i = 0; i < sheet.widgets.length; i++) {
-    const w = sheet.widgets[i];
+    const w = sheet.widgets[i]!;
     const pos = sheet.layout[i];
     const entry: Record<string, unknown> = { id: w.id };
 

@@ -70,10 +70,10 @@ describe('ValueFilterResolver', () => {
       const result = resolver.resolve('sales in the north region');
       expect(result.filters!).toBeDefined();
       expect(result.filters!.length).toBe(1);
-      expect(result.filters![0].value).toBe('North');
-      expect(result.filters![0].field.id).toBe('sales::Region');
-      expect(result.filters![0].operator).toBe('=');
-      expect(result.filters![0].source).toBe('exact_value');
+      expect(result.filters![0]!.value).toBe('North');
+      expect(result.filters![0]!.field.id).toBe('sales::Region');
+      expect(result.filters![0]!.operator).toBe('=');
+      expect(result.filters![0]!.source).toBe('exact_value');
     });
 
     it('returns multiple filters when multiple exact values match', () => {
@@ -113,7 +113,7 @@ describe('ValueFilterResolver', () => {
       });
       const result = resolver.resolve('a north sales');
       expect(result.filters!.length).toBe(1);
-      expect(result.filters![0].value).toBe('North');
+      expect(result.filters![0]!.value).toBe('North');
     });
 
     it('skips value items with empty normalized values', () => {
@@ -129,7 +129,7 @@ describe('ValueFilterResolver', () => {
       });
       const result = resolver.resolve('electronics');
       expect(result.filters!.length).toBe(1);
-      expect(result.filters![0].value).toBe('Electronics');
+      expect(result.filters![0]!.value).toBe('Electronics');
     });
 
     it('deduplicates matches preferring higher matchScore', () => {
@@ -148,8 +148,8 @@ describe('ValueFilterResolver', () => {
       const matches = resolver.findMatches('sales in the north');
       const northMatches = matches.filter((m) => m.normalizedValue === 'north');
       expect(northMatches.length).toBe(1);
-      expect(northMatches[0].matchScore).toBe(1);
-      expect(northMatches[0].matchSource).toBe('exact_value');
+      expect(northMatches[0]!.matchScore).toBe(1);
+      expect(northMatches[0]!.matchSource).toBe('exact_value');
     });
 
     it('uses score 0.9 as default when matchScore is absent', () => {
@@ -159,7 +159,7 @@ describe('ValueFilterResolver', () => {
         ],
       });
       const result = resolver.resolve('north');
-      expect(result.filters![0].score).toBe(1);
+      expect(result.filters![0]!.score).toBe(1);
     });
   });
 
@@ -174,7 +174,7 @@ describe('ValueFilterResolver', () => {
       const result = resolver.resolve('sales in north');
       expect(result.filters!).toBeDefined();
       expect(result.filters!.length).toBe(1);
-      expect(result.filters![0].value).toBe('North');
+      expect(result.filters![0]!.value).toBe('North');
     });
 
     it('skips value whose normalizedValue is substring of existing key', () => {
@@ -190,7 +190,7 @@ describe('ValueFilterResolver', () => {
       });
       const result = resolver.resolve('sales in north america');
       expect(result.filters!.length).toBe(1);
-      expect(result.filters![0].value).toBe('North America');
+      expect(result.filters![0]!.value).toBe('North America');
     });
 
     it('prefers longer normalizedValues first', () => {
@@ -206,7 +206,7 @@ describe('ValueFilterResolver', () => {
       });
       const result = resolver.resolve('north america sales');
       expect(result.filters!.length).toBe(1);
-      expect(result.filters![0].value).toBe('North America');
+      expect(result.filters![0]!.value).toBe('North America');
     });
   });
 
@@ -310,9 +310,9 @@ describe('ValueFilterResolver', () => {
       });
       const matches = resolver.findMatches('show sales in the north region');
       expect(matches.length).toBe(1);
-      expect(matches[0].normalizedValue).toBe('north');
-      expect(matches[0].matchSource).toBe('exact_value');
-      expect(matches[0].matchScore).toBe(1);
+      expect(matches[0]!.normalizedValue).toBe('north');
+      expect(matches[0]!.matchSource).toBe('exact_value');
+      expect(matches[0]!.matchScore).toBe(1);
     });
 
     it('does not match value as substring within a word', () => {
@@ -337,7 +337,7 @@ describe('ValueFilterResolver', () => {
       });
       const matches = resolver.findMatches('sales in north america');
       expect(matches.length).toBe(1);
-      expect(matches[0].normalizedValue).toBe('north america');
+      expect(matches[0]!.normalizedValue).toBe('north america');
     });
 
     it('returns empty array when no items match', () => {
@@ -366,8 +366,8 @@ describe('ValueFilterResolver', () => {
       });
       const matches = resolver.findMatches('north');
       expect(matches.length).toBe(1);
-      expect(matches[0].matchScore).toBe(1);
-      expect(matches[0].matchSource).toBe('exact_value');
+      expect(matches[0]!.matchScore).toBe(1);
+      expect(matches[0]!.matchSource).toBe('exact_value');
     });
   });
 
@@ -383,9 +383,9 @@ describe('ValueFilterResolver', () => {
       const result = resolver.toFilters('sales in the north', byValue);
       expect(result.filters!).toBeDefined();
       expect(result.filters!.length).toBe(1);
-      expect(result.filters![0].field.id).toBe('sales::Region');
-      expect(result.filters![0].value).toBe('North');
-      expect(result.filters![0].operator).toBe('=');
+      expect(result.filters![0]!.field.id).toBe('sales::Region');
+      expect(result.filters![0]!.value).toBe('North');
+      expect(result.filters![0]!.operator).toBe('=');
     });
 
     it('builds filters for multiple distinct values', () => {
@@ -427,7 +427,7 @@ describe('ValueFilterResolver', () => {
       ]);
       const result = resolver.toFilters('north', byValue);
       expect(result.filters!.length).toBe(1);
-      expect(result.filters![0].field.id).toBe('sales::Region');
+      expect(result.filters![0]!.field.id).toBe('sales::Region');
     });
 
     it('returns clarification when value maps to multiple unique fields', () => {
@@ -468,8 +468,8 @@ describe('ValueFilterResolver', () => {
         ],
       ]);
       const result = resolver.toFilters('north', byValue);
-      expect(result.filters![0].score).toBe(0.85);
-      expect(result.filters![0].source).toBe('fuzzy_value');
+      expect(result.filters![0]!.score).toBe(0.85);
+      expect(result.filters![0]!.source).toBe('fuzzy_value');
     });
 
     it('defaults score to 0.9 when matchScore is absent', () => {
@@ -481,7 +481,7 @@ describe('ValueFilterResolver', () => {
         ],
       ]);
       const result = resolver.toFilters('north', byValue);
-      expect(result.filters![0].score).toBe(0.9);
+      expect(result.filters![0]!.score).toBe(0.9);
     });
 
     it('returns empty filters from empty map', () => {
@@ -525,8 +525,8 @@ describe('ValueFilterResolver', () => {
       const result = resolver.toFilters('sales in north', byValue, clarification);
       expect(result.filters!).toBeDefined();
       expect(result.filters!.length).toBe(1);
-      expect(result.filters![0].field.id).toBe('sales::Region');
-      expect(result.filters![0].source).toBe('clarification');
+      expect(result.filters![0]!.field.id).toBe('sales::Region');
+      expect(result.filters![0]!.source).toBe('clarification');
     });
 
     it('resolves ambiguity when query text cues field label', () => {
@@ -543,8 +543,8 @@ describe('ValueFilterResolver', () => {
       const result = resolver.toFilters('sales in north region', byValue);
       expect(result.filters!).toBeDefined();
       expect(result.filters!.length).toBe(1);
-      expect(result.filters![0].field.id).toBe('sales::Region');
-      expect(result.filters![0].source).toBeUndefined();
+      expect(result.filters![0]!.field.id).toBe('sales::Region');
+      expect(result.filters![0]!.source).toBeUndefined();
     });
 
     it('returns clarification when no cue disambiguates', () => {

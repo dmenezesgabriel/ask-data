@@ -39,7 +39,7 @@ describe('AskData', () => {
     const result = await uc.execute({ question: 'count rows', datasourceId: 'x' });
     // Assert: result came from the stub, not from DuckDB
     expect(result).toBeDefined();
-    expect((engine.ask as ReturnType<typeof vi.fn>).mock.calls[0][0]).toBe('count rows');
+    expect((engine.ask as ReturnType<typeof vi.fn>).mock.calls[0]![0]).toBe('count rows');
     // If DuckDbWasmQueryEngine had been used, this test environment would have thrown
     // because @duckdb/duckdb-wasm requires browser WASM APIs unavailable in Node
   });

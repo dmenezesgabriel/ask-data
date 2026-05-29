@@ -156,8 +156,8 @@ export class NarrativeGenerator {
   private calculatePeriodChanges(rows: DataRow[]): number[] {
     const changes: number[] = [];
     for (let i = 1; i < rows.length; i++) {
-      const prev = Number(rows[i - 1].value);
-      const curr = Number(rows[i].value);
+      const prev = Number(rows[i - 1]!.value);
+      const curr = Number(rows[i]!.value);
       if (prev !== 0) {
         changes.push((curr - prev) / Math.abs(prev));
       }
@@ -187,7 +187,7 @@ export class NarrativeGenerator {
     if (facts.valid.length < 2 || facts.trendChange === null) return narratives;
 
     const metricFormat = metricField?.format;
-    const first = Number(facts.valid[0].value);
+    const first = Number(facts.valid[0]!.value);
     const totalChange = facts.trendChange;
     const pctChange = facts.trendPct ?? 0;
 
@@ -202,7 +202,7 @@ export class NarrativeGenerator {
       importance: 7,
       details: {
         first,
-        last: Number(facts.valid[facts.valid.length - 1].value),
+        last: Number(facts.valid[facts.valid.length - 1]!.value),
         totalChange,
         pctChange,
       },
@@ -332,7 +332,7 @@ export class NarrativeGenerator {
     }
 
     if (sorted.length >= 3) {
-      const topShare = Number(sorted[0].value) / total;
+      const topShare = Number(sorted[0]!.value) / total;
       if (topShare > 0.4) {
         narratives.push({
           type: 'pattern',
@@ -360,7 +360,7 @@ export class NarrativeGenerator {
 
     if (intent.analysisType === 'comparison' && rows.length >= 2) {
       const sorted = [...rows].sort((a, b) => Number(b.value) - Number(a.value));
-      const diff = Math.abs(Number(sorted[0].value) - Number(sorted[1].value));
+      const diff = Math.abs(Number(sorted[0]!.value) - Number(sorted[1]!.value));
       const avg = rows.reduce((s, r) => s + Number(r.value), 0) / rows.length;
 
       if (avg > 0) {
@@ -405,7 +405,7 @@ export class NarrativeGenerator {
     const values = valid.map((r) => Number(r.value));
     const sortedDesc = [...values].sort((a, b) => b - a);
 
-    const isSortedDesc = values.every((v, i) => i === 0 || v <= sortedDesc[i]);
+    const isSortedDesc = values.every((v, i) => i === 0 || v <= sortedDesc[i]!);
 
     if (isSortedDesc) {
       narratives.push({
@@ -418,8 +418,8 @@ export class NarrativeGenerator {
 
     const gaps: number[] = [];
     for (let i = 1; i < values.length; i++) {
-      const prev = values[i - 1];
-      const curr = values[i];
+      const prev = values[i - 1]!;
+      const curr = values[i]!;
       if (prev > 0) {
         gaps.push((prev - curr) / prev);
       }
@@ -464,11 +464,11 @@ export class NarrativeGenerator {
     const outlierNarratives = validNarratives.filter((n) => n.type === 'outlier');
 
     if (trendNarratives.length > 0) {
-      return `Analysis of ${metricName} by ${dimensionLabel} reveals ${trendNarratives[0].text}`;
+      return `Analysis of ${metricName} by ${dimensionLabel} reveals ${trendNarratives[0]!.text}`;
     }
 
     if (outlierNarratives.length > 0) {
-      return `Notable findings: ${outlierNarratives[0].text}`;
+      return `Notable findings: ${outlierNarratives[0]!.text}`;
     }
 
     const first = validNarratives[0];
@@ -484,12 +484,12 @@ export class NarrativeGenerator {
       (n) => n.importance >= 8 && n.text && !n.text.includes('undefined'),
     );
     if (highPriority.length > 0) {
-      return highPriority[0].text;
+      return highPriority[0]!.text;
     }
 
     const validNarratives = narratives.filter((n) => n.text && !n.text.includes('undefined'));
     if (validNarratives.length > 0) {
-      return validNarratives[0].text;
+      return validNarratives[0]!.text;
     }
 
     return 'Analysis complete. Check the narratives above for details.';

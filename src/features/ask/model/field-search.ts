@@ -93,14 +93,14 @@ export class TextSearchFieldMatchStrategy {
     const index = this.fieldSearchIndex();
     if (!index) return null;
     const results = index.search(phrase, roles).slice(0, 4);
-    if (!results.length || results[0].score < 0.9) return null;
-    if (results[1] && results[0].score - results[1].score < 0.15)
+    if (!results.length || results[0]!.score < 0.9) return null;
+    if (results[1] && results[0]!.score - results[1].score < 0.15)
       return {
         ambiguous: true,
         fields: results.map((result) => result.field).filter((f): f is CatalogField => !!f),
-        score: results[0].score,
+        score: results[0]!.score,
       };
-    return { field: results[0].field, score: Math.min(0.9, results[0].score / 3) };
+    return { field: results[0]!.field, score: Math.min(0.9, results[0]!.score / 3) };
   }
 
   async findInText(text: string, role: FieldRole) {
@@ -208,13 +208,13 @@ export class FuseFieldMatchStrategy {
       .search(norm(phrase))
       .filter((result) => roles.includes(result.item.field.role))
       .slice(0, 4);
-    if (!results.length || (results[0].score ?? 0) > 0.28) return null;
-    if (results[1] && (results[1].score ?? 1) - (results[0].score ?? 0) < 0.04)
+    if (!results.length || (results[0]!.score ?? 0) > 0.28) return null;
+    if (results[1] && (results[1].score ?? 1) - (results[0]!.score ?? 0) < 0.04)
       return {
         ambiguous: true,
         fields: results.map((result) => result.item.field).filter((f): f is CatalogField => !!f),
       };
-    return { field: results[0].item.field };
+    return { field: results[0]!.item.field };
   }
 }
 

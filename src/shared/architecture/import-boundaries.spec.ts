@@ -38,7 +38,7 @@ describe('architecture import boundaries', () => {
   });
 
   it('reports dependency direction for allowed and forbidden boundary fixtures', () => {
-    expect(architectureLayers.core.allowedDependencies).toEqual(['core']);
+    expect(architectureLayers.core!.allowedDependencies).toEqual(['core']);
 
     expect(
       isArchitectureDependencyAllowed(

@@ -97,7 +97,7 @@ describe('UiCodeEditor', () => {
       const view = getView(el);
       view.dispatch({ changes: { from: 0, to: 0, insert: 'hello' } });
       expect(handler).toHaveBeenCalledOnce();
-      expect((handler.mock.calls[0][0] as CustomEvent<string>).detail).toBe('hello');
+      expect((handler.mock.calls[0]![0] as CustomEvent<string>).detail).toBe('hello');
       cleanup(el);
     });
   });

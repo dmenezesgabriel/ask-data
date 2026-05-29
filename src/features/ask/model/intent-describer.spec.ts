@@ -261,8 +261,8 @@ describe('IntentDescriber', () => {
         metric: { kind: 'count_distinct' as const, entity, field, label: 'Customer' },
       });
       const evidence = describer.describeEvidence(intent);
-      expect(evidence[0].kind).toBe('metric');
-      expect(evidence[0].source).toBe('count_distinct');
+      expect(evidence[0]!.kind).toBe('metric');
+      expect(evidence[0]!.source).toBe('count_distinct');
     });
 
     it('describes regular metric evidence with default_metric source when default', () => {

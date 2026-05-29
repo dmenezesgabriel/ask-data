@@ -202,7 +202,7 @@ export class SqlPlanner {
     joins: string[],
     diagnostics: Diagnostics | null,
   ): PlannedSql {
-    const dim = intent.dimensions[0];
+    const dim = intent.dimensions[0]!;
     const expr = `${aliases.get(dim.table)}.${quoteIdent(dim.column)}`;
     const listWhereParts = [...whereParts, `${expr} IS NOT NULL`, `CAST(${expr} AS VARCHAR) <> ''`];
     const sql = `SELECT DISTINCT ${expr} AS label\nFROM ${from}\n${joins.join('\n')}\nWHERE ${listWhereParts.join(' AND ')}\nORDER BY label ASC\nLIMIT ${Number(intent.limit) || this.askConfig.maxRows || 25}`;

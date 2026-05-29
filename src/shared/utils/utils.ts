@@ -123,9 +123,11 @@ export const cosineSimilarity = (a: ArrayLike<number>, b: ArrayLike<number>): nu
   let aNorm = 0;
   let bNorm = 0;
   for (let i = 0; i < Math.min(a.length, b.length); i++) {
-    dot += a[i] * b[i];
-    aNorm += a[i] * a[i];
-    bNorm += b[i] * b[i];
+    const ai = a[i]!;
+    const bi = b[i]!;
+    dot += ai * bi;
+    aNorm += ai * ai;
+    bNorm += bi * bi;
   }
   return aNorm && bNorm ? dot / (Math.sqrt(aNorm) * Math.sqrt(bNorm)) : 0;
 };

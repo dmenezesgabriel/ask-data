@@ -209,7 +209,7 @@ describe('DatasourceEditorPanel', () => {
       input.dispatchEvent(new Event('input', { bubbles: true }));
 
       expect(received).toHaveLength(1);
-      expect(received[0].name).toBe('new-view');
+      expect(received[0]!.name).toBe('new-view');
       cleanup(el);
     });
 
@@ -227,7 +227,7 @@ describe('DatasourceEditorPanel', () => {
       input.dispatchEvent(new Event('input', { bubbles: true }));
 
       expect(received).toHaveLength(1);
-      expect(received[0].url).toBe('https://new.com/data.csv');
+      expect(received[0]!.url).toBe('https://new.com/data.csv');
       cleanup(el);
     });
 
@@ -245,7 +245,7 @@ describe('DatasourceEditorPanel', () => {
       select.dispatchEvent(new Event('change', { bubbles: true }));
 
       expect(received).toHaveLength(1);
-      expect(received[0].type).toBe('json');
+      expect(received[0]!.type).toBe('json');
       cleanup(el);
     });
 
@@ -262,7 +262,7 @@ describe('DatasourceEditorPanel', () => {
       input.value = 'b';
       input.dispatchEvent(new Event('input', { bubbles: true }));
 
-      expect(received[0].url).toBe('https://keep.com/k.csv');
+      expect(received[0]!.url).toBe('https://keep.com/k.csv');
       cleanup(el);
     });
 
