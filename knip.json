@@ -8,5 +8,6 @@
   ],
   "project": ["src/**/*.ts", "tests/**/*.ts"],
   "ignoreExportsUsedInFile": true,
-  "ignoreUnresolved": ["tests/.*/steps/.*", "^/src/"]
+  "ignoreUnresolved": ["tests/.*/steps/.*", "^/src/"],
+  "ignore": ["tests/typecheck-fixtures/**"]
 }
