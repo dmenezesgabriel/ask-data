@@ -39,7 +39,7 @@ export class DatasourcePicker extends LitElement {
   override updated(changed: Map<string, unknown>): void {
     if (changed.has('open')) {
       if (this.open) {
-        void this._loadItems();
+        this._loadItems();
         try {
           this._dialogRef.value?.showModal();
         } catch (err) {

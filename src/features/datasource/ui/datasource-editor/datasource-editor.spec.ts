@@ -1,6 +1,6 @@
 import './datasource-editor';
 
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setCatalogService } from '@/shared/services/catalog-service';
 
@@ -17,7 +17,12 @@ function cleanup(el: HTMLElement): void {
   el.remove();
 }
 
-type EditorInternals = { _isDirty: boolean; _nameError: string; _urlError: string; _loadError: string };
+type EditorInternals = {
+  _isDirty: boolean;
+  _nameError: string;
+  _urlError: string;
+  _loadError: string;
+};
 
 describe('DatasourceEditor willUpdate() — UT-002', () => {
   let getDatasourceExecute: ReturnType<typeof vi.fn>;
@@ -26,7 +31,9 @@ describe('DatasourceEditor willUpdate() — UT-002', () => {
     getDatasourceExecute = vi.fn().mockImplementation(() => new Promise(() => {}));
     setCatalogService({
       listDatasources: { execute: async () => [] },
-      getDatasource: { execute: getDatasourceExecute },
+      getDatasource: {
+        execute: getDatasourceExecute as unknown as (id: string) => Promise<unknown>,
+      },
       listDashboards: { execute: async () => [] },
       getDashboard: { execute: async () => null },
       getQuestion: { execute: async () => null },

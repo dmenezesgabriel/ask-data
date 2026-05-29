@@ -57,7 +57,7 @@ export class DatasourceEditor extends LitElement {
 
   override updated(changed: Map<string, unknown>): void {
     if (changed.has('slug') || changed.has('isNew')) {
-      void this._loadConfig();
+      this._loadConfig();
     }
   }
 

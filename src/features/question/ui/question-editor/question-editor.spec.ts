@@ -1,6 +1,6 @@
 import './index';
 
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setCatalogService } from '@/shared/services/catalog-service';
 
@@ -26,7 +26,7 @@ describe('QuestionEditor willUpdate() — UT-003', () => {
     getQuestionExecute = vi.fn().mockImplementation(() => new Promise(() => {}));
     setCatalogService({
       listQuestions: { execute: async () => [] },
-      getQuestion: { execute: getQuestionExecute },
+      getQuestion: { execute: getQuestionExecute as unknown as (id: string) => Promise<unknown> },
       listDatasources: { execute: async () => [] },
       getDatasource: { execute: async () => null },
       listDashboards: { execute: async () => [] },
