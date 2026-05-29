@@ -1,0 +1,24 @@
+{
+  "//": [
+    "Baseline duplication (2026-05-29): 5.01% total (typescript: 5.61%, css: 0.41%)",
+    "TODO(duplication-debt): top 3 duplicated pairs to address:",
+    "  1. src/core/entities/ask.ts <-> src/shared/types/ask.ts (8 overlapping blocks, largest 32 lines)",
+    "  2. src/adapters/client/local-storage/local-storage-datasource-repository.spec.ts <-> local-storage-question-repository.spec.ts (31 lines)",
+    "  3. src/features/question/ui/question-editor-panel/question-editor-panel.spec.ts (multiple self-clones, largest 23 lines)"
+  ],
+  "threshold": 1,
+  "minLines": 6,
+  "minTokens": 50,
+  "reporters": ["console", "html"],
+  "output": "reports/duplication",
+  "ignore": [
+    "dist/**",
+    "build/**",
+    "coverage/**",
+    ".next/**",
+    "storybook-static/**",
+    "node_modules/**",
+    "*.d.ts",
+    ".stryker-tmp/**"
+  ]
+}
