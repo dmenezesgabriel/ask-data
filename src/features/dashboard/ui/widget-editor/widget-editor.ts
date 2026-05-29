@@ -114,7 +114,7 @@ export class WidgetEditor extends LitElement {
     if (dialog?.open) dialog.close();
   }
 
-  override updated(changed: Map<string, unknown>): void {
+  override willUpdate(changed: Map<string, unknown>): void {
     if (changed.has('widget')) {
       this._panelConfig = this.widget
         ? widgetToQuestionConfig(this.widget)

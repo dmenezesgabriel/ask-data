@@ -20,6 +20,39 @@ async function updateComplete(el: WidgetEditor): Promise<void> {
   await el.updateComplete;
 }
 
+describe('WidgetEditor willUpdate() — UT-001', () => {
+  beforeEach(() => {
+    vi.spyOn(HTMLDialogElement.prototype, 'showModal').mockImplementation(function showModal(
+      this: HTMLDialogElement,
+    ) {
+      this.open = true;
+    });
+  });
+
+  afterEach(() => {
+    document.body.replaceChildren();
+    vi.restoreAllMocks();
+  });
+
+  it('UT-001: updates _panelConfig from new widget prop before next render', async () => {
+    const seedDashboard = createSeedDashboards()[0];
+    const [widgetA, widgetB] = seedDashboard.widgets;
+
+    const el = mount({ widget: widgetA, mode: 'edit' });
+    await updateComplete(el);
+
+    const internals = el as unknown as { _panelConfig: { title: string } };
+    expect(internals._panelConfig?.title).toBe(widgetA.title);
+
+    el.widget = widgetB;
+    // Check _panelConfig after willUpdate runs but before any async side-effect
+    await el.updateComplete;
+    expect(internals._panelConfig?.title).toBe(widgetB.title);
+
+    el.remove();
+  });
+});
+
 describe('WidgetEditor capability regression', () => {
   beforeEach(() => {
     vi.spyOn(HTMLDialogElement.prototype, 'showModal').mockImplementation(function showModal(

@@ -46,14 +46,22 @@ export class DatasourceEditor extends LitElement {
     this._loadConfig();
   }
 
+  override willUpdate(changed: Map<string, unknown>): void {
+    if (changed.has('slug') || changed.has('isNew')) {
+      this._loadError = '';
+      this._isDirty = false;
+      this._nameError = '';
+      this._urlError = '';
+    }
+  }
+
   override updated(changed: Map<string, unknown>): void {
     if (changed.has('slug') || changed.has('isNew')) {
-      this._loadConfig();
+      void this._loadConfig();
     }
   }
 
   private async _loadConfig(): Promise<void> {
-    this._loadError = '';
     if (this.isNew && this.slug && this.slug !== 'new') {
       // Shell pre-created the entry; load it so the name appears pre-filled.
       this._config =
@@ -66,9 +74,6 @@ export class DatasourceEditor extends LitElement {
         this.slug,
       )) as DataSourceConfig | null;
     }
-    this._isDirty = false;
-    this._nameError = '';
-    this._urlError = '';
   }
 
   private _onPanelChange(e: CustomEvent<DataSourceConfig>): void {

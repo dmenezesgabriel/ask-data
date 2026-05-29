@@ -45,14 +45,20 @@ export class QuestionEditor extends LitElement {
     this._loadConfig();
   }
 
+  override willUpdate(changed: Map<string, unknown>): void {
+    if (changed.has('slug') || changed.has('isNew')) {
+      this._error = '';
+      this._isDirty = false;
+    }
+  }
+
   override updated(changed: Map<string, unknown>): void {
     if (changed.has('slug') || changed.has('isNew')) {
-      this._loadConfig();
+      void this._loadConfig();
     }
   }
 
   private async _loadConfig(): Promise<void> {
-    this._error = '';
     if (this.isNew && this.slug && this.slug !== 'new') {
       // Shell pre-created the entry; load it so the title appears pre-filled.
       this._config =
@@ -65,7 +71,6 @@ export class QuestionEditor extends LitElement {
         this.slug,
       )) as QuestionConfig | null;
     }
-    this._isDirty = false;
   }
 
   private _onPanelChange(e: CustomEvent<QuestionConfig>): void {

@@ -27,12 +27,19 @@ export class DatasourcePicker extends LitElement {
   private _error = '';
   private _dialogRef = createRef<HTMLDialogElement>();
 
+  override willUpdate(changed: Map<string, unknown>): void {
+    if (changed.has('open') && this.open) {
+      this._filter = '';
+      this._pendingSlugs = [...this.selectedSlugs];
+      this._loading = true;
+      this._error = '';
+    }
+  }
+
   override updated(changed: Map<string, unknown>): void {
     if (changed.has('open')) {
       if (this.open) {
-        this._filter = '';
-        this._pendingSlugs = [...this.selectedSlugs];
-        this._loadItems();
+        void this._loadItems();
         try {
           this._dialogRef.value?.showModal();
         } catch (err) {
@@ -57,8 +64,6 @@ export class DatasourcePicker extends LitElement {
   }
 
   private async _loadItems(): Promise<void> {
-    this._loading = true;
-    this._error = '';
     try {
       this._items = (await getCatalogService().listDatasources.execute()) as DataSourceConfig[];
     } catch (error) {
