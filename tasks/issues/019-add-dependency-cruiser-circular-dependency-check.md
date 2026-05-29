@@ -1,5 +1,5 @@
 ---
-id: "019"
+id: '019'
 created: 2026-05-28
 updated: 2026-05-28
 status: active
@@ -18,18 +18,20 @@ P2 — Independent of ESLint and TypeScript tasks; can start any time. Must comp
 
 ## Assignability
 
-**HITL** — the initial `depcruise` run may reveal existing circular dependencies in the codebase. A human must decide whether to fix them immediately or to document them as known debt and configure `depcruise` to report (not block) them during the stabilization period. The decision point is: *fail CI on all circulars now* vs *report and defer*.
+**HITL** — the initial `depcruise` run may reveal existing circular dependencies in the codebase. A human must decide whether to fix them immediately or to document them as known debt and configure `depcruise` to report (not block) them during the stabilization period. The decision point is: _fail CI on all circulars now_ vs _report and defer_.
 
 ## Context
 
 The project enforces architecture layer boundaries using `eslint-plugin-boundaries` (configured via `architecture-boundaries.config.cjs` and `eslint.config.js`). This correctly prevents cross-layer imports at the ESLint level.
 
 However, `eslint-plugin-boundaries` does not detect **circular dependencies** — situations where module A imports B, B imports C, and C imports A, all within the same allowed layer. Circular dependencies cause:
+
 - Unpredictable module initialization order (especially in Vite/ESM bundles).
 - Subtle runtime bugs where a module's exports are `undefined` at import time.
 - Build-time warnings from Vite's circular dependency detector.
 
 `dependency-cruiser` is the right tool for this:
+
 - It reads the actual module graph from source files.
 - It can enforce `no-circular` rules independent of ESLint.
 - Its config file (`.dependency-cruiser.cjs`) is separate from `eslint.config.js` and from `architecture-boundaries.config.cjs`.

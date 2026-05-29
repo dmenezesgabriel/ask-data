@@ -45,12 +45,14 @@ tasks/issues/001-short-descriptive-slug.md
 ```
 
 Good:
+
 - `tasks/issues/001-create-project.md`
 - `tasks/issues/002-invite-project-member.md`
 - `tasks/issues/003-protect-project-settings.md`
 - `tasks/issues/004-add-project-observability.md`
 
 Bad:
+
 - `tasks/issues/create project.md`
 - `tasks/issues/task1.md`
 - `tasks/issues/high-priority-feature.md`
@@ -67,11 +69,13 @@ Sort tasks by:
 4. earliest tracer-bullet validation
 
 Good:
+
 - `tasks/issues/001-create-project.md` before `tasks/issues/002-invite-project-member.md`, because invitations require `projectId`.
 - `tasks/issues/002-invite-project-member.md` before `tasks/issues/003-resend-invitation.md`, because resend requires an existing invitation.
 - `tasks/issues/003-protect-project-settings.md` before `tasks/issues/004-add-settings-form.md`, because permissions define who can use the form.
 
 Bad:
+
 - Write UI polish before the core project creation flow exists.
 - Write invitation tasks before the project identity exists.
 - Write analytics-only tasks before the user behavior exists.
@@ -101,11 +105,13 @@ docs/adrs/001-short-decision-slug.md
 ```
 
 Good:
+
 - `docs/adrs/001-use-notification-port.md`
 - `docs/adrs/002-store-project-events.md`
 - `docs/adrs/003-use-opentelemetry.md`
 
 Bad:
+
 - `docs/adrs/architecture.md`
 - `docs/adrs/decision1.md`
 - `docs/adrs/final-choice.md`
@@ -117,11 +123,13 @@ Bad:
 Sort ADRs by when the decision is first needed.
 
 Good:
+
 - `001-use-notification-port.md` before `002-send-invitation-email.md`, because email delivery tasks depend on the port decision.
 - `002-store-project-events.md` before tasks that write audit events.
 - `003-use-opentelemetry.md` before tasks that standardize traces and metrics.
 
 Bad:
+
 - Create provider-specific ADRs before deciding the boundary.
 - Create implementation detail ADRs before the architecture question exists.
 - Create ADRs after tasks already depend on unrecorded architecture decisions.
@@ -138,6 +146,7 @@ Report:
 - unresolved assumptions, if any
 
 Good:
+
 - Created `tasks/issues/001-create-project.md`.
 - Created `tasks/issues/002-invite-project-member.md`.
 - Created `docs/adrs/001-use-notification-port.md`.
@@ -145,6 +154,7 @@ Good:
 - Assumption: invitations expire after 7 days.
 
 Bad:
+
 - Done.
 - Created issues.
 - Created ADRs.

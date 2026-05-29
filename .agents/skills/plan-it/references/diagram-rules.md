@@ -10,15 +10,16 @@ Include a diagram when the relationship or flow cannot be expressed clearly in �
 
 Each type covers a distinct, mutually exclusive scenario. Select one.
 
-| Type | Use when |
-|------|----------|
-| `flowchart` | Branching logic, decision trees, deployment topology, or option-comparison paths |
-| `sequenceDiagram` | Time-ordered message passing between services, systems, or actors |
-| `classDiagram` | Object relationships, inheritance, and interface structure in the domain model |
-| `erDiagram` | Relational data model with entity attributes and cardinality |
-| `stateDiagram-v2` | Entity lifecycle states and the transitions between them |
+| Type              | Use when                                                                         |
+| ----------------- | -------------------------------------------------------------------------------- |
+| `flowchart`       | Branching logic, decision trees, deployment topology, or option-comparison paths |
+| `sequenceDiagram` | Time-ordered message passing between services, systems, or actors                |
+| `classDiagram`    | Object relationships, inheritance, and interface structure in the domain model   |
+| `erDiagram`       | Relational data model with entity attributes and cardinality                     |
+| `stateDiagram-v2` | Entity lifecycle states and the transitions between them                         |
 
 Good:
+
 - 4 microservices exchanging messages → `sequenceDiagram`
 - Comparing 3 notification delivery topologies → `flowchart`
 - Domain model with 5 entities and foreign-key relationships → `erDiagram`
@@ -26,6 +27,7 @@ Good:
 - Repository and service inheritance → `classDiagram`
 
 Bad:
+
 - Use `sequenceDiagram` for a data model with no message ordering.
 - Use `flowchart` for entity attribute relationships.
 - Use `classDiagram` for a time-ordered API call chain.
@@ -65,10 +67,12 @@ sequenceDiagram
 - Use lowercase kebab-case node labels (`auth-service`, `notification-port`).
 
 Good:
+
 - 8-node `sequenceDiagram` with a title comment.
 - `erDiagram` with 5 entities, each showing primary key and two foreign keys.
 
 Bad:
+
 - 20-node diagram that requires horizontal scrolling.
 - Diagram with no context label — reader cannot identify what it models.
 

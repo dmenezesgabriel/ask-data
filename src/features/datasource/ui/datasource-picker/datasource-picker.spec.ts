@@ -1,6 +1,6 @@
 import './datasource-picker';
 
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setCatalogService } from '@/shared/services/catalog-service';
 
@@ -28,7 +28,12 @@ function cleanup(el: HTMLElement): void {
   el.remove();
 }
 
-type PickerInternals = { _filter: string; _pendingSlugs: string[]; _loading: boolean; _error: string };
+type PickerInternals = {
+  _filter: string;
+  _pendingSlugs: string[];
+  _loading: boolean;
+  _error: string;
+};
 
 describe('DatasourcePicker willUpdate() — UT-004', () => {
   beforeEach(() => {

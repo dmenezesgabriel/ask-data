@@ -1,4 +1,4 @@
 echo "pre-commit: running lint-staged, typecheck, and tests"
-npm run lint:staged
-npm run typecheck
-npm run test:hooks
+pnpm run lint:staged
+pnpm run typecheck
+pnpm run test:hooks

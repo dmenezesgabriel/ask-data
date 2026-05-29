@@ -16,12 +16,14 @@ Do not fragment code into many tiny modules without a clear design reason.
 Do not introduce a new architectural style when the project already has a clear working structure.
 
 Good:
+
 - Implement project creation through the existing service boundary.
 - Add validation for project names where input rules already live.
 - Update only the affected dashboard form, API handler, service, repository, and tests.
 - Follow the existing component structure before adding Atomic Design naming.
 
 Bad:
+
 - Rewrite the whole dashboard.
 - Replace the router because one route needs validation.
 - Add a generic framework for future project workflows.
@@ -37,6 +39,7 @@ Apply SOLID, design patterns, Ports and Adapters, Clean Architecture, Component-
 Do not introduce abstractions, layers, adapters, factories, ports, design-system structure, or architectural patterns just because they are considered good practice.
 
 Good:
+
 - Add a `NotificationPort` because the task touches a volatile email provider.
 - Extract a validator because the same rule is used by API and UI.
 - Add a component boundary because the form has multiple states and tests.
@@ -45,6 +48,7 @@ Good:
 - Follow the existing feature-folder structure instead of forcing Atomic Design.
 
 Bad:
+
 - Add ports for every dependency.
 - Add factories for single constructors.
 - Add Atomic Design folders for one small component.
@@ -62,10 +66,12 @@ Imagine deleting the proposed module entirely. If its complexity vanishes — ca
 A deep module has a small interface that hides a large implementation. A shallow module exposes nearly as much complexity in its interface as it has inside — it adds a layer without reducing cognitive load.
 
 Good:
+
 - A `NotificationPort` hides SMTP, SES, and retry logic behind a single `send(notification)` call. Deleting it would scatter provider details into every call site. Deep module — justified.
 - A `ProjectValidator` consolidates five name rules used by API and UI. Deleting it would duplicate the rules in two places. Deep module — justified.
 
 Bad:
+
 - A `ProjectServiceFactory` that constructs one service with no variation. Deleting it pushes a single constructor call to the caller — trivial. Shallow module — not justified.
 - A `StringUtils` wrapper around `str.strip()`. Deleting it changes nothing meaningful. Shallow module — not justified.
 
@@ -88,6 +94,7 @@ Look for:
 - existing ADRs
 
 Good:
+
 - Search for existing project creation flow before adding a new one.
 - Read current permission checks before implementing a new role rule.
 - Inspect existing telemetry helpers before adding logs or metrics.
@@ -95,6 +102,7 @@ Good:
 - Inspect existing form accessibility patterns before adding a new form.
 
 Bad:
+
 - Ask where validation belongs before checking the codebase.
 - Add a new logger without checking existing logging patterns.
 - Create a new folder structure without reading current architecture.
@@ -111,12 +119,14 @@ Each question must include numbered alternatives.
 Mark the recommended alternative with `(recommended)`.
 
 Good:
+
 - Question: Should duplicate project names be rejected per owner?
   1. Reject duplicates per owner. `(recommended)`
   2. Allow duplicates with different IDs.
   3. Reject duplicates globally.
 
 Bad:
+
 - What should I do?
 - Any other requirements?
 - Is this correct?
@@ -134,12 +144,14 @@ Default loop:
 4. Repeat until the task is complete.
 
 Good:
+
 - Add a unit test for the 80-character project name limit before implementing validation.
 - Add an integration test for `POST /projects` persistence before wiring the repository.
 - Add a regression test before fixing a known duplicate-invitation bug.
 - Add a permission test before changing owner-only settings behavior.
 
 Bad:
+
 - Write tests only after manual implementation.
 - Add snapshot tests that only freeze markup.
 - Add tests that assert implementation details instead of behavior.
@@ -162,6 +174,7 @@ Default loop:
 7. Add integration, smoke, or E2E coverage only when the composed behavior needs it.
 
 Good:
+
 - Build `ProjectForm` with valid, invalid, submitting, and server-error states before wiring the dashboard.
 - Build `InvitationList` with empty, pending, accepted, and failed states before connecting the API.
 - Use `<button>` for submit actions and `<a>` for navigation.
@@ -169,6 +182,7 @@ Good:
 - Use existing story, preview, fixture, or component test patterns when available.
 
 Bad:
+
 - Build the whole page before testing component behavior.
 - Hide all state handling inside one large screen component.
 - Add E2E tests for every visual state instead of component-level behavior tests.
@@ -184,6 +198,7 @@ Use native elements before custom widgets.
 Use ARIA only when native semantics are not enough.
 
 Good:
+
 - Use `<button>` for actions.
 - Use `<a href="...">` for navigation.
 - Use `<label>` associated with each form control.
@@ -195,6 +210,7 @@ Good:
 - Announce async validation or save errors when needed.
 
 Bad:
+
 - Use `<div onClick>` as a button.
 - Use `<span>` as a link.
 - Remove focus outlines without replacement.
@@ -216,12 +232,14 @@ Atomic Design terms:
 - Pages: real screens with data, routing, permissions, and user flows.
 
 Good:
+
 - Put reusable input behavior in a field component instead of duplicating validation markup.
 - Compose `ProjectNameField` and `DescriptionField` into `ProjectForm`.
 - Compose `ProjectForm` into the dashboard project creation page.
 - Keep page-level data loading outside small presentational components when the project already separates them.
 
 Bad:
+
 - Force Atomic Design folder names into a project that uses feature folders consistently.
 - Create atoms, molecules, organisms, templates, and pages for a tiny one-off screen.
 - Split every button, label, and wrapper into separate files without reuse.
@@ -232,6 +250,7 @@ Bad:
 For backend, service, CLI, library, data, or domain work, prefer TDD and clear boundaries.
 
 Good:
+
 - Implement validation in a domain validator or application service.
 - Keep HTTP parsing in the API boundary.
 - Keep persistence details inside repositories or data adapters.
@@ -239,6 +258,7 @@ Good:
 - Return consistent domain or application errors.
 
 Bad:
+
 - Put domain rules inside controllers.
 - Let database row shape leak into UI or API contracts by accident.
 - Call provider SDKs directly from business logic.
@@ -249,6 +269,7 @@ Bad:
 For frontend work, prefer CDD, semantic HTML, accessibility, behavior tests, and existing component conventions.
 
 Good:
+
 - Implement component states before wiring the API.
 - Keep business rules in shared validators or application logic when used by backend too.
 - Keep UI permission checks as presentation guards, not the source of truth.
@@ -257,6 +278,7 @@ Good:
 - Prefer native form behavior before custom JavaScript behavior.
 
 Bad:
+
 - Trust frontend-only authorization.
 - Put all validation only in UI when backend must enforce it.
 - Create one large component with fetching, validation, permissions, formatting, and rendering mixed together.
@@ -268,11 +290,13 @@ Bad:
 Prefer a thin, working vertical slice over isolated horizontal layers.
 
 Good:
+
 - Implement dashboard form, API route, service rule, database persistence, success message, and telemetry for project creation.
 - Implement invitation request, permission check, invitation record, pending state, and audit log.
 - Implement a component state, its page integration, API call, and error handling when the task is user-facing.
 
 Bad:
+
 - Build every database table first.
 - Build all UI screens before connecting real behavior.
 - Add every repository method before one user flow works.
@@ -311,6 +335,7 @@ gradle test
 ```
 
 Good:
+
 - Run the specific unit test after changing a validator.
 - Run the API integration test after changing the service and repository.
 - Run typecheck after changing shared interfaces.
@@ -319,6 +344,7 @@ Good:
 - Run accessibility checks when interactive UI, forms, dialogs, navigation, or error states changed.
 
 Bad:
+
 - Skip validation because the change looks simple.
 - Run only lint after changing business logic.
 - Run the entire suite repeatedly when a focused test is enough.
@@ -330,6 +356,7 @@ Bad:
 Handle expected failures explicitly.
 
 Good:
+
 - Return `400` with `{ code, message, field }` for validation errors.
 - Return `403` when a member changes owner-only settings.
 - Show inline form errors next to the related field.
@@ -338,6 +365,7 @@ Good:
 - Log unexpected failures with request ID and safe context.
 
 Bad:
+
 - Catch and ignore errors.
 - Return generic `500` for validation failures.
 - Show “Something went wrong” for every error.
@@ -349,6 +377,7 @@ Bad:
 Implement telemetry when required by the task, risk, or existing pattern.
 
 Good:
+
 - Log project creation with `projectId`, `ownerId`, request ID, and result.
 - Emit `project.created` metric with success and failure tags.
 - Trace API, service, repository, and database spans for critical flows.
@@ -356,6 +385,7 @@ Good:
 - Exclude descriptions, email bodies, tokens, passwords, and secrets from logs.
 
 Bad:
+
 - Add logs everywhere.
 - Track every click by default.
 - Log raw request bodies.

@@ -1,0 +1,35 @@
+name: quality
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    # Steps run individually (not as a single `pnpm check`) so GitHub Actions UI shows
+    # which tool failed without reading the log (OBS-001). This intentionally deviates
+    # from FR-003's single-step suggestion; OBS-001 takes precedence here.
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: ./.github/workflows/setup-node
+      - name: Run typecheck
+        run: pnpm typecheck
+      - name: Run lint
+        run: pnpm lint
+      - name: Run format check
+        run: pnpm format:check
+      - name: Run fast tests
+        run: pnpm test:hooks
+      - name: Run knip
+        run: pnpm knip
+      - name: Run duplication check
+        run: pnpm duplication:check
+      - name: Run architecture check
+        run: pnpm architecture:check

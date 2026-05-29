@@ -25,11 +25,13 @@ Introduce application-level ports for feature flag evaluation and observability 
 ## Consequences
 
 Positive:
+
 - Capabilities can be enabled per deployment mode, workspace, or extension set.
 - Telemetry can remain consistent when deployment topology changes.
 - Tests can verify disabled capabilities and telemetry redaction.
 
 Negative:
+
 - Adds a small amount of composition and adapter code before all flags are externally backed.
 - Requires discipline to avoid direct `console` or environment checks in domain flows.
 

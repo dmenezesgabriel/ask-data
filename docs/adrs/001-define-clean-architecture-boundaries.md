@@ -25,11 +25,13 @@ Adopt a Clean Architecture boundary policy for Portable BI: `core` owns entities
 ## Consequences
 
 Positive:
+
 - Developers can understand the product from business modules before technical details.
 - Client-only and server-backed deployments can share application contracts.
 - Tests can target stable use cases and ports instead of volatile UI/storage details.
 
 Negative:
+
 - Short-term duplication may remain while legacy registries migrate.
 - Boundary rules will expose existing cross-layer imports that need planned remediation.
 

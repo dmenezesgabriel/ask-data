@@ -1,8 +1,8 @@
 ---
-id: "{{NUMBER}}"
-issue: "{{tasks/issues/001-slug.md}}"
-created: {{YYYY-MM-DD}}
-updated: {{YYYY-MM-DD}}
+id: '{{NUMBER}}'
+issue: '{{tasks/issues/001-slug.md}}'
+created: { { YYYY-MM-DD } }
+updated: { { YYYY-MM-DD } }
 ---
 
 # Implementation Summary: <task name>
@@ -23,6 +23,7 @@ updated: {{YYYY-MM-DD}}
 - <Concrete user-visible or system-visible outcome>
 
 Example:
+
 - Signed-in users can create projects from the dashboard.
 - Project names longer than 80 characters are rejected.
 - Duplicate invitations show “Member already invited.”
@@ -35,6 +36,7 @@ Example:
 - <Existing convention followed>
 
 Example:
+
 - Project creation is implemented through the existing project service.
 - `ProjectForm` was implemented as an isolated component with invalid, submitting, and server-error states.
 - The form uses native labels, buttons, and field-level error associations.
@@ -48,6 +50,7 @@ Example:
 - `<test path>` — <what it verifies>
 
 Example:
+
 - `tests/unit/project-name.test.ts` — verifies project names accept 1–80 characters.
 - `tests/integration/create-project.test.ts` — verifies `POST /projects` persists project data.
 - `src/components/project-form.test.tsx` — verifies invalid, submitting, and server-error form states.
@@ -58,6 +61,7 @@ Example:
 - `<category>`: Not applicable — <specific reason>.
 
 Example:
+
 - `E2E`: Not applicable — this task changed only a pure validation helper and no complete user journey.
 - `Performance`: Not applicable — this task does not affect runtime behavior.
 - `Component`: Not applicable — this task changes only backend authorization logic.
@@ -71,6 +75,7 @@ Example:
 ```
 
 Example:
+
 ```text
 npm test -- project-name — passed
 npm run typecheck — passed
@@ -83,6 +88,7 @@ npm run test:a11y -- project-form — passed
 - <Not applicable reason>
 
 Example:
+
 - `ProjectForm` uses native labels and submit button.
 - Name field error is connected to the input.
 - Submit button remains keyboard reachable and prevents duplicate submissions.
@@ -94,6 +100,7 @@ Example:
 - <Not applicable reason>
 
 Example:
+
 - Added `project.created` metric with success and failure tags.
 - Logs include `projectId`, `ownerId`, request ID, and result.
 - Project descriptions and tokens are excluded from logs.
@@ -104,6 +111,7 @@ Example:
 - Not applicable — <specific reason>
 
 Example:
+
 - `docs/adrs/001-use-notification-port.md` — updated from `Proposed` to `Accepted`.
 - Not applicable — this task does not touch architectural decisions.
 

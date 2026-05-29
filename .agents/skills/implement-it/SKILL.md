@@ -4,7 +4,7 @@ description: Implements existing tasks, issues, stories, or plan items using TDD
 compatibility: Designed for Claude Code. Requires bash for script execution. Language and framework agnostic.
 metadata:
   domain: software-implementation
-  version: "1.0"
+  version: '1.0'
 ---
 
 Implement one or more existing tasks, issues, stories, or plan items.
@@ -63,6 +63,7 @@ See [output-rules.md](references/output-rules.md) for naming and report structur
 ## If validation fails
 
 If a validation check (test, lint, build) fails after implementation:
+
 - Fix the root cause, not the check.
 - Do not disable linting, skip tests, or use `--force` flags to make CI pass.
 - If the failure is pre-existing and out of scope, document it in the summary under "Unresolved assumptions" and do not claim it as a blocker.

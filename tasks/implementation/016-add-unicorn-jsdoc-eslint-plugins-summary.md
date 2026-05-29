@@ -1,6 +1,6 @@
 ---
-id: "016"
-task: "016-add-unicorn-jsdoc-eslint-plugins"
+id: '016'
+task: '016-add-unicorn-jsdoc-eslint-plugins'
 date: 2026-05-29
 status: complete
 ---
@@ -61,15 +61,15 @@ Integration tests verified manually:
 
 ## Violation Counts (OBS-001)
 
-| Rule | Count | Severity |
-|------|-------|----------|
-| `unicorn/no-useless-undefined` | 32 | error |
-| `jsdoc/require-example` | 9 | warn |
-| `unicorn/prefer-ternary` | 4 | warn |
-| `unicorn/no-lonely-if` | 0 | — |
-| `jsdoc/require-description` | 0 | — |
-| `jsdoc/no-blank-block-descriptions` | 0 | — |
-| `jsdoc/check-tag-names` | 0 | — |
+| Rule                                | Count | Severity |
+| ----------------------------------- | ----- | -------- |
+| `unicorn/no-useless-undefined`      | 32    | error    |
+| `jsdoc/require-example`             | 9     | warn     |
+| `unicorn/prefer-ternary`            | 4     | warn     |
+| `unicorn/no-lonely-if`              | 0     | —        |
+| `jsdoc/require-description`         | 0     | —        |
+| `jsdoc/no-blank-block-descriptions` | 0     | —        |
+| `jsdoc/check-tag-names`             | 0     | —        |
 
 All counts appended to the `// TODO(lint-debt):` block in `eslint.config.js`.
 
@@ -83,6 +83,6 @@ None — this is a plugin addition to an existing ESLint flat-config, no archite
 
 ## Unresolved Assumptions
 
-- **AC-003 wording mismatch**: `jsdoc/require-description` only fires on existing JSDoc blocks that lack a description. A function with *no* JSDoc block does not trigger the rule. AC-003 says "with no JSDoc block" which contradicts the rule's behavior. The rule is configured correctly; the AC description is imprecise. If JSDoc existence enforcement is needed in a follow-up task, add `jsdoc/require-jsdoc` with `publicOnly: true`.
+- **AC-003 wording mismatch**: `jsdoc/require-description` only fires on existing JSDoc blocks that lack a description. A function with _no_ JSDoc block does not trigger the rule. AC-003 says "with no JSDoc block" which contradicts the rule's behavior. The rule is configured correctly; the AC description is imprecise. If JSDoc existence enforcement is needed in a follow-up task, add `jsdoc/require-jsdoc` with `publicOnly: true`.
 - **`onlySingleLine` vs `only-single-line`**: The task spec used camelCase `"onlySingleLine"` but unicorn v64 uses kebab-case `"only-single-line"`. Used the value the plugin actually accepts.
 - **`no-blank-block-description` vs `no-blank-block-descriptions`**: Task spec used the singular form; the plugin exports the plural form. Used the actual rule name.

@@ -25,11 +25,13 @@ Define a BI platform API made of explicit extension points, capability metadata,
 ## Consequences
 
 Positive:
+
 - Extension APIs become stable, documented, and testable.
 - Built-in and user-provided functionality can evolve polymorphically.
 - Feature flags can enable or disable capabilities without UI conditionals spreading across the app.
 
 Negative:
+
 - Requires careful versioning of extension contracts.
 - Some existing code must be inverted into registries rather than direct imports.
 

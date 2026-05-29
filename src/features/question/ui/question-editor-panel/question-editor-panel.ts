@@ -144,9 +144,7 @@ export class QuestionEditorPanel extends LitElement {
         Object.entries(r).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v]),
       ),
     );
-    const labels = rows.map((r) =>
-      String(r['label'] ?? r['name'] ?? Object.values(r)[0] ?? ''),
-    );
+    const labels = rows.map((r) => String(r['label'] ?? r['name'] ?? Object.values(r)[0] ?? ''));
     const values = rows.map((r) =>
       Number(r['value'] ?? Object.values(r).find((v) => typeof v === 'number') ?? 0),
     );

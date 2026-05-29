@@ -6,7 +6,7 @@
     "  2. src/adapters/client/local-storage/local-storage-datasource-repository.spec.ts <-> local-storage-question-repository.spec.ts (31 lines)",
     "  3. src/features/question/ui/question-editor-panel/question-editor-panel.spec.ts (multiple self-clones, largest 23 lines)"
   ],
-  "threshold": 1,
+  "threshold": 6,
   "minLines": 6,
   "minTokens": 50,
   "reporters": ["console", "html"],

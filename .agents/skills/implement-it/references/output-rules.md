@@ -30,11 +30,13 @@ tasks/implementation/001-short-descriptive-slug-summary.md
 ```
 
 Good:
+
 - `tasks/implementation/001-create-project-summary.md`
 - `tasks/implementation/002-invite-project-member-summary.md`
 - `tasks/implementation/003-protect-project-settings-summary.md`
 
 Bad:
+
 - `tasks/implementation/done.md`
 - `tasks/implementation/task1.md`
 - `tasks/implementation/summary final.md`
@@ -56,6 +58,7 @@ The summary must include:
 - unresolved assumptions or follow-up work
 
 Good:
+
 - `UT-001` added for project name length.
 - `IT-001` added for `POST /projects` persistence.
 - `ProjectForm` component states verified for invalid, submitting, and server-error states.
@@ -63,6 +66,7 @@ Good:
 - `E2E-001` not applicable because this task changed only a pure validator.
 
 Bad:
+
 - Done.
 - Tests passed.
 - Changed backend.

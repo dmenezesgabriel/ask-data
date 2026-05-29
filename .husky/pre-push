@@ -1,2 +1,2 @@
 echo "pre-push: running knip"
-npm run knip
+pnpm run knip

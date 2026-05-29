@@ -109,7 +109,10 @@ function buildScatterConfig(
           data: rows.map((row) => ({
             x: numberValue(row[xKey]),
             y: numberValue(row[yKey]),
-            r: Math.max(3, Math.sqrt(Math.abs(rKey !== undefined ? numberValue(row[rKey]) : 0) || 9)),
+            r: Math.max(
+              3,
+              Math.sqrt(Math.abs(rKey !== undefined ? numberValue(row[rKey]) : 0) || 9),
+            ),
           })),
           backgroundColor: '#c9613f88',
           borderColor: '#c9613f',

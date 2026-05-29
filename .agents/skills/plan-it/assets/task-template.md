@@ -1,7 +1,7 @@
 ---
-id: "{{NUMBER}}"
-created: {{YYYY-MM-DD}}
-updated: {{YYYY-MM-DD}}
+id: '{{NUMBER}}'
+created: { { YYYY-MM-DD } }
+updated: { { YYYY-MM-DD } }
 status: active
 ---
 
@@ -12,6 +12,7 @@ status: active
 <P0 | P1 | P2> — <short reason this task has this priority>.
 
 Example:
+
 - P0 — Required before member invitations because projects must exist first.
 
 ## Dependencies
@@ -22,6 +23,7 @@ Example:
 - <No ADR dependency; this task uses existing architecture.>
 
 Example:
+
 - Depends on Task 1: Create project.
 - Depends on ADR `docs/adrs/001-use-notification-port.md`.
 - Depends on the `projects` table with `id`, `name`, `description`, and `ownerId`.
@@ -38,6 +40,7 @@ OR
 <**HITL** — requires human involvement at a decision point: [describe the specific decision or judgment that needs a human].>
 
 Example:
+
 - **AFK** — all requirements and acceptance criteria are resolved; no irreversible architectural decisions remain open.
 - **HITL** — requires human approval of the database migration strategy before persistence can be implemented.
 
@@ -46,6 +49,7 @@ Example:
 <Short self-contained explanation of the task. Include enough context to understand it without previous discussion.>
 
 Example:
+
 - Users create projects from the dashboard before they invite members or configure settings.
 - A project has a name, optional description, owner, member list, and settings page.
 - Only the project owner can invite members or change project settings.
@@ -63,6 +67,7 @@ Use Gherkin. Highlight reserved words in bold.
 - **Then** <business outcome is achieved>
 
 Example:
+
 - **Feature**: Project creation
 - **Scenario**: Team lead starts a client project
 - **Given** Ana is a signed-in team lead
@@ -77,6 +82,7 @@ Example:
 - <Required ADR stub exists when the task depends on an architectural decision>
 
 Example:
+
 - The `POST /projects` API contract includes request, response, and error formats.
 - The `project.name`, `project.description`, and `project.ownerId` fields are defined.
 - The owner, admin, and member permission rules are documented.
@@ -89,6 +95,7 @@ Example:
 - `FR-003`: <specific user-visible or system-visible behavior>
 
 Example:
+
 - `FR-001`: A signed-in user can create a project from the dashboard.
 - `FR-002`: The system rejects project names longer than 80 characters.
 - `FR-003`: A project owner can invite a member using their email address.
@@ -100,6 +107,7 @@ Example:
 - `NFR-003`: <specific consistency or maintainability constraint>
 
 Example:
+
 - `NFR-001`: Project creation returns a response in under 300 ms at p95 under normal load.
 - `NFR-002`: API validation errors use the same `{ code, message, field }` format.
 - `NFR-003`: All project form labels, buttons, and errors use localization keys.
@@ -113,6 +121,7 @@ Example:
 - `OBS-005`: <specific sensitive-data exclusion rule>
 
 Example:
+
 - `OBS-001`: Log project creation with `projectId`, `ownerId`, request ID, and result.
 - `OBS-002`: Record a `project.created` metric with success and failure counts.
 - `OBS-003`: Trace `POST /projects` across API, service, repository, and database calls.
@@ -128,6 +137,7 @@ Use observable pass/fail outcomes. Prefer Gherkin.
 - `AC-003`: **Given** <context>, **When** <action>, **Then** <observable result>.
 
 Example:
+
 - `AC-001`: **Given** a signed-in user, **When** they submit a valid project form, **Then** the project appears on the dashboard.
 - `AC-002`: **Given** a project name with 81 characters, **When** the user submits the form, **Then** the name field shows a validation error.
 
@@ -143,6 +153,7 @@ If a category is not relevant, write `Not applicable — <specific reason>`.
 - `UT-002`: Not applicable — <specific reason>.
 
 Example:
+
 - `UT-001`: Validate that `project.name` accepts 1–80 characters. Covers `FR-002`.
 
 ### Integration Tests
@@ -157,6 +168,7 @@ Use Gherkin when applicable.
   Covers `<FR/AC/Risk ID>`.
 
 Example:
+
 - `IT-001`: **Scenario**: Project is persisted through the API  
   **Given** a signed-in user with ID `user-123`  
   **When** they call `POST /projects` with name “Acme Migration”  
@@ -175,6 +187,7 @@ Use only for critical build, deploy, startup, or shallow availability checks.
   Covers `<release confidence or critical path>`.
 
 Example:
+
 - `SMK-001`: **Scenario**: Dashboard loads after deployment  
   **Given** a signed-in user exists  
   **When** the user opens the dashboard  
@@ -192,6 +205,7 @@ Use only for complete critical user journeys.
   Covers `<FR/AC/Risk ID>`.
 
 Example:
+
 - `E2E-001`: **Scenario**: User creates a project from the dashboard  
   **Given** a signed-in user is on the dashboard  
   **When** they create a project named “Acme Migration”  
@@ -209,6 +223,7 @@ Use only when preventing a known previous defect.
   Covers previous defect `<BUG-ID>`.
 
 Example:
+
 - `REG-001`: **Scenario**: Duplicate invitation still shows a clear error  
   **Given** `bruno@company.com` already has a pending invitation  
   **When** Ana invites `bruno@company.com` again  
@@ -221,6 +236,7 @@ Example:
 - `PT-002`: Not applicable — <specific reason>.
 
 Example:
+
 - `PT-001`: Run normal-load project creation and verify `POST /projects` stays under 300 ms p95. Covers `NFR-001`.
 
 ### Security Tests
@@ -229,6 +245,7 @@ Example:
 - `ST-002`: Not applicable — <specific reason>.
 
 Example:
+
 - `ST-001`: Attempt to update another user’s project and verify the API returns `403`. Covers `AC-004`.
 
 ### Usability Tests
@@ -237,6 +254,7 @@ Example:
 - `UX-002`: Not applicable — <specific reason>.
 
 Example:
+
 - `UX-001`: Submit an empty project form and verify errors appear next to `name` and `description`. Covers `AC-002`.
 
 ### Observability Tests
@@ -245,6 +263,7 @@ Example:
 - `OT-002`: Not applicable — <specific reason>.
 
 Example:
+
 - `OT-001`: Create a project and verify the log contains `projectId`, `ownerId`, request ID, and success result. Covers `OBS-001`.
 
 ## Definition of Done

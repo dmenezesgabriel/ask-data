@@ -1,5 +1,5 @@
 ---
-id: "018"
+id: '018'
 created: 2026-05-28
 updated: 2026-05-28
 status: active
@@ -25,6 +25,7 @@ P2 — Independent of ESLint and TypeScript tasks; can start any time. Must comp
 The project has no duplication detection tool. `jscpd` (JavaScript Copy-Paste Detector) scans source files for repeated code blocks and reports duplication percentages and locations. It complements ESLint's structural rules by catching copy-paste patterns that ESLint cannot see.
 
 The tool must be configured to:
+
 - Ignore generated/build output (`dist/`, `.next/`, `coverage/`, `storybook-static/`).
 - Ignore type declaration files (`*.d.ts`).
 - Use a threshold and minimum block size that avoids false positives from short repeated patterns (e.g., import boilerplate).

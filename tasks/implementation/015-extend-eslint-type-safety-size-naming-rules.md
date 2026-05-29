@@ -1,5 +1,5 @@
 ---
-id: "015"
+id: '015'
 created: 2026-05-29
 status: complete
 ---
@@ -18,6 +18,7 @@ status: complete
 ## Behavior implemented
 
 **FR-001** — Type-safety rules added to `**/*.ts, **/*.tsx` with type-aware parsing (`projectService`):
+
 - `@typescript-eslint/no-explicit-any: error`
 - `@typescript-eslint/explicit-function-return-type: error` (allowExpressions: true)
 - `@typescript-eslint/no-unsafe-assignment: error`
@@ -27,6 +28,7 @@ status: complete
 - `@typescript-eslint/consistent-type-imports: error` (disallowTypeAnnotations: false to allow typeof import() patterns)
 
 **FR-002** — Size and complexity guardrails added globally:
+
 - `complexity: ["error", 8]` — cyclomatic complexity
 - `max-depth: ["error", 2]`
 - `max-lines: ["error", { max: 500, skipBlankLines: true, skipComments: true }]`
@@ -40,6 +42,7 @@ status: complete
 **FR-005** — `no-console: "error"` globally; overridden to "off" for `tests/**`, `src/app/**`, `**/*.scripts.ts`, `scripts/**`
 
 **FR-007** — Low-risk violations fixed:
+
 - `@typescript-eslint/consistent-type-imports`: 23 violations auto-fixed across 18 files; 16 remaining `typeof import()` patterns allowed via `disallowTypeAnnotations: false`
 
 **FR-008** — sonarjs overlap verified and noted in lint-debt block. `sonarjs/cognitive-complexity` (already error) differs from `complexity` (cyclomatic) — both kept. `sonarjs/function-return-type` (already error) partially overlaps with `explicit-function-return-type` — both kept for coverage.
@@ -57,6 +60,7 @@ status: complete
 ## Tests added or updated
 
 None added. All existing tests pass:
+
 - `src/shared/architecture/import-boundaries.spec.ts` — 9/9 pass (required `allowDefaultProject` fix)
 - Full `test:hooks` suite — 103 tests pass across 20 test files
 

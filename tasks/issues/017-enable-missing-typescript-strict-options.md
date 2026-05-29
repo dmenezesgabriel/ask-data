@@ -1,5 +1,5 @@
 ---
-id: "017"
+id: '017'
 created: 2026-05-28
 updated: 2026-05-28
 status: active
@@ -18,7 +18,7 @@ P1 — Independent of ESLint tasks; operates only on `tsconfig.json` and can run
 
 ## Assignability
 
-**HITL** — `noUncheckedIndexedAccess: true` may produce a large number of violations across the codebase (every array index access and record lookup becomes `T | undefined`). The implementer must audit violations, fix low-risk ones, and present the remaining count to a human before deciding whether to keep the option enabled or to document it as a deferred enforcement item. The human decision point is: *enable now and add explicit guards* vs *defer and document*.
+**HITL** — `noUncheckedIndexedAccess: true` may produce a large number of violations across the codebase (every array index access and record lookup becomes `T | undefined`). The implementer must audit violations, fix low-risk ones, and present the remaining count to a human before deciding whether to keep the option enabled or to document it as a deferred enforcement item. The human decision point is: _enable now and add explicit guards_ vs _defer and document_.
 
 ## Context
 
@@ -28,6 +28,7 @@ The current `tsconfig.json` has `strict: true`, `noImplicitAny: true`, `strictNu
 - `forceConsistentCasingInFileNames` — not present in `tsconfig.json`. On case-insensitive file systems (macOS, Windows), this prevents import paths that differ only in casing from silently resolving on dev but failing in CI (Linux).
 
 `noUncheckedIndexedAccess` is the riskier change because it affects every array and record access site. The safe strategy is:
+
 1. Enable it.
 2. Run `pnpm typecheck` and count errors.
 3. Fix low-risk violations (add `?? fallback` or explicit `if (x === undefined)` guards where the index is known safe).

@@ -84,7 +84,7 @@ describe('AskDataEngine.measurePriority()', () => {
     const engine = makeEngine();
     const intent = { metric: makeField({ id: 'sales::Sales', column: 'Sales' }) };
 
-    vi.spyOn(engine, 'initialize').mockResolvedValue(undefined);
+    vi.spyOn(engine, 'initialize').mockResolvedValue();
     vi.spyOn(engine, 'parseQuestion').mockReturnValue({ intent } as never);
     vi.spyOn(engine, 'planSql').mockReturnValue({
       sql: 'SELECT region AS label, 10 AS value FROM sales',
@@ -94,7 +94,9 @@ describe('AskDataEngine.measurePriority()', () => {
     vi.spyOn(engine, 'evaluateDiagnostics').mockResolvedValue({} as never);
     vi.spyOn(engine, 'describeIntent').mockReturnValue('Sales by region');
     vi.spyOn(engine, 'describeEvidence').mockReturnValue([] as never);
-    engine.duckDBManager = { query: vi.fn().mockResolvedValue({ rows: [{ label: 'West', value: 10 }] }) };
+    engine.duckDBManager = {
+      query: vi.fn().mockResolvedValue({ rows: [{ label: 'West', value: 10 }] }),
+    };
 
     await engine.ask('confidential sales by region');
 

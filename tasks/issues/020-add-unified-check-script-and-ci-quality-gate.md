@@ -1,5 +1,5 @@
 ---
-id: "020"
+id: '020'
 created: 2026-05-28
 updated: 2026-05-28
 status: active
@@ -22,7 +22,7 @@ P3 — Depends on Tasks 015–019 all completing successfully so the `check` com
 
 ## Assignability
 
-**HITL** — the CI workflow scope requires a human decision on which test suite to include in the quality gate. The full test suite (`test:integration` + `test:e2e`) requires a browser environment and can be slow or flaky in CI. The decision point is: *run all tests in CI* vs *run only the fast test subset (`test:hooks`) in the gate and schedule integration/e2e as a separate nightly job*.
+**HITL** — the CI workflow scope requires a human decision on which test suite to include in the quality gate. The full test suite (`test:integration` + `test:e2e`) requires a browser environment and can be slow or flaky in CI. The decision point is: _run all tests in CI_ vs _run only the fast test subset (`test:hooks`) in the gate and schedule integration/e2e as a separate nightly job_.
 
 ## Context
 

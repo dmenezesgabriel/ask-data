@@ -4,7 +4,7 @@ description: Creates a sequenced implementation plan as self-contained task file
 compatibility: Designed for Claude Code. Requires bash for script execution and a git repository for project context.
 metadata:
   domain: software-planning
-  version: "1.0"
+  version: '1.0'
 ---
 
 Create an implementation plan with _one or more tasks_.
@@ -61,6 +61,7 @@ See [output-files.md](references/output-files.md) for numbering, naming, and ord
 ## If output fails
 
 If files cannot be created:
+
 - Verify the directory exists: `ls -ld tasks/issues/` — if not, run `mkdir -p tasks/issues`
 - Report the error and propose an alternative output location if needed.
 
@@ -68,7 +69,7 @@ If files cannot be created:
 
 **Artificial task splitting**: Do not create tiny tasks to appear thorough. If the work is atomic, bundle it. A task that blocks nothing and delivers no independent behavior is a horizontal slice pretending to be vertical.
 
-**Cross-section duplication**: Context, Use Cases, and Requirements serve distinct purposes — context explains *why*, use cases describe *who and when*, requirements define *what must be true*. Restating the same fact in all three teaches the reader to skip sections.
+**Cross-section duplication**: Context, Use Cases, and Requirements serve distinct purposes — context explains _why_, use cases describe _who and when_, requirements define _what must be true_. Restating the same fact in all three teaches the reader to skip sections.
 
 **Asking questions the codebase can answer**: Never ask the requester for information available by codebase inspection. Inspect first. Asking questions you could answer yourself is slower and reveals you haven't read the code.
 

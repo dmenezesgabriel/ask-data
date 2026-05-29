@@ -111,11 +111,11 @@ describe('Task 003: seeded catalog repositories', () => {
     const userRepo = new LocalStorageDatasourceRepository(fakeClock);
     const seededRepo = new SeededDatasourceRepository(userRepo);
 
-    await new CreateDatasource(
-      seededRepo,
-      { create: () => 'test-uuid' },
-      fakeClock,
-    ).execute({ name: 'test-ds', type: 'csv', url: 'https://example.com/data.csv' });
+    await new CreateDatasource(seededRepo, { create: () => 'test-uuid' }, fakeClock).execute({
+      name: 'test-ds',
+      type: 'csv',
+      url: 'https://example.com/data.csv',
+    });
 
     const found = await seededRepo.get('test-ds');
     expect(found).not.toBeNull();
@@ -313,7 +313,7 @@ describe('Task 003: seeded catalog repositories', () => {
       save: async () => {
         throw new Error('storage failed');
       },
-      delete: async () => undefined,
+      delete: async () => {},
     };
 
     await expect(
@@ -338,8 +338,8 @@ describe('Task 003: seeded catalog repositories', () => {
       setItem: () => {
         throw new Error('quota exceeded');
       },
-      removeItem: () => undefined,
-      clear: () => undefined,
+      removeItem: () => {},
+      clear: () => {},
     };
     vi.stubGlobal('localStorage', throwingStorage);
 

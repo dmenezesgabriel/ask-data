@@ -31,11 +31,13 @@ tasks/reviews/001-short-descriptive-slug-review.md
 ```
 
 Good:
+
 - `tasks/reviews/001-create-project-review.md`
 - `tasks/reviews/002-invite-project-member-review.md`
 - `tasks/reviews/016-create-review-it-skill-review.md`
 
 Bad:
+
 - `tasks/reviews/done.md`
 - `tasks/reviews/review1.md`
 - `tasks/reviews/task-review final.md`
@@ -57,11 +59,13 @@ The report must include:
 - unresolved assumptions or follow-up work
 
 Good:
+
 - `F-001 — Blocking — AC-004 — unit test category missing; no test file found for UT-001.`
 - `AC-001: Pass — review report file created at tasks/reviews/016-create-review-it-skill-review.md.`
 - `UT-001: Missing — no file matching the test described in the Required Tests section was found.`
 
 Bad:
+
 - Done.
 - Looks good.
 - Tests pass.
@@ -80,10 +84,12 @@ After writing the review report, summarize in the conversation:
 - unresolved assumptions, if any
 
 Good:
+
 - Reviewed `tasks/issues/016-create-review-it-skill.md`. Verdict: **Pass**. 0 Blocking, 1 Non-blocking, 2 Suggestions.
 - Reviewed `tasks/issues/001-create-project.md`. Verdict: **Fail** (F-001, F-003). AC-002 fails, IT-001 missing.
 
 Bad:
+
 - Done.
 - Review complete.
 - No issues found.

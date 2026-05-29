@@ -4,7 +4,7 @@ description: Reviews an implementation against its task requirements, acceptance
 compatibility: Designed for Claude Code. Requires bash for script execution and a git repository for inspecting code changes.
 metadata:
   domain: software-review
-  version: "1.0"
+  version: '1.0'
 ---
 
 Review an implementation against its task contract.
@@ -59,6 +59,7 @@ See [output-rules.md](references/output-rules.md) for naming, numbering, and rep
 ## If output fails
 
 If files cannot be created:
+
 - Verify the directory exists: `ls -ld tasks/reviews/` — if not, run `mkdir -p tasks/reviews`
 - Report the error and propose an alternative output location if needed.
 
